@@ -35,10 +35,40 @@ Alternatively, clone this repository and copy the desired skill folders into
 `~/.codex/skills` (Windows: `%USERPROFILE%\.codex\skills`), or into your configured
 `CODEX_HOME/skills`. Preserve existing same-name skills and reconcile local edits
 before replacing them. Installing all four keeps the companion reference links
-available. Restart Codex after installing so it discovers the skills.
+available. Installed skills are available on the next Codex turn.
 
 Installation supplies skill instructions and scripts. Configure the dependencies
 below only for workflows you use.
+
+### Try it without accounts or Altium
+
+The [BOM review walkthrough](altium-design-review/examples/bom-review/README.md)
+contains small, synthetic inputs with intentional mistakes. From a checkout of
+this repository, Python 3.10+ is enough:
+
+```sh
+python altium-design-review/scripts/audit_exports.py --project altium-design-review/examples/bom-review/Demo.PrjPCB --variant "Demo assembly" --bom altium-design-review/examples/bom-review/bom.csv --pnp altium-design-review/examples/bom-review/pnp.csv --out demo-review.json
+```
+
+Open `demo-review.json` or ask Codex to explain it. The walkthrough shows the
+expected findings and where they appear in the report. The command preserves
+its inputs and refuses to overwrite an existing report; choose a new `--out`
+name when repeating it.
+
+## What runs automatically
+
+| Bundled helper | Result |
+| --- | --- |
+| `audit_exports.py` | Reads CSV exports and saved variant metadata; writes a JSON review report. |
+| `native_inventory.py` | Uses Altium Monkey to inventory saved schematic/PCB files. Full circuit reasoning and physical-instance reconciliation remain review work. |
+| `migrate.py` / `normalize_config.py` | Generate local library staging and adapt an exported importer configuration. |
+| `sync_artifacts.py` | Prepares synchronization CSV/schema files or summarizes a private log. It does not execute a Workspace update. |
+| `digikey.py` | Queries the DigiKey API or reads its local cache. It does not select or purchase parts automatically. |
+
+The skills guide Codex through the remaining research, review and native Altium
+steps. They do not bundle an Altium MCP server or a general Workspace write API.
+Installing them does not supply those capabilities; an available connector or
+the native Altium workflow is used for authorized changes.
 
 ## Dependencies
 
@@ -59,6 +89,24 @@ See [DigiKey credentials](digikey-part-selection/references/credentials.md) for
 portable credential injection and [API usage](digikey-part-selection/references/api.md)
 for cache and request behavior. Product pages and manufacturer datasheets remain
 available when API access is absent. No account credentials are included.
+
+### Common setup issues
+
+- **An existing skill blocks installation:** compare it with the new version,
+  preserve local edits, and reconcile the same-name folder before reinstalling.
+  Installed copies do not automatically update when this repository changes.
+- **Python or `altium_monkey` cannot be found:** use the same interpreter for
+  installation and execution. For example, `.venv/Scripts/python.exe -m pip`
+  installs into that Windows environment; a different `python` command may not.
+  The CSV demo does not need Altium Monkey.
+- **A companion reference is missing:** install all four skills side by side,
+  using their original folder names.
+- **DigiKey returns 401/403 or 429:** check the application's access or returned
+  retry/reset information respectively. See the [API guide](digikey-part-selection/references/api.md).
+- **Altium rejects a save or synchronization:** use the affected skill's
+  [save diagnostics](altium-365-library-maintain/references/save-troubleshooting.md)
+  or [synchronization guidance](altium-365-library-maintain/references/synchronization.md).
+  An offline helper passing does not establish Workspace permissions.
 
 ## Examples
 
@@ -90,7 +138,9 @@ python -m unittest discover -s digikey-part-selection/tests -v
 The tests use synthetic temporary libraries, CSVs and mocked network responses.
 They do not require a private project, live Workspace or DigiKey credentials.
 They do not establish native Altium acceptance, live API access, current stock
-or engineering signoff. GitHub Actions runs the suites on Windows with Python 3.12.
+or engineering signoff. GitHub Actions runs all suites on Windows with Python 3.12,
+plus the three standard-library suites on Linux with Python 3.10. The packaged
+CSV walkthrough is exercised through its command-line interface on both platforms.
 
 Contributions should improve reusable workflows or include a minimal synthetic
 reproduction for a demonstrated problem. Keep customer designs, Workspace

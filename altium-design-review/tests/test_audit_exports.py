@@ -1,5 +1,7 @@
 import csv
+import hashlib
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -147,6 +149,41 @@ class ExportAuditTests(unittest.TestCase):
         report = audit(self.project, "Build A", bom)
         self.assertEqual(report["summary"]["unique_complete_identities"], 0)
         self.assertEqual(report["summary"]["potentially_fitted_references"], 2)
+
+
+class PackagedExampleTests(unittest.TestCase):
+    def test_bom_walkthrough_cli_and_preserved_inputs(self):
+        skill = Path(__file__).resolve().parents[1]
+        example = skill / "examples" / "bom-review"
+        inputs = [example / name for name in ("Demo.PrjPCB", "bom.csv", "pnp.csv")]
+        before = [hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs]
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "demo report.json"
+            command = [sys.executable, "-B", str(skill / "scripts" / "audit_exports.py"),
+                       "--project", str(inputs[0]), "--variant", "Demo assembly",
+                       "--bom", str(inputs[1]), "--pnp", str(inputs[2]), "--out", str(output)]
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(report["summary"]["bom_rows"], 3)
+            self.assertEqual(report["summary"]["potentially_fitted_references"], 4)
+            self.assertEqual(report["summary"]["pnp_references"], 4)
+            self.assertEqual(report["reconciliation"]["dnp_present_in_bom"], ["R2"])
+            self.assertEqual(report["reconciliation"]["bom_only"], ["R2"])
+            self.assertEqual(report["reconciliation"]["pnp_only"], ["R4"])
+            capacitor = next(row for row in report["bom"]["rows"] if row["references"] == ["C1"])
+            self.assertEqual((capacitor["mpn"], capacitor["spn"]), ("", ""))
+            self.assertTrue(any(item["code"] == "missing_purchasing_fields"
+                                and item.get("line") == capacitor["line"] for item in report["issues"]))
+            self.assertEqual(len(report["nominal_value_candidates"]), 1)
+            self.assertEqual(report["nominal_value_candidates"][0]["status"],
+                             "candidate_only_package_and_ratings_unverified")
+            self.assertEqual(report["coverage"]["live_availability"], "not_checked")
+            saved = output.read_bytes()
+            repeated = subprocess.run(command, capture_output=True, text=True)
+            self.assertNotEqual(repeated.returncode, 0)
+            self.assertEqual(output.read_bytes(), saved)
+        self.assertEqual([hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs], before)
 
 
 if __name__ == "__main__":

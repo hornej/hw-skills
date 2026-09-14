@@ -1,0 +1,5 @@
+; Synthetic variant metadata for the CSV walkthrough, not a complete PCB design.
+[ProjectVariant1]
+Description=Demo assembly
+VariationCount=1
+Variation1=Designator=R2|UniqueId=\DEMO\R2|Kind=1

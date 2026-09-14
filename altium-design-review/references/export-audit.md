@@ -5,6 +5,9 @@ and writes one new JSON report (refuses overwrite). For Excel exports use an
 available spreadsheet workflow to inspect the selected sheet or produce a faithful
 CSV staging copy; record the workbook/sheet provenance. Do not rename XLSX to CSV.
 
+For a first run without project data, use the bundled
+[synthetic BOM/PnP walkthrough](../examples/bom-review/README.md).
+
 ```text
 python <skill>/scripts/audit_exports.py --project <design.PrjPCB> --variant <exact-name> --bom <BOM.csv> --pnp <PnP.csv> --out <new-report.json>
 python <skill>/scripts/audit_exports.py --project <design.PrjPCB> --variant <exact-name> --bom <new-BOM.csv> --previous <old-report.json> --out <new-report.json>

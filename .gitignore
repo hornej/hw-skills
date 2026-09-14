@@ -17,6 +17,8 @@ venv/
 *.IntLib
 *.PrjPcb
 *.PrjPCB
+!altium-design-review/examples/bom-review/Demo.PrjPCB
+demo-review*.json
 .altium-migration-output
 .DS_Store
 Thumbs.db

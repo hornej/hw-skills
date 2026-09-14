@@ -1,0 +1,5 @@
+Variant: Demo assembly
+Designator,Quantity,MFR,MPN,Supplier,SPN,Value,Footprint
+"R1, R2",2,ExampleParts,DEMO-R10K,ExampleSupplier,DEMO-SKU-10K,10k,R0402
+R3,1,ExampleParts,DEMO-R10K-ALT,ExampleSupplier,DEMO-SKU-ALT,10K,R0603
+C1,1,ExampleParts,,ExampleSupplier,,1uF,C0402

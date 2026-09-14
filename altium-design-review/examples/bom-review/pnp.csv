@@ -1,0 +1,6 @@
+Variant: Demo assembly
+Designator,Footprint,Center-X(mm),Center-Y(mm),Rotation,Layer
+R1,R0402,10,10,0,Top
+R3,R0603,20,10,90,Top
+C1,C0402,10,20,0,Top
+R4,R0402,20,20,0,Top

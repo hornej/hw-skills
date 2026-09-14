@@ -7,11 +7,14 @@ The binary migration helpers are tested with CPython 3.12 and
 root, or reuse an existing environment with that version. Windows PowerShell:
 
 ~~~powershell
-python -m venv .venv
+py -3.12 -m venv .venv
 $python = (Resolve-Path '.venv\Scripts\python.exe').Path
 $skill = (Resolve-Path '.\altium-library-migrate').Path
 & $python -m pip install -r "$skill\scripts\requirements.txt"
 ~~~
+
+If the Windows `py` launcher is unavailable, use the full path to a CPython 3.12
+executable for the first command. Verify the version before creating the environment.
 
 On macOS/Linux, use `python3.12 -m venv .venv`, then
 `.venv/bin/python -m pip install -r altium-library-migrate/scripts/requirements.txt`.

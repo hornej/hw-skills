@@ -1,0 +1,4 @@
+interface:
+  display_name: "DigiKey Part Selection"
+  short_description: "Find and compare electronic parts with DigiKey"
+  default_prompt: "Use $digikey-part-selection to find and compare parts for these circuit requirements."

@@ -1,0 +1,305 @@
+{
+  "canonicalParameters": {
+    "MFR": [
+      "MFR",
+      "MF",
+      "Manufacturer",
+      "MANUFACTURER",
+      "ManufacturerName",
+      "Manufacturer Name",
+      "Manufacturer_Name"
+    ],
+    "MPN": [
+      "MPN",
+      "MP",
+      "ManufacturerPartNumber",
+      "Manufacturer Part Number",
+      "Manufacturer_Part_Number",
+      "MANUFACTURER P/N"
+    ],
+    "Supplier": [
+      "Supplier",
+      "SUPPLIER",
+      "Supplier 1",
+      "SupplierName",
+      "Supplier Name",
+      "Supplier_Name",
+      "Vendor",
+      "DISTRIBUTOR"
+    ],
+    "SPN": [
+      "SPN",
+      "SupplierPartNumber",
+      "Supplier Part Number",
+      "Supplier Part Number 1",
+      "Supplier_Part_Number",
+      "Supplier P/N",
+      "SUPPLIER P/N",
+      "VendorPartNumber",
+      "DISTRIBUTOR P/N"
+    ],
+    "Comment": [
+      "Comment"
+    ]
+  },
+  "supplierInference": [
+    {
+      "partNumber": "MOUSER_PART_NUMBER",
+      "supplier": "Mouser"
+    },
+    {
+      "partNumber": "Mouser Part Number",
+      "supplier": "Mouser"
+    },
+    {
+      "partNumber": "Digi-Key Part Number",
+      "supplier": "DigiKey"
+    },
+    {
+      "partNumber": "Digikey Part Number",
+      "supplier": "DigiKey"
+    },
+    {
+      "partNumber": "LCSC Part Number",
+      "supplier": "LCSC"
+    }
+  ],
+  "schemaVersion": 1,
+  "excludeDirectories": [
+    ".git",
+    ".svn",
+    "history",
+    "__previews",
+    "__pycache__",
+    "node_modules",
+    ".venv",
+    "codex-skills",
+    "hw-skills"
+  ],
+  "manufacturerAliases": {
+    "TI": "Texas Instruments",
+    "ST MICRO": "STMicroelectronics",
+    "ON SEMI": "onsemi",
+    "ON SEMICONDUCTOR": "onsemi",
+    "ONSEMI": "onsemi"
+  },
+  "supplierAliases": {
+    "Digi-Key": "DigiKey",
+    "Digi Key": "DigiKey"
+  },
+  "categoryOverrides": [],
+  "excludedComponents": [],
+  "preserveSeparateComponents": [],
+  "modelSubstitutions": [],
+  "allowAmbiguousModels": [],
+  "parameterRules": [
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Batteries$",
+      "componentType": "Batteries"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Capacitors$",
+      "componentType": "Capacitors"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Connectors$",
+      "componentType": "Connectors"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Crystals \\& Oscillators$",
+      "componentType": "Crystals & Oscillators"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Data Converters$",
+      "componentType": "Data Converters"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Diodes$",
+      "componentType": "Diodes"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Filters$",
+      "componentType": "Filters"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Fuses$",
+      "componentType": "Fuses"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Inductors$",
+      "componentType": "Inductors"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Integrated Circuits$",
+      "componentType": "Integrated Circuits"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Integrated Circuits\\\\Amplifiers$",
+      "componentType": "Integrated Circuits\\Amplifiers"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Mechanical$",
+      "componentType": "Mechanical"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Miscellaneous$",
+      "componentType": "Miscellaneous"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Resistors$",
+      "componentType": "Resistors"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Switches$",
+      "componentType": "Switches"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Test Points$",
+      "componentType": "Test Points"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Transformers$",
+      "componentType": "Transformers"
+    },
+    {
+      "parameter": "ComponentType",
+      "pattern": "^Transistors$",
+      "componentType": "Transistors"
+    }
+  ],
+  "designatorRules": [
+    {
+      "pattern": "(?:R|RV)(?:\\?|[0-9]+)?",
+      "componentType": "Resistors"
+    },
+    {
+      "pattern": "C(?:\\?|[0-9]+)?",
+      "componentType": "Capacitors"
+    },
+    {
+      "pattern": "(?:L|FB)(?:\\?|[0-9]+)?",
+      "componentType": "Inductors"
+    },
+    {
+      "pattern": "(?:D|LED|TVS)(?:\\?|[0-9]+)?",
+      "componentType": "Diodes"
+    },
+    {
+      "pattern": "Q(?:\\?|[0-9]+)?",
+      "componentType": "Transistors"
+    },
+    {
+      "pattern": "(?:U|IC)(?:\\?|[0-9]+)?",
+      "componentType": "Integrated Circuits"
+    },
+    {
+      "pattern": "(?:J|P|CN|CON|CONN|XJ)(?:\\?|[0-9]+)?",
+      "componentType": "Connectors"
+    },
+    {
+      "pattern": "(?:Y|X|XTAL)(?:\\?|[0-9]+)?",
+      "componentType": "Crystals & Oscillators"
+    },
+    {
+      "pattern": "(?:SW|S)(?:\\?|[0-9]+)?",
+      "componentType": "Switches"
+    },
+    {
+      "pattern": "TP(?:\\?|[0-9]+)?",
+      "componentType": "Test Points"
+    },
+    {
+      "pattern": "T(?:\\?|[0-9]+)?",
+      "componentType": "Transformers"
+    },
+    {
+      "pattern": "(?:MH|MP|H|M)(?:\\?|[0-9]+)?",
+      "componentType": "Mechanical"
+    },
+    {
+      "pattern": "(?:BT|BAT)(?:\\?|[0-9]+)?",
+      "componentType": "Batteries"
+    },
+    {
+      "pattern": "(?:F|FU)(?:\\?|[0-9]+)?",
+      "componentType": "Fuses"
+    },
+    {
+      "pattern": "FL(?:\\?|[0-9]+)?",
+      "componentType": "Filters"
+    }
+  ],
+  "nameRules": [
+    {
+      "pattern": "\\b(standoff|mounting[ _-]?hole|mounting[ _-]?hardware|screw|spacer)\\b",
+      "componentType": "Mechanical"
+    },
+    {
+      "pattern": "^(?:CONN(?:ECTOR)?|HDR|JST|MOLEX|USB[ _-]|BAT_CON)(?:[ _-]|$)",
+      "componentType": "Connectors"
+    },
+    {
+      "pattern": "^(?:TEST[ _-]?POINT|ROUND_PAD|SQUARE_PAD|MOT_PHASE_PAD)(?:[ _-]|$)",
+      "componentType": "Test Points"
+    },
+    {
+      "pattern": "^(?:ADC|DAC|ADS)(?:[0-9_ -]|$)",
+      "componentType": "Data Converters"
+    },
+    {
+      "pattern": "^(?:LMH|LMV|OPA|THS)[0-9]",
+      "componentType": "Integrated Circuits\\Amplifiers"
+    },
+    {
+      "pattern": "^(?:RES(?:ISTOR)?|POT)(?:[_ -]|$)",
+      "componentType": "Resistors"
+    },
+    {
+      "pattern": "^(?:CAP(?:ACITOR)?)(?:[_ -]|$)",
+      "componentType": "Capacitors"
+    },
+    {
+      "pattern": "^(?:NMOS|PMOS|MOSFET)(?:[_ -]|$)",
+      "componentType": "Transistors"
+    },
+    {
+      "pattern": "^(?:DIODE|LED|TVS|ESD)(?:[_ -]|$)",
+      "componentType": "Diodes"
+    },
+    {
+      "pattern": "^(?:XTAL|CRYSTAL|OSCILLATOR)(?:[_ -]|$)",
+      "componentType": "Crystals & Oscillators"
+    },
+    {
+      "pattern": "^(?:BATTERY|BAT[ _-]HOLDER)(?:[_ -]|$)",
+      "componentType": "Batteries"
+    },
+    {
+      "pattern": "^(?:SWITCH|PUSHBUTTON)(?:[_ -]|$)",
+      "componentType": "Switches"
+    },
+    {
+      "pattern": "^(?:INDUCTOR|FERRITE|FB)(?:[_ -]|$)",
+      "componentType": "Inductors"
+    }
+  ],
+  "mergeNamelessAcrossLibraries": false,
+  "parameterOverrides": []
+}

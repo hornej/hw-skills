@@ -1,0 +1,5 @@
+# Authenticated configs, catalogs, and run outputs belong outside this skill.
+*.CmpSync
+*.cmpsync
+*.log
+runs/

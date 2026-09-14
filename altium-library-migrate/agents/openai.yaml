@@ -1,0 +1,4 @@
+interface:
+  display_name: "Altium Library Migration"
+  short_description: "Normalize and audit Altium library migrations"
+  default_prompt: "Use $altium-library-migrate to audit and stage these Altium libraries for a repeatable migration."

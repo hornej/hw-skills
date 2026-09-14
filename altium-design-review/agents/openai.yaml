@@ -1,0 +1,4 @@
+interface:
+  display_name: "Altium Design Review"
+  short_description: "Review BOM consolidation, sourcing, schematics and variants"
+  default_prompt: "Use $altium-design-review to review this Altium project's current BOM, schematic constraints and assembly variants, then report concrete remaining actions."

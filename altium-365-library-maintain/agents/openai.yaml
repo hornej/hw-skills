@@ -1,0 +1,4 @@
+interface:
+  display_name: "Altium 365 Library Maintenance"
+  short_description: "Maintain Altium 365 component and model metadata"
+  default_prompt: "Use $altium-365-library-maintain to audit and update the requested metadata in my existing Altium 365 Workspace library."

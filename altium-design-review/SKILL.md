@@ -1,6 +1,6 @@
 ---
 name: altium-design-review
-description: Review Altium BOMs for consolidation and sourcing, check proposed parts against schematic roles, and reconcile saved assembly variants with BOM and pick-and-place exports. Use for design reviews, specific replacement questions, and rechecks after a new export.
+description: Review Altium BOMs, component replacements, schematic roles, and assembly variants; reconcile manufacturing exports and review PCB rules, xSignals, and DRC evidence. Use for design reviews, rule-update requests, and rechecks after a saved design or export changes.
 ---
 
 # Altium design review
@@ -82,6 +82,22 @@ Altium Monkey installation without saving any design file.
   exact device datasheets; render ambiguous regions when useful.
 - Report native compile/ERC/DRC results only when actually run or current exports
   were inspected. Parsing files or passing export checks is not full design signoff.
+
+## PCB rules and xSignals
+
+Read [the PCB-rule and xSignal workflow](references/pcb-rules-xsignals.md) when
+reviewing routing constraints or preparing an authorized rule update. Keep a
+review read-only; an import package is not evidence that the PCB was updated.
+
+- Use the target board's saved rules, classes, endpoints and stackup. Carry over
+  design intent between boards only after resolving their different connectivity,
+  assembly choices and impedance geometry.
+- Distinguish a complete rule replacement from a small overlay, and verify the
+  actual import behavior for the installed Altium version. A `.RUL` file does
+  not create the xSignals, object classes or impedance profiles its queries need.
+- Verify complete xSignal paths and class membership before enabling dependent
+  rules. Report targeted DRC results and overall board DRC separately, including
+  which checks were run against which saved revision.
 
 ## Recheck and handoff
 

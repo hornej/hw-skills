@@ -13,7 +13,7 @@ without requiring UI automation for every step.
 | --- | --- |
 | [altium-library-migrate](altium-library-migrate/SKILL.md) | Discover, normalize, audit and consolidate local SchLib/PcbLib libraries; prepare an Altium Library Importer configuration. |
 | [altium-365-library-maintain](altium-365-library-maintain/SKILL.md) | Maintain existing Workspace components, models and templates; add verified metadata and named product links; prepare synchronization inputs and diagnose saves. |
-| [altium-design-review](altium-design-review/SKILL.md) | Review BOM consolidation and replacements, trace schematic roles, and reconcile assembly variants with BOM and pick-and-place exports. |
+| [altium-design-review](altium-design-review/SKILL.md) | Review BOMs, replacements, schematic roles and assembly variants; reconcile exports and review PCB rules, xSignals and DRC evidence. |
 | [digikey-part-selection](digikey-part-selection/SKILL.md) | Find and compare exact parts using DigiKey catalog data, current purchasing information and manufacturer datasheets. |
 
 The library skills distinguish local staging from updates to existing Workspace

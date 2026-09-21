@@ -20,6 +20,24 @@ For a named reference, locate the exact instance and variant first. Follow both
 ends and relevant neighboring circuitry. Text near a resistor is a navigation aid,
 not a netlist. Calculate voltage/current/power margins when needed; label assumptions.
 
+## TVS polarity and replacements
+
+Resolve symbol/MPN disagreements from the exact manufacturer datasheet and traced
+pin connections. TVS directionality concerns signal voltage relative to its
+return, not the direction of data flow. For signals that normally stay above
+ground, unidirectional protection can provide lower negative clamping; signals
+that legitimately go below ground need a protection window that accommodates it.
+Both types can protect against transients of either polarity.
+
+Check maximum normal voltage, reverse working voltage, breakdown, clamp voltage
+at the relevant pulse/current, capacitance, leakage, and protected-device limits.
+Working voltage is not clamp voltage. A unidirectional suffix or matching package
+does not prove a drop-in replacement: verify cathode/anode mapping, land pattern,
+signal loading, and the protection path, including any series impedance. For the
+general polarity distinction, see [TI's GPIO ESD guidance](https://www.ti.com/document-viewer/lit/html/SLVAFQ4/GUID-E87DB142-562D-408B-802B-30488CFE68C5).
+
+## Decision record
+
 Use a compact decision record when several substitutions are being tracked:
 
 - source MFR/MPN, proposed MFR/MPN, affected physical references and variants;

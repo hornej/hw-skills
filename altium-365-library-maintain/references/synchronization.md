@@ -16,7 +16,8 @@ Official sources:
 - [Microsoft Access Runtime](https://support.microsoft.com/en-us/access/download-and-install-microsoft-365-access-runtime)
 - [Text-driver schema.ini](https://learn.microsoft.com/en-us/sql/odbc/microsoft/schema-ini-file-text-file-driver)
 
-Altium references checked 2026-09-06. Microsoft references were used during the
+Altium synchronization reference checked again 2026-09-17; permissions reference
+checked 2026-09-06. Microsoft references were used during the
 runtime installation and CSV pilot on 2026-09-05.
 
 Check installed feature/provider availability first. The 64-bit Microsoft 365
@@ -84,6 +85,13 @@ An observed export used a DatabaseDataSource and ComponentDataSourceTable,
 with a CSV table name such as pilot#csv. These names are observations, not a
 portable contract. Use the target Altium version's generated structure.
 
+A saved configuration may contain only Destination, or a DataSource with an
+empty Tables array. Neither is ready to execute. Add the CSV connection and
+include the intended table; one observed native UI exposed this through
+Properties > Table Inclusion. Save after selecting the table and inspect the
+generated mappings. Do not invent the missing table structure from an empty
+file when native generation is available.
+
 Inspect each mapping. The pilot's automatic mapping set Description from Name,
 left Supplier unmapped, and omitted the link fields. Corrected one-to-one
 mappings retained the original description and models. Do not map audit columns,
@@ -135,8 +143,31 @@ including an invocation that actually wrote zero items. Read all ERROR lines.
 Positive writes followed by an error require live reconciliation before retrying.
 Do not automatically rerun or expand a failed batch.
 
+Compare the exact reported Item ID set with the planned set as well as the
+count; equal counts can still conceal a wrong target. Save execution-started
+state before launching and reconcile an interrupted invocation before repeating
+it. A completed input is not an idempotent update: exclude already-applied rows
+and keep obsolete or superseded sources clearly marked.
+
 Read back intended parameters, link label and URL, item/revision identity, models,
 Part Choices, and lifecycle state. Check for duplicate items and unintended
 description changes. Record verified changes separately from server-reported
 writes. A retained native link does not prove new-link creation. Extend to a
 batch only after unresolved errors or mapping behavior affecting it are resolved.
+
+In a web readback, wait for the expected component revision and each inspected
+section to finish loading. Expanded Parameters do not prove Part Choices have
+loaded. An early empty list is an incomplete observation, not proof that choices
+were deleted or never existed. Recheck incomplete sections; retain an explicit
+verification gap if a trustworthy before-state was never captured.
+
+Compare all existing parameters as well as the fields being written. A revision
+save can materialize empty parameters or normalize displayed units even when
+only IPN was mapped. Record these separately from cleared or changed populated
+values; investigate unexpected changes rather than claiming an exact-only diff.
+A mathematically equivalent unit conversion is still an incidental change when
+that field was not mapped. Verify the conversion and report it separately from
+the requested write; acceptance in one task does not authorize normalization in
+another. Distinguish preserved model
+identifiers from changing preview/loading text. Report configured lifecycle
+preservation separately from an independently observed lifecycle state.

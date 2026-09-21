@@ -38,6 +38,10 @@ the component library remains managed in Altium 365.
 - Read [metadata rules](references/metadata.md) when matching catalog records or
   preparing links, purchasing fields, or passive Value parameters. Keep reusable
   rules separate from Workspace-specific choices and unresolved identities.
+- For Arena item numbers, read [Arena IPN synchronization](references/arena-ipn.md).
+  It covers the selected IPN convention, identity matching, duplicate Names,
+  stalled-export alternatives, creation candidates, and the separate update of
+  components already placed in designs.
 - For DigiKey enrichment, use the shared [API guide](../digikey-part-selection/references/api.md)
   and [credential locations](../digikey-part-selection/references/credentials.md).
   Selecting a new part from circuit requirements belongs to digikey-part-selection;

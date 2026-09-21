@@ -7,6 +7,7 @@ schema or supplier preference explicitly chosen by the user.
 | --- | --- |
 | MFR | Manufacturer supported by the exact part record. Preserve a valid historical label unless normalization is requested. |
 | MPN | Exact manufacturer part number, including suffixes and leading zeros. |
+| IPN | Internal part number. Confirm the project's PLM mapping; preserve its exact text separately from MPN, supplier codes, and Altium Item/revision IDs. See [Arena IPN synchronization](arena-ipn.md). |
 | Name | Human-readable component label; may be derived from a normalized Comment when requested. It is not the Item ID. |
 | Description | Exact-part technical prose, checked against the final structured specifications and manufacturer corrections. |
 | Supplier | Distributor associated with SPN. Use DigiKey for a newly selected DigiKey offer. |
@@ -44,6 +45,11 @@ Automotive/AEC onto other parts or claim full coverage while searches remain.
 A source name conflicting with MPN/SPN requires identity resolution. Keep symbol
 variants as separate Workspace items even when they share an MPN. Do not merge,
 clone, delete, or reimport items as part of ordinary metadata enrichment.
+
+For resistor power/name discrepancies, follow [rating consistency](power-ratings.md).
+The same exact part can have standard, extended, or precision operating ratings;
+record the selected mode and conditions before changing Name, Description, or
+Power. A package code or the highest catalog wattage is insufficient evidence.
 
 Names can repeat and may resemble old source IDs. Keep local source identifiers
 separate from Workspace Item IDs even when their strings overlap; use the

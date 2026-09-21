@@ -39,6 +39,11 @@ since a previous report. It does not qualify replacements or check live stock.
   SPN/Supplier Part Number as aliases for analysis. Preserve raw fields and flag
   contradictory aliases. Keep manufacturer choices and each Supplier/SPN pair
   coherent; numbered choices are alternatives, not a comma-separated order code.
+- Treat IPN as the user's internal/PLM item number, distinct from MPN, SPN and
+  Altium Item/revision IDs. Confirm the project's mapping and preserve its exact
+  text when reconciling the BOM to PLM. Multiple Altium representations or
+  manufacturer identities can legitimately share one IPN. Record sourcing
+  approval and build use separately; an IPN alone establishes neither.
 - Detect embedded `[NoParam]`, unresolved `=Parameter` expressions, incomplete
   module suffixes, and incorrect supplier SKUs. Manufacturer MPN and distributor
   SKU are distinct identities. Preserve meaningful punctuation, package suffixes,
@@ -100,6 +105,17 @@ review read-only; an import package is not evidence that the PCB was updated.
   which checks were run against which saved revision.
 
 ## Recheck and handoff
+
+For a design follow-up after managed-library metadata synchronization, compare
+each placed component's saved Item/revision ID with the verified library target.
+Report the designator, sheet, old/new revision and intended IPN. A library update
+does not propagate into an already placed schematic or an old BOM by itself.
+Review the native update differences, including intervening model/parameter
+changes and variant overrides, before an authorized project update. Do not write
+raw managed revision IDs into a SchDoc as a substitute for a coherent component
+update. Verify the saved design and regenerated BOM IPN column afterward. Library
+IPN matching/execution belongs to the companion maintenance skill's
+[Arena workflow](../altium-365-library-maintain/references/arena-ipn.md).
 
 Lead with remaining actionable items. Give exact designators and MPN changes,
 metadata fields to correct, sourcing evidence and unresolved engineering checks.

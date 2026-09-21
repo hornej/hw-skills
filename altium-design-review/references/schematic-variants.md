@@ -1,5 +1,9 @@
 # Schematic, PCB and variant evidence
 
+If `references/local-runtime.md` exists locally, consult it for the configured
+interpreter and verification scope. Keep machine paths and private validation
+artifacts in that ignored local note, outside the portable skill.
+
 Prefer already available native Altium exports or a tested read-only parser. The
 bundled adapter uses Altium Monkey when installed. It does not install or upgrade
 the engine and does not use private machine paths by default.

@@ -67,6 +67,18 @@ may preserve every duplicate; do not describe it as geometry deduplication.
 
 ## Parameters and template preflight
 
+Preserve existing internal part numbers as extra metadata. Confirm the project's
+PLM-to-`IPN` mapping and store it as Text independently of MFR/MPN, Supplier/SPN
+and Altium Item/revision IDs. Retain leading zeros; do not use IPN to merge symbol
+variants or replace the migration's identity checks. Conflicting IPNs on candidate
+duplicates need explicit resolution. When staging genuinely new Arena-backed
+components, include a verified IPN from the start and check the current managed
+library/Part Choices before creating another representation. For matching and
+updates to existing managed components, use the maintenance skill's
+[Arena workflow](../../altium-365-library-maintain/references/arena-ipn.md).
+Record sourcing approval and build use separately from identity. Follow the
+project's policy for unapproved/reference sources; IPN alone asserts neither.
+
 Use current exported templates and inspect actual importer parameter types.
 Formatting a SchLib value as 2.2k does not establish an Ohm-typed Workspace
 parameter. Keep the requested units, validate representative nonempty values,

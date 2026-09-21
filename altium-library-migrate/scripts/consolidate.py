@@ -814,7 +814,9 @@ def consolidate(args) -> int:
             new_symbol = output.add_symbol(
                 output_name,
                 description,
-                original_name=representative.symbol.original_name,
+                # Each retained variant needs its own library reference, matching
+                # the rewritten component record. Source names remain in the manifest.
+                original_name=output_name,
             )
             new_symbol.part_count = representative.symbol.part_count
             new_symbol.raw_records = raw_records

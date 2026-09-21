@@ -3,7 +3,7 @@
 ## Runtime
 
 The binary migration helpers are tested with CPython 3.12 and
-`altium-monkey==2026.8.21`. Create an isolated environment from the repository
+`altium-monkey==2026.9.21`. Create an isolated environment from the repository
 root, or reuse an existing environment with that version. Windows PowerShell:
 
 ~~~powershell

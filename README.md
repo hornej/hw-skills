@@ -76,7 +76,7 @@ the native Altium workflow is used for authorized changes.
 | --- | --- |
 | BOM/PnP CSV review and synchronization-file preparation | Python 3.10+; standard library only. |
 | DigiKey catalog helper | Python 3.10+; a DigiKey Product Information API application for live queries. Set `DIGIKEY_CLIENT_ID` and `DIGIKEY_CLIENT_SECRET` through your own secret manager or process environment. |
-| Binary library migration and optional native design inventory | CPython 3.12 with `altium-monkey==2026.8.21`, the tested engine version. |
+| Binary library migration and optional native design inventory | CPython 3.12 with `altium-monkey==2026.9.21`, the tested engine version. |
 | Native import, Workspace release and component/model editing | Altium Designer on Windows and appropriate access to the selected Altium 365 Workspace. Custom Data Synchronization also needs its installed feature and a compatible 64-bit OLE DB provider. |
 
 For binary helpers, create a virtual environment and install
@@ -154,7 +154,7 @@ under the [MIT License](LICENSE).
 
 [Altium Monkey](https://github.com/wavenumber-eng/altium_monkey) is separately
 installed and licensed under
-[AGPL-3.0-or-later](https://pypi.org/project/altium-monkey/2026.8.21/).
+[AGPL-3.0-or-later](https://pypi.org/project/altium-monkey/2026.9.21/).
 The MIT license here does not relicense that dependency or its dependencies.
 Altium and DigiKey services remain subject to their own access requirements and
 terms. This is an independent project, not an official Altium or DigiKey product.

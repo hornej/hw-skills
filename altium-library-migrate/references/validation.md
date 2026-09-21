@@ -1,5 +1,12 @@
 # Validation
 
+The 32 synthetic migration tests passed on Windows with CPython 3.12 and
+`altium-monkey==2026.9.21` on 2026-09-21. Consolidation gives each retained symbol
+variant its generated library reference as well as its storage name. The variant
+regression checks saved/reopened identities, model unions, and unchanged sources.
+This validates the bundled helpers' tested cases; it is not native Altium import
+or Workspace qualification.
+
 Run the synthetic regression suite from the repository root in the pinned engine
 environment:
 

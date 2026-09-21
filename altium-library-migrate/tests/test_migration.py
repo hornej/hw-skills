@@ -216,6 +216,9 @@ class BinaryTests(unittest.TestCase):
             self.assertEqual(sorted(len(v["attached_models"]) for v in manifest["variants"]),[1,2])
             self.assertEqual(len(report["unreferenced_footprints"]),1)
             consolidated=AltiumSchLib(root/"result/consolidated/Consolidated.SchLib")
+            expected_names={v["output_component"] for v in manifest["variants"]}
+            self.assertEqual({s.name for s in consolidated.symbols},expected_names)
+            self.assertEqual({s.original_name for s in consolidated.symbols},expected_names)
             for symbol in consolidated.symbols:
                 names={p.name for p in symbol.parameters}
                 self.assertTrue({"MFR","MPN","Supplier","SPN","Comment"}<=names)

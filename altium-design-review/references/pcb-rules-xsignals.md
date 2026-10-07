@@ -9,14 +9,33 @@ generate rule packages or run native Altium DRC.
 
 Identify the target PCB, saved revision/hash, assembly variant and installed
 Altium version. Inspect the existing rules and their priorities, enabled state,
-queries, classes, differential pairs and impedance profiles. Resolve any unsaved
-work and saves made after the baseline before preparing an import.
+queries, classes, differential pairs and impedance profiles. Where rule sets are
+present, check membership and the containing set's enabled state as well as the
+individual rule. Resolve any unsaved work and saves made after the baseline
+before preparing an import.
 
 For a cross-board comparison, map the actual pads, nets, fitted endpoints and
 stackup. Recalculate impedance geometry using the target stackup; another
 board's trace widths, profile identifiers and connector choices are not a
 transferable rule set. Keep mandatory corrections, optional improvements and
 deferred work distinct in the board-specific findings.
+
+Check that electrical rules actually prohibit the intended fault. For general
+short-circuit protection, verify an enabled `All` / `All`, `Allowed = False`
+rule and inspect higher-priority exceptions. Changing the scope to `All` while
+leaving `Allowed = True` allows shorts throughout that scope. Clearance checks
+and a zero-violation report do not substitute for this check.
+
+For differential-pair matching, verify the selected mode as well as the query:
+within-pair matching compares P against N; pair-to-pair matching compares
+channels. Confirm class membership and that applicable Batch checks are enabled.
+Rules scoped to absent objects provide no coverage. Choose numerical budgets
+from the actual interface requirements; a generic guideline is not a device
+guarantee or a complete multi-board channel budget.
+
+When direct saved-file editing is available, follow
+[programmatic rule updates](programmatic-pcb-rules.md). An import package is an
+alternative delivery path, not proof that the working PCB has been updated.
 
 ## Prepare and import a rule change
 

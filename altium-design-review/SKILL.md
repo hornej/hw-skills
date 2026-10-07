@@ -1,6 +1,6 @@
 ---
 name: altium-design-review
-description: Review Altium BOMs, component replacements, schematic roles, and assembly variants; reconcile manufacturing exports and review PCB rules, xSignals, and DRC evidence. Use for design reviews, rule-update requests, and rechecks after a saved design or export changes.
+description: Review Altium BOMs, replacements, schematics, variants, PCB rules and xSignals; verify release readiness and manufacturing outputs. Use for design reviews, rule updates, PCB release checklists, OutputJob preparation, and saved-design or export rechecks.
 ---
 
 # Altium design review
@@ -9,6 +9,11 @@ Turn the current design evidence into specific, traceable actions: affected
 designators, present and proposed MFR/MPN, the reason, and what is still unverified.
 Default to review. Apply edits when requested; preserve unrelated changes and
 verify saved sources and regenerated outputs before saying a change is complete.
+
+Keep this skill generic and reusable. Store board names, pin maps, component
+choices, numerical design limits and review findings with the project, not in
+the skill. Derive them from each target design; use clearly illustrative examples
+without turning one project's implementation into a default for others.
 
 ## Establish the review scope
 
@@ -88,11 +93,24 @@ Altium Monkey installation without saving any design file.
 - Report native compile/ERC/DRC results only when actually run or current exports
   were inspected. Parsing files or passing export checks is not full design signoff.
 
+## Grounding and attached-board interfaces
+
+For ground/reference-plane review or compatibility with a mating board, read
+[grounding and interface checks](references/pcb-grounding-interfaces.md). Inspect
+actual copper and connected pins on both boards; distinguish cable mapping,
+electrical I/O compatibility and configured functions where applicable.
+
 ## PCB rules and xSignals
 
 Read [the PCB-rule and xSignal workflow](references/pcb-rules-xsignals.md) when
 reviewing routing constraints or preparing an authorized rule update. Keep a
 review read-only; an import package is not evidence that the PCB was updated.
+
+For an authorized direct edit of a saved PCB, use
+[programmatic rule updates](references/programmatic-pcb-rules.md). Check the
+available engine's write support, protect the current editor state, and verify
+that only the intended rule data changed. File readback and native DRC are
+separate results.
 
 - Use the target board's saved rules, classes, endpoints and stackup. Carry over
   design intent between boards only after resolving their different connectivity,
@@ -103,6 +121,21 @@ review read-only; an import package is not evidence that the PCB was updated.
 - Verify complete xSignal paths and class membership before enabling dependent
   rules. Report targeted DRC results and overall board DRC separately, including
   which checks were run against which saved revision.
+
+## PCB release and manufacturing outputs
+
+For a release review, use the [PCB release checklist](references/pcb-release-checklist.md).
+Record Done, N/A or Open against the actual project and intended assembly variants,
+with evidence for completion and a reason for exclusions. Keep the reusable master
+blank; save the completed record with the project. Resolve applicable items without
+turning optional features into requirements or claiming unavailable native checks.
+
+For OutputJob setup or supplier packages, use
+[OutputJobs and manufacturing files](references/outputjobs-manufacturing-files.md).
+Recheck current supplier requirements, selected data sources, variant settings and
+all output containers. Separate archived design evidence from the files the supplier
+needs. Supplier import success and a zero-count DRC do not by themselves establish
+release readiness.
 
 ## Recheck and handoff
 

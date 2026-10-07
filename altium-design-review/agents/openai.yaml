@@ -1,4 +1,4 @@
 interface:
   display_name: "Altium Design Review"
-  short_description: "Review BOMs, variants, PCB rules and xSignal evidence"
-  default_prompt: "Use $altium-design-review to review this Altium project's requested BOM, schematic, variant or PCB-rule scope, then report verified findings and remaining actions."
+  short_description: "Review Altium designs, release checks and output files"
+  default_prompt: "Use $altium-design-review to review this Altium project's requested design, PCB-release or manufacturing-output scope, then report verified findings and remaining actions."

@@ -21,6 +21,11 @@ items. Design review reports evidence and unresolved checks; component selection
 does not place an order. Project naming conventions, templates, supplier choices
 and component lists belong with the project using the skills.
 
+For release work, start with the [PCB Release Checklist](altium-design-review/references/pcb-release-checklist.md)
+and [OutputJobs and Manufacturing Files](altium-design-review/references/outputjobs-manufacturing-files.md).
+They include evidence-based completion criteria and supplier guidance for CircuitHub,
+JLCPCB and PCBWay.
+
 ## Install in Codex
 
 Ask Codex:

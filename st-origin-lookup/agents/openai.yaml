@@ -1,0 +1,4 @@
+interface:
+  display_name: "ST Origin Lookup"
+  short_description: "Look up ST country of origin with source evidence"
+  default_prompt: "Use $st-origin-lookup to look up declared country of origin for these exact ST part numbers and identify any missing fabrication, assembly, or test evidence."

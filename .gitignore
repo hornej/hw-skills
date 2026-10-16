@@ -25,3 +25,4 @@ Thumbs.db
 
 # Machine-specific setup and private validation notes
 **/references/local-runtime.md
+**/part-sourcing-bitwarden.json

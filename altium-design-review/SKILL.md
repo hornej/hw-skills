@@ -11,9 +11,11 @@ Default to review. Apply edits when requested; preserve unrelated changes and
 verify saved sources and regenerated outputs before saying a change is complete.
 
 Keep this skill generic and reusable. Store board names, pin maps, component
-choices, numerical design limits and review findings with the project, not in
-the skill. Derive them from each target design; use clearly illustrative examples
-without turning one project's implementation into a default for others.
+choices, project-specific numerical limits and review findings with the project,
+not in the skill. Supplier references are dated guidance, conditional on the
+project's selected service. Derive design requirements from each target design;
+use clearly illustrative examples without turning one project's implementation
+into a default for others.
 
 ## Establish the review scope
 
@@ -29,6 +31,20 @@ without turning one project's implementation into a default for others.
   one design is not a global preferred MPN or manufacturer.
 - Review the requested scope. A focused resistor question does not require a full
   board audit; "all parts available" requires every in-scope orderable MPN.
+
+## Supplier constraints during design and review
+
+When the board specification selects CircuitHub, use the
+[CircuitHub service and fabrication checks](references/circuithub-design-requirements.md)
+before component/package selection, stackup/rule setup and layout review, and
+again at release. Record the fabrication profile and order service separately:
+Value Proto adds build restrictions to ProtoBoard fabrication limits; general
+CircuitHub capabilities do not establish eligibility for either service.
+If only the supplier or an ambiguous label such as "proto spec" is recorded,
+flag the missing selection and continue independent checks. Keep service-dependent
+eligibility Open until resolved. Do not choose CircuitHub for other boards,
+relax electrical requirements, or change fitting/service to obtain eligibility
+without an explicit project decision. Keep that decision in the board's spec.
 
 ## BOM and procurement
 

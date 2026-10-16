@@ -9,6 +9,11 @@ Turn the user's circuit requirements into a justified choice of exact manufactur
 parts. DigiKey is the discovery and purchasing source; manufacturer datasheets
 establish electrical and mechanical suitability.
 
+For comparisons across distributors or a batch of candidates, use the companion
+[part-sourcing skill](../part-sourcing/SKILL.md). It adds Nexar/Octopart and Mouser
+screening, imports this client's ProductDetails results for price comparison, and
+documents the separate DigiKey quote/tracing access needed for origin evidence.
+
 ## Search and qualify
 
 - Separate hard requirements from preferences. Use the existing circuit context
@@ -50,7 +55,10 @@ constraint prevents a match before proposing compromises.
 
 Do not infer country of origin from brand headquarters, RoHS status, or a product
 family. Report it only when an explicit source supports the exact part or shipment;
-otherwise leave it unknown. Do not add automotive qualifications or environmental
+otherwise leave it unknown. Declared COO does not establish wafer fabrication,
+assembly, or test countries. Read the companion
+[origin evidence reference](../part-sourcing/references/origin.md) for provider
+fields and their limits. Do not add automotive qualifications or environmental
 ratings from an adjacent series.
 
 Selection does not require an Altium import, Workspace revision, or purchase.

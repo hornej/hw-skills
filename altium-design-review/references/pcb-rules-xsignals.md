@@ -7,6 +7,12 @@ generate rule packages or run native Altium DRC.
 
 ## Establish the baseline
 
+Read the board's selected fabrication process before choosing numerical rules.
+For CircuitHub, apply the [service-specific requirements](circuithub-design-requirements.md),
+including copper-weight and board-thickness dependencies. Check both saved rule
+coverage and actual geometry; a supplier's general capability or quote threshold
+does not override the chosen ProtoBoard/Value Proto profile.
+
 Identify the target PCB, saved revision/hash, assembly variant and installed
 Altium version. Inspect the existing rules and their priorities, enabled state,
 queries, classes, differential pairs and impedance profiles. Where rule sets are

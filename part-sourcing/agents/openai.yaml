@@ -1,0 +1,4 @@
+interface:
+  display_name: "Part Sourcing"
+  short_description: "Compare part stock, quantity prices, and origin"
+  default_prompt: "Use $part-sourcing to compare these exact parts at my purchase quantity, verify distributor availability, and identify missing origin evidence."

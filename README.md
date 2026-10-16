@@ -15,6 +15,8 @@ without requiring UI automation for every step.
 | [altium-365-library-maintain](altium-365-library-maintain/SKILL.md) | Maintain existing Workspace components, models and templates; add verified metadata and named product links; prepare synchronization inputs and diagnose saves. |
 | [altium-design-review](altium-design-review/SKILL.md) | Review BOMs, replacements, schematic roles and assembly variants; reconcile exports and review PCB rules, xSignals and DRC evidence. |
 | [digikey-part-selection](digikey-part-selection/SKILL.md) | Find and compare exact parts using DigiKey catalog data, current purchasing information and manufacturer datasheets. |
+| [part-sourcing](part-sourcing/SKILL.md) | Batch-check Nexar/Octopart and Mouser availability, compare quantity pricing with DigiKey results, and collect separate origin evidence from distributor quotes and lot tracing. |
+| [st-origin-lookup](st-origin-lookup/SKILL.md) | Retrieve ST declared country of origin for exact ordering codes, preserving source evidence and unknown manufacturing stages. |
 
 The library skills distinguish local staging from updates to existing Workspace
 items. Design review reports evidence and unresolved checks; component selection
@@ -25,6 +27,10 @@ For release work, start with the [PCB Release Checklist](altium-design-review/re
 and [OutputJobs and Manufacturing Files](altium-design-review/references/outputjobs-manufacturing-files.md).
 They include evidence-based completion criteria and supplier guidance for CircuitHub,
 JLCPCB and PCBWay.
+When a board specification selects CircuitHub, use the
+[service-specific design requirements](altium-design-review/references/circuithub-design-requirements.md)
+during design and review as well as release, distinguishing ProtoBoard fabrication,
+Value Proto build eligibility and general/custom fabrication.
 
 ## Install in Codex
 
@@ -32,14 +38,15 @@ Ask Codex:
 
 ```text
 Use $skill-installer to install altium-library-migrate,
-altium-365-library-maintain, altium-design-review, and digikey-part-selection
+altium-365-library-maintain, altium-design-review, digikey-part-selection,
+part-sourcing, and st-origin-lookup
 from https://github.com/hornej/hw-skills.
 ```
 
 Alternatively, clone this repository and copy the desired skill folders into
 `~/.codex/skills` (Windows: `%USERPROFILE%\.codex\skills`), or into your configured
 `CODEX_HOME/skills`. Preserve existing same-name skills and reconcile local edits
-before replacing them. Installing all four keeps the companion reference links
+before replacing them. Installing all six keeps the companion reference links
 available. Installed skills are available on the next Codex turn.
 
 Installation supplies skill instructions and scripts. Configure the dependencies
@@ -69,6 +76,8 @@ name when repeating it.
 | `migrate.py` / `normalize_config.py` | Generate local library staging and adapt an exported importer configuration. |
 | `sync_artifacts.py` | Prepares synchronization CSV/schema files or summarizes a private log. It does not execute a Workspace update. |
 | `digikey.py` | Queries the DigiKey API or reads its local cache. It does not select or purchase parts automatically. |
+| `part_sourcing.py` | Reads batch availability and origin APIs, imports DigiKey ProductDetails evidence, and compares native-currency quantity prices. No quote creation, orders, or RFQs. |
+| `st_origin_lookup.py` | Reads ST website origin data or normalizes captured responses; exports JSON/CSV with exact-code and source checks. |
 
 The skills guide Codex through the remaining research, review and native Altium
 steps. They do not bundle an Altium MCP server or a general Workspace write API.
@@ -81,6 +90,8 @@ the native Altium workflow is used for authorized changes.
 | --- | --- |
 | BOM/PnP CSV review and synchronization-file preparation | Python 3.10+; standard library only. |
 | DigiKey catalog helper | Python 3.10+; a DigiKey Product Information API application for live queries. Set `DIGIKEY_CLIENT_ID` and `DIGIKEY_CLIENT_SECRET` through your own secret manager or process environment. |
+| Batch sourcing and origin helpers | Python 3.10+; Nexar Supply application credentials, a Mouser Search API key, or DigiKey account-linked OAuth access for the selected provider. ST's undocumented website service may require browser capture. |
+| STM32 package/pin screening | ST's public pin-data repository at a recorded commit; local CubeMX or current datasheets for missing coverage or a verified newer source. No distributor API key is needed. |
 | Binary library migration and optional native design inventory | CPython 3.12 with `altium-monkey==2026.9.21`, the tested engine version. |
 | Native import, Workspace release and component/model editing | Altium Designer on Windows and appropriate access to the selected Altium 365 Workspace. Custom Data Synchronization also needs its installed feature and a compatible 64-bit OLE DB provider. |
 
@@ -95,6 +106,17 @@ portable credential injection and [API usage](digikey-part-selection/references/
 for cache and request behavior. Product pages and manufacturer datasheets remain
 available when API access is absent. No account credentials are included.
 
+See [sourcing provider access](part-sourcing/references/providers.md) for credential
+variables, batching, quotas, plan-gated fields, and retention. New sourcing clients
+are verified against public schemas and offline fixtures; live authenticated
+acceptance checks still require provisioned access. Nexar API data must not be
+retained beyond its documented 24-hour limit. Findchips currently has a manual
+fallback; no public self-service inventory-search API integration is claimed.
+The optional [Windows sourcing launcher](part-sourcing/references/credentials.md)
+accepts environment credentials or a user-configured Bitwarden mapping; a private
+vault, helper skill, and account-specific configuration are not required for the
+ordinary environment-based clients.
+
 ### Common setup issues
 
 - **An existing skill blocks installation:** compare it with the new version,
@@ -104,7 +126,7 @@ available when API access is absent. No account credentials are included.
   installation and execution. For example, `.venv/Scripts/python.exe -m pip`
   installs into that Windows environment; a different `python` command may not.
   The CSV demo does not need Altium Monkey.
-- **A companion reference is missing:** install all four skills side by side,
+- **A companion reference is missing:** install all six skills side by side,
   using their original folder names.
 - **DigiKey returns 401/403 or 429:** check the application's access or returned
   retry/reset information respectively. See the [API guide](digikey-part-selection/references/api.md).
@@ -127,6 +149,12 @@ MFR, MPN, Supplier, SPN, and passive Value fields for these existing components.
 
 Use $digikey-part-selection to compare replacement MOSFETs for this circuit,
 including the actual gate drive, pinout, thermal conditions, and build quantity.
+
+Use $part-sourcing to compare these candidate MPNs at 1,000 pieces, including
+authorized distributor stock, valid quantity prices, and missing origin evidence.
+
+Use $st-origin-lookup to check the declared country of origin of these exact ST
+ordering codes and separate it from fabrication, assembly, and testing locations.
 ```
 
 ## Tests and contributions
@@ -138,13 +166,15 @@ python -m unittest discover -s altium-library-migrate/tests -v
 python -m unittest discover -s altium-365-library-maintain/tests -v
 python -m unittest discover -s altium-design-review/tests -v
 python -m unittest discover -s digikey-part-selection/tests -v
+python -m unittest discover -s part-sourcing/tests -v
+python -B st-origin-lookup/scripts/test_st_origin_lookup.py
 ```
 
 The tests use synthetic temporary libraries, CSVs and mocked network responses.
 They do not require a private project, live Workspace or DigiKey credentials.
 They do not establish native Altium acceptance, live API access, current stock
 or engineering signoff. GitHub Actions runs all suites on Windows with Python 3.12,
-plus the three standard-library suites on Linux with Python 3.10. The packaged
+plus the five standard-library suites on Linux with Python 3.10. The packaged
 CSV walkthrough is exercised through its command-line interface on both platforms.
 
 Contributions should improve reusable workflows or include a minimal synthetic

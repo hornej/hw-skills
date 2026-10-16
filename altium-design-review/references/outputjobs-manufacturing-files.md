@@ -60,6 +60,12 @@ outside that agreement.
 
 ## CircuitHub
 
+When selected in the board specification, apply the
+[CircuitHub service and fabrication checks](circuithub-design-requirements.md)
+before preparing outputs. Reconcile the chosen profile, order service, quantity,
+stackup, special processes and assembly variant with Board settings and the
+current quote. A valid upload does not prove ProtoBoard or Value Proto eligibility.
+
 **Preferred native input:** upload all applicable .SchDoc files and one .PcbDoc
 for the board, with an explicit CSV BOM when needed for MPNs and fitting. Confirm
 component links before upload. A .PrjPCB alone is not a design package, and Gerbers

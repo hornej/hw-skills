@@ -18,7 +18,8 @@ Missing tools or evidence leave an applicable item Open.
 ## Release record
 
 Record: project/PCB; PCB revision; assembly revision and variant(s), or base build;
-Altium version; fab/assembler; build quantity; source snapshot/commit and file hashes;
+Altium version; fab/assembler and selected fabrication profile/order service;
+supplier requirements URL(s)/checked date; build quantity; source snapshot/commit and file hashes;
 OutJob(s); validation-report paths; reviewer/date; exceptions; package location.
 Use the project's own revision scheme when PCB and assembly revisions are shared.
 
@@ -27,6 +28,7 @@ Companion: [OutputJobs and Manufacturing Files](outputjobs-manufacturing-files.m
 ## 1. Confirm the design and build
 
 - [ ] **C+D — Build identity:** Confirm the project, board revision, build quantity and intended assembly variant(s), or explicitly select the base build.
+- [ ] **C+D — Supplier/service:** Confirm the board specification's fabrication profile and order service. If CircuitHub is selected, complete the [CircuitHub checks](circuithub-design-requirements.md) against current sources; record missing selections and profile conflicts as Open. Use N/A with a reason for the CircuitHub-specific checks when another supplier is selected.
 - [ ] **C+D — Variants:** Check fitted/DNP parts, alternates and parameter overrides. Distinguish never fitted, fitted by the assembler and fitted later in house.
 - [ ] **C+D — Revision encoding, if used:** Update revision resistors/jumpers in every released variant; verify the resulting code against the firmware decoding table.
 - [ ] **D — Schematic validation:** Validate/compile the project using the installed Altium workflow. Resolve errors; review warnings, No ERC directives and suppressed checks. Retain the result.
@@ -39,6 +41,7 @@ Companion: [OutputJobs and Manufacturing Files](outputjobs-manufacturing-files.m
 - [ ] **D — Unused pad shapes:** Review/remove unused layer shapes where appropriate for the design and fab process. Preserve required connections, outer-layer lands and specified annular rings.
 - [ ] **D — Teardrops, if used:** Add or update them after routing changes and inspect affected pads/vias. Do not make teardrops a universal requirement.
 - [ ] **C+D — Fabrication details:** Check stackup, impedance targets/tolerances, copper weights, drill spans, slots, via treatment, edge contacts and mask/paste settings against the selected process.
+- [ ] **C+D — Service eligibility:** For CircuitHub, reconcile actual geometry and fitted parts/approved alternates with the selected profile, including Value Proto quantity, package, mounting and sourcing restrictions when applicable. Distinguish requirements, recommendations and custom-quote triggers; retain the comparison with the project.
 - [ ] **D — Ground stitching vias:** Verify adequate stitching between intended same-net ground pours/planes; add vias where missing. Respect antenna, isolation and other keepouts; verify actual connections after repour.
 - [ ] **C+D — High-speed layer transitions:** Verify nearby ground return connections between the relevant ground reference planes; add return vias where missing and preserve differential-pair symmetry. Check reference continuity at each transition; review transitions between different reference nets separately.
 - [ ] **D — Final copper:** Repour polygons after copper/pad/via/teardrop changes. Inspect thermal connections, disconnected copper and return paths relevant to the design.
@@ -79,6 +82,7 @@ through an OutJob, check that job's validation configuration too; see the compan
 - [ ] **C+D — BOM/PnP:** Reconcile physical references, quantities, MPNs, footprints and fitting state. Check coordinates, units, origin, side and rotation; explain intentional BOM/PnP differences.
 - [ ] **C+D — CAM review:** Open the exported data and inspect copper/layer order, outline, drills/slots, mask, paste and silkscreen. Check drill/copper alignment and avoid unintended mirroring.
 - [ ] **C+D — Drawings and supplier preview:** Verify fabrication notes, stackup/impedance requirements and required assembly views. Confirm imported parts, DNPs, polarity and orientation when using a supplier portal.
+- [ ] **C+D — Supplier configuration:** For CircuitHub, verify Board settings, applicable stackup/impedance/via options, CAM/DFM disposition and the actual quoted service against the reviewed revision/variant/quantity. Retain evidence of any supplier-agreed exception; local DRC or import success alone does not close this item.
 - [ ] **C — Package:** Include only current, intended deliverables. Archive sources, OutJobs, reports and a relative-path/SHA-256 manifest; distinguish internal archive files from the supplier upload.
 - [ ] **D — Release:** Confirm all applicable items are Done or explicitly dispositioned; record the exact revision, variant and package issued. Leave unresolved work visible.
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Read-only part sourcing, origin evidence, and quantity-price comparison."""
 import argparse
+import base64
 import csv
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 import hashlib
+import hmac
 import io
 import json
 import os
@@ -23,6 +25,8 @@ NEXAR = "https://api.nexar.com/graphql"
 MOUSER = "https://api.mouser.com/api/v1/search/partnumber"
 DIGIKEY = "https://api.digikey.com"
 LCSC = "https://api.lcsc.com/rest/api/agent/product/v1"
+JLCPCB = "https://open.jlcpcb.com"
+JLCPCB_DETAIL_PATH = "/overseas/openapi/component/getComponentDetailByCode"
 STAGES = ("declared_coo", "wafer_fabrication", "assembly", "test")
 
 
@@ -53,7 +57,8 @@ def request_json(url, *, body=None, headers=None, form=False):
     h = {"Accept": "application/json", **(headers or {})}
     payload = None
     if body is not None:
-        payload = (urlencode(body) if form else json.dumps(body)).encode("utf-8")
+        payload = body if isinstance(body, bytes) and not form else (
+            urlencode(body) if form else json.dumps(body)).encode("utf-8")
         h["Content-Type"] = ("application/x-www-form-urlencoded" if form else "application/json")
     req = Request(url, data=payload, headers=h)
     try:
@@ -404,6 +409,65 @@ def normalize_lcsc(batch):
     return offers, statuses, origins
 
 
+def jlcpcb_headers(payload, app_id, access_key, secret_key, *, timestamp=None, nonce=None):
+    """SDK 1.0.6 detail operation; sign exactly the bytes passed to the transport."""
+    if not isinstance(payload, bytes):
+        raise SourcingError("JLCPCB signing requires the serialized request bytes")
+    if any(not isinstance(v, str) or not re.fullmatch(r'[!-~]+', v) or
+           any(c in v for c in '"\\') for v in (app_id, access_key)):
+        raise SourcingError("JLCPCB App ID or access key has invalid header characters")
+    timestamp = str(int(time.time())) if timestamp is None else str(timestamp)
+    nonce = secrets.token_hex(16) if nonce is None else nonce
+    if not timestamp.isascii() or not timestamp.isdigit() or not re.fullmatch(r"[a-zA-Z0-9]{32}", nonce):
+        raise SourcingError("Invalid JLCPCB timestamp or nonce")
+    canonical = f"POST\n{JLCPCB_DETAIL_PATH}\n{timestamp}\n{nonce}\n".encode("utf-8") + payload + b"\n"
+    signature = base64.b64encode(hmac.new(secret_key.encode("utf-8"), canonical, hashlib.sha256).digest()).decode("ascii")
+    return {"Authorization": f'JOP appid="{app_id}",accesskey="{access_key}",'
+            f'timestamp="{timestamp}",nonce="{nonce}",signature="{signature}"'}
+
+
+def normalize_jlcpcb(batch):
+    """Exact public-library detail only; no inferred currency, order rules or COO."""
+    response = batch["response"]
+    if response.get("code") != 200 or response.get("success") is False:
+        raise SourcingError("JLCPCB rejected the request; check Components access, app credentials, IP whitelist and quota")
+    products = response.get("data")
+    if not isinstance(products, list):
+        raise SourcingError("JLCPCB response lacks component detail data")
+    requested = batch["parts"][0]
+    sku = batch["request"]["componentCodes"][0]
+    status = "not_found" if not products else "ambiguous" if len(products) != 1 else "exact"
+    match = {**requested, "status": status, "hits": len(products), "observed_at": batch["checked_at"]}
+    if status != "exact":
+        return [], [match], []
+    product = products[0]
+    if (not isinstance(product, dict) or product.get("componentCode") != sku or
+            key(product.get("componentModel")) != key(requested["mpn"]) or
+            key(product.get("componentBrandEn")) != key(requested["manufacturer"])):
+        raise SourcingError("JLCPCB detail does not match the requested manufacturer, full MPN and C-number")
+    ranges = product.get("priceRanges") or []
+    if not isinstance(ranges, list) or any(not isinstance(p, dict) for p in ranges):
+        raise SourcingError("JLCPCB price ranges have an unexpected shape")
+    offer = {"provider": "jlcpcb", "manufacturer": requested["manufacturer"],
+        "reported_manufacturer": product["componentBrandEn"], "mpn": product["componentModel"],
+        "match_status": "exact", "seller": "JLCPCB", "sku": sku,
+        "source_url": batch["source_url"], "observed_at": batch["checked_at"],
+        "authorized_by_aggregator": None, "inventory_quantity": integer(product.get("stockCount")),
+        "inventory_scope": "jlcpcb_pcba_public_library", "moq": None, "order_multiple": None,
+        "package": product.get("componentSpecification"), "packaging": None,
+        "restriction": "For JLCPCB assembly; standalone component purchase is not established",
+        "library_type": product.get("libraryType"), "assembly_component_flag": product.get("assemblyComponentFlag"),
+        "datasheet_url": product.get("datasheetUrl"),
+        # The SDK supplies numeric ranges but no currency or MOQ/order multiple.
+        # Preserve them as unqualified evidence, never label them with CLI currency.
+        "unqualified_price_ranges": ranges, "price_currency": None, "prices": []}
+    record = origin_record(requested["manufacturer"], product["componentModel"], batch,
+        sku=sku, scope="catalog", match_status="exact", evidence_status="no_documented_origin_fields")
+    # assemblyComponentFlag concerns PCBA eligibility. Export/RoHS codes and
+    # generic parameters do not establish wafer, chip assembly or test locations.
+    return [offer], [match], [record]
+
+
 def normalize_digikey(batch, provider):
     response = batch["response"]
     if provider == "digikey-quote":
@@ -481,11 +545,11 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
     report = {"schema": SCHEMA, "provider": provider, "requested_quantity": quantity,
               "currency": currency, "requested_parts": parts, "batches": [],
               "offers": [], "matches": [], "origin_records": [], "errors": [], "complete": True}
-    max_size = 100 if provider == "nexar" else 1 if provider == "lcsc" else 10
+    max_size = 100 if provider == "nexar" else 1 if provider in {"lcsc", "jlcpcb"} else 10
     size = batch_size or max_size
     if size < 1 or size > max_size or not 1 <= match_limit <= 100:
         raise SourcingError("Invalid batch size or match limit")
-    if provider in {"nexar", "mouser", "lcsc"} and not parts:
+    if provider in {"nexar", "mouser", "lcsc", "jlcpcb"} and not parts:
         raise SourcingError("No parts to query")
     if provider == "mouser" and any(not 3 <= len(p["mpn"]) <= 40 or "|" in p["mpn"] for p in parts):
         raise SourcingError("Mouser part numbers must be 3-40 characters without a pipe")
@@ -495,6 +559,10 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
         if sku is not None and (len(parts) != 1 or not re.fullmatch(r"C\d{1,12}", sku) or offset):
             raise SourcingError("LCSC --sku requires one exact manufacturer/MPN pair and no offset")
         report["scope"] = "one_catalog_item" if sku else "one_search_page_per_part"
+    if provider == "jlcpcb":
+        if len(parts) != 1 or not isinstance(sku, str) or not re.fullmatch(r"C\d{1,12}", sku) or offset:
+            raise SourcingError("JLCPCB requires --sku C-number and one exact manufacturer/MPN pair")
+        report["scope"] = "one_pcba_public_library_item"
     groups = [parts[i:i + size] for i in range(0, len(parts), size)] or [[]]
     headers = {}
     if provider == "nexar":
@@ -509,6 +577,8 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
         api_key = env("MOUSER_SEARCH_API_KEY")
     elif provider == "lcsc":
         api_key, api_secret = env("LCSC_API_KEY"), env("LCSC_API_SECRET")
+    elif provider == "jlcpcb":
+        app_id, api_key, api_secret = env("JLC_API_APP_ID"), env("JLC_API_ACCESS_KEY"), env("JLC_API_SECRET_KEY")
     elif provider in {"digikey-quote", "digikey-trace"}:
         headers = {"Authorization": "Bearer " + env("DIGIKEY_USER_ACCESS_TOKEN"),
                    "X-DIGIKEY-Client-Id": env("DIGIKEY_CLIENT_ID")}
@@ -539,6 +609,11 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
                 params.update(returnInformation="All", currency=currency)
                 source = url = LCSC + "/" + operation + "?" + urlencode(params)
                 headers = lcsc_headers(params, api_key, api_secret)
+            elif provider == "jlcpcb":
+                source = url = JLCPCB + JLCPCB_DETAIL_PATH
+                params = {"componentCodes": [sku]}
+                body = json.dumps(params, separators=(",", ":")).encode("utf-8")
+                headers = jlcpcb_headers(body, app_id, api_key, api_secret)
             elif provider == "digikey-quote":
                 if integer(quote_id, 1) is None or offset < 0 or not 1 <= limit <= 50:
                     raise SourcingError("Quote requires a positive ID, nonnegative offset, and limit 1-50")
@@ -560,6 +635,9 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
             elif provider == "lcsc":
                 batch.update(operation=operation, request=params)
                 offers, matches, origins = normalize_lcsc(batch)
+            elif provider == "jlcpcb":
+                batch.update(operation="getComponentDetailByCode", request=params)
+                offers, matches, origins = normalize_jlcpcb(batch)
             else:
                 if provider == "digikey-quote":
                     batch.update(quote_id=quote_id, offset=offset, limit=limit)
@@ -606,6 +684,8 @@ def evaluate_offer(offer, quantity, currency):
         warnings.append("additional_reeling_fee")
     if offer.get("match_status") != "exact":
         warnings.append("identity_or_result_set_unresolved")
+    if offer.get("unqualified_price_ranges"):
+        warnings.append("price_currency_unverified")
     # An advertised unit price can be reported even when valid order multiples are
     # unknown, but a purchasable quantity and extended cost must remain unresolved.
     priced_quantity = purchase if purchase is not None else max(quantity, moq or 1)
@@ -693,7 +773,7 @@ def positive(value):
 def render(data, fmt):
     if fmt == "json":
         return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
-    fields = ["manufacturer", "mpn", "seller", "sku", "provider", "match_status", "packaging",
+    fields = ["manufacturer", "mpn", "seller", "sku", "provider", "match_status", "package", "packaging", "inventory_scope",
               "authorized_by_aggregator", "marketplace", "sales_maximum_quantity", "restriction", "reeling_fee",
               "requested_quantity", "purchase_quantity", "moq", "order_multiple", "inventory_quantity",
               "stock_sufficient", "comparison_currency", "price_evaluated_quantity", "unit_price", "extended_parts_cost",
@@ -735,7 +815,7 @@ def write_output(content, path):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("nexar", "mouser", "lcsc"):
+    for name in ("nexar", "mouser", "lcsc", "jlcpcb"):
         p = sub.add_parser(name)
         inputs = p.add_mutually_exclusive_group(required=True)
         inputs.add_argument("--input", help="CSV or JSON candidate file")
@@ -753,6 +833,8 @@ def main(argv=None):
             p.add_argument("--sku", help="Verified LCSC C-number for one manufacturer/MPN pair")
             p.add_argument("--offset", type=int, default=0, help="Search offset; no automatic paging")
             p.add_argument("--limit", type=positive, default=50, help="Search page size, at most 500")
+        if name == "jlcpcb":
+            p.add_argument("--sku", required=True, help="JLCPCB C-number to verify against one manufacturer/full MPN pair")
         p.add_argument("--output")
     p = sub.add_parser("digikey-quote")
     p.add_argument("--quote-id", type=positive, required=True)
@@ -785,7 +867,7 @@ def main(argv=None):
             options = vars(args).copy()
             for field in ("command", "output", "input", "part", "manufacturer"):
                 options.pop(field, None)
-            parts = read_parts(args) if args.command in {"nexar", "mouser", "lcsc"} else []
+            parts = read_parts(args) if args.command in {"nexar", "mouser", "lcsc", "jlcpcb"} else []
             data = collect(args.command, parts, **options)
             if parts:
                 data["comparison"] = compare([data], args.quantity, args.currency)

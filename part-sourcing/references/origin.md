@@ -92,7 +92,11 @@ LCSC's current v3.4 product schema provides reference photos, generic parameters
 and export codes. Its shipping-country fields are destinations, and its
 `ProductChangeNotifications` feed concerns catalog/price updates, not manufacturer
 process changes. The helper preserves raw responses and leaves origin assertions
-empty. JLCPCB component field-level coverage remains unverified pending access.
+empty. JLCPCB's official business SDK 1.0.6 detail schema was inspected: it has no
+explicit COO, wafer-fabrication, chip-assembly, test-country or lot-route fields.
+The helper leaves origin assertions empty; successful live response validation
+is pending Parts approval. Export codes, RoHS and `assemblyComponentFlag` do not
+establish origin.
 
 Origin Lens's existing LCSC photo/OCR integration can provide sample assembly
 evidence for supported ST markings. Keep this separate from catalog declarations,

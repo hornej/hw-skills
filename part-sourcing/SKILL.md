@@ -1,6 +1,6 @@
 ---
 name: part-sourcing
-description: Compare exact electronic parts using Nexar/Octopart, Mouser, DigiKey, and LCSC, with JLCPCB API access guidance, quantity pricing, stock, and separate origin evidence. Use for candidate lists, BOM sourcing, and procurement constraints after technical requirements are established.
+description: Compare exact electronic parts using Nexar/Octopart, Mouser, DigiKey, LCSC, and JLCPCB component details, with quantity pricing, stock, and separate origin evidence. Use for candidate lists, BOM sourcing, and procurement constraints after technical requirements are established.
 ---
 
 # Part sourcing
@@ -20,8 +20,8 @@ current task.
 - For final stock and prices, use the existing `digikey-part-selection` client or
   the Mouser or LCSC helper here. Refresh exact distributor SKUs and packaging choices.
 - For LCSC or JLCPCB, read [LCSC and JLCPCB access](references/lcsc-jlcpcb.md).
-  Both have official partner APIs. The LCSC client implements the current
-  documented contract; JLCPCB component schemas and access still need provisioning.
+  Both have official partner APIs. LCSC supports search/details; JLCPCB supports
+  one C-number detail lookup from its official SDK, pending live acceptance.
   Keep JLCPCB assembly-library inventory distinct from LCSC purchasable stock.
 - For COO or fabrication/assembly/test restrictions, read
   [origin evidence](references/origin.md). Use `st-origin-lookup` for ST's website
@@ -74,6 +74,7 @@ python scripts/part_sourcing.py nexar --input candidates.csv --quantity 1000
 python scripts/part_sourcing.py mouser --part STM32H523CCU6 --manufacturer STMicroelectronics --quantity 1000 --output mouser.json
 python scripts/part_sourcing.py lcsc --part STM32G491RET6 --manufacturer STMicroelectronics --quantity 1000 --output lcsc.json
 python scripts/part_sourcing.py lcsc --part STM32G491RET6 --manufacturer STMicroelectronics --sku C3231005 --quantity 1000 --output lcsc-detail.json
+python scripts/part_sourcing.py jlcpcb --part STM32G491RET6 --manufacturer STMicroelectronics --sku C3231005 --quantity 1000 --output jlcpcb-detail.json
 python scripts/part_sourcing.py compare --input mouser.json --quantity 1000 --currency USD --format csv
 python scripts/part_sourcing.py compare --input mouser.json --input digikey-details.json --quantity 1000
 python scripts/part_sourcing.py digikey-quote --quote-id 12345 --offset 0 --limit 50 --output quote-page.json
@@ -90,6 +91,11 @@ the existing DigiKey client's ProductDetails envelope. DigiKey imports preserve
 package-specific stock and validated response currency. Its `StandardPackage`
 does not establish an order multiple; missing multiples keep the purchase quantity
 and extended cost unresolved while still showing an advertised quantity price.
+
+JLCPCB requires a C-number plus the expected manufacturer and full MPN. Its SDK
+does not establish price currency, MOQ or order multiple; price tiers are retained
+as unqualified evidence and excluded from cost comparisons. Its inventory is
+scoped to JLCPCB's public PCBA library. See the provider reference before live use.
 
 Nexar keeps no persistent cache in this helper. Its data retention limit is 24
 hours under the currently documented terms; saved outputs and copies are subject

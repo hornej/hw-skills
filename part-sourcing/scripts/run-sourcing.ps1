@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('nexar', 'mouser', 'lcsc')][string]$Provider,
+    [Parameter(Mandatory = $true)][ValidateSet('nexar', 'mouser', 'lcsc', 'jlcpcb')][string]$Provider,
     [string]$Python = 'python',
     [string]$SecretsFile = (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'hw-skills\part-sourcing-bitwarden.json'),
     [string]$BitwardenHelper = '',
@@ -12,6 +12,7 @@ $requiredNames = switch ($Provider) {
     'nexar' { @('NEXAR_CLIENT_ID', 'NEXAR_CLIENT_SECRET') }
     'mouser' { @('MOUSER_SEARCH_API_KEY') }
     'lcsc' { @('LCSC_API_KEY', 'LCSC_API_SECRET') }
+    'jlcpcb' { @('JLC_API_APP_ID', 'JLC_API_ACCESS_KEY', 'JLC_API_SECRET_KEY') }
 }
 $helpOnly = $SourcingArgs -contains '--help' -or $SourcingArgs -contains '-h'
 $environmentReady = @($requiredNames | Where-Object {
@@ -32,7 +33,9 @@ if ($useBitwarden) {
     $null = Get-Command bws -ErrorAction Stop
 }
 $null = Get-Command $Python -ErrorAction Stop
-$envNames = @('BWS_ACCESS_TOKEN', 'NEXAR_CLIENT_ID', 'NEXAR_CLIENT_SECRET', 'MOUSER_SEARCH_API_KEY', 'LCSC_API_KEY', 'LCSC_API_SECRET')
+$envNames = @('BWS_ACCESS_TOKEN', 'NEXAR_CLIENT_ID', 'NEXAR_CLIENT_SECRET', 'MOUSER_SEARCH_API_KEY',
+    'LCSC_API_KEY', 'LCSC_API_SECRET', 'JLC_API_APP_ID', 'JLC_API_ACCESS_KEY', 'JLC_API_SECRET_KEY',
+    'JLC_API_TOKENIZATION_PUBLIC_KEY', 'JLC_API_TOKENIZATION_PRIVATE_KEY')
 $priorEnv = @{}
 foreach ($name in $envNames) { $priorEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 $sourcingExit = 1

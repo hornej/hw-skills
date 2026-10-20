@@ -126,8 +126,15 @@ contracts, scope, and source links.
 The `lcsc` helper implements v3.4 read-only product search/details and uses
 `LCSC_API_KEY` / `LCSC_API_SECRET`. Offline tests verify signing, matching,
 pricing, incomplete pages and failures; production credentials and IP access
-still need authenticated acceptance testing. JLCPCB is an access/documentation
-route pending its entitled component schema, not a working CLI integration.
+still need authenticated acceptance testing.
+
+The `jlcpcb` helper implements one exact C-number detail lookup from the official
+Java business SDK 1.0.6. It requires `JLC_API_APP_ID`, `JLC_API_ACCESS_KEY`,
+`JLC_API_SECRET_KEY` and approval for **Parts**. Signing, matching, missing
+currency/order rules, failure handling and credential isolation have offline
+coverage. Live acceptance remains pending: the 2026-10-20 attempt returned HTTP
+403 while Parts access was under review. Do not repeat requests until access is
+approved. A configured key alone does not establish entitlement.
 
 ## Failures, records, and Findchips
 

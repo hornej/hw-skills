@@ -1,7 +1,9 @@
 # LCSC and JLCPCB
 
 Verified official documentation on 2026-10-20. Both offer partner APIs requiring
-account approval. No authenticated call was made during this integration.
+account approval. LCSC live testing is pending credentials. A JLCPCB detail
+request reached the API but returned HTTP 403 while Parts access was under
+review; no successful component response has been validated yet.
 
 ## LCSC
 
@@ -97,8 +99,8 @@ the digest. The timestamp is Unix seconds; the nonce is 32 random alphanumeric
 characters. POST signs the exact JSON bytes sent; GET has an empty body.
 The single-line Authorization header uses the `JOP` scheme with quoted `appid`,
 `accesskey`, `nonce`, `timestamp` and `signature` fields. The SDK's documented
-service origin is `https://open.jlcpcb.com`; operation paths still require the
-entitled Components documentation.
+service origin is `https://open.jlcpcb.com`. The component-detail path below was
+verified in the downloaded official business SDK.
 
 The documented request-signing flow does **not** use a tokenization public/private
 key pair. Do not load those keys for catalog requests unless the applicable
@@ -106,14 +108,46 @@ operation's documentation establishes a separate need. Their other purpose has
 not been verified. Keep keys, signatures and signing inputs out of logs, command
 arguments, reports and repositories; reject redirects on authenticated requests.
 
-**No standalone JLCPCB transport is implemented yet.** Public pages inspected
-did not expose the component request/response schema or its business SDK download.
-Obtain the entitled Components documentation/SDK from the approved account,
-then verify exact identity, stock scope, currencies, order constraints, quotas,
-and field meanings before writing a client or claiming live support.
-Do not invent paths or use third-party scraped catalogs as the official API.
+### Read-only detail helper
 
-Until then, use the ordinary parts-library UI for focused checks. Basic/Extended
+`part_sourcing.py jlcpcb` implements a focused lookup using the official
+`overseas-openapi-sdk-java` **1.0.6** and core SDK **1.0.0**, inspected on
+2026-10-20. Vendor archives remain outside this repository; the Python client
+uses the standard library and does not run or redistribute the Java SDK.
+
+- POST `https://open.jlcpcb.com/overseas/openapi/component/getComponentDetailByCode`
+  with `{"componentCodes":["C…"]}`. One C-number per invocation, together with
+  the expected manufacturer and complete MPN.
+- `ComponentCodesQueryVO.getURI()` establishes the route and request field.
+  `ComponentDetailListResponseVO` returns `data` as a list; the core
+  `HttpResult.isSuccessful()` requires business `code` 200.
+- The helper checks `componentCode`, `componentModel` and `componentBrandEn`
+  together. It preserves suffixes and rejects mismatches. No manufacturer aliases
+  have been verified for this API. Missing or multiple results are not exact offers.
+- `stockCount` is retained with public PCBA-library scope. `componentSpecification`
+  is the package, not the packing method. `libraryType`, `assemblyComponentFlag`,
+  datasheet URL and the original response remain available for review.
+- `ComponentPriceRange` contains `startQuantity`, `endQuantity` and `unitPrice`,
+  but no currency. The detail schema also lacks MOQ and order multiple. The helper
+  retains raw ranges as `unqualified_price_ranges`, leaves currency/order rules
+  unknown and excludes these prices from purchase-cost comparisons. `--currency`
+  is a comparison preference, not evidence of JLCPCB's response currency.
+
+SDK offline checks are not successful live acceptance. The first authenticated
+attempt returned HTTP/business status 403, consistent with the application's
+**Parts — Reviewing** status. Wait for approval before retrying. If access still
+fails after approval, check application credentials, Parts entitlement and the
+configured [outbound IP whitelist](https://api.jlcpcb.com/docs/ip-whitelist).
+Do not automatically retry or disable security settings.
+
+The SDK's other public-library operations paginate a catalog; they do not provide
+a verified targeted MPN search. This helper does not scan that catalog, read
+customer-private stock, or call ordering/balance services. Use a C-number from
+an ordinary focused library search, then verify identity with the detail lookup.
+Batch limits, account quotas and redistribution terms require confirmation before
+expanding this into a bulk service.
+
+Until live acceptance, use the ordinary parts-library UI for focused checks. Basic/Extended
 classification and SMT placement capabilities concern JLCPCB's assembly service.
 Private/customer-owned inventory is not public stock offered for sale. A shared
 C-number does not mean LCSC and JLCPCB stock can be combined or purchased through
@@ -128,9 +162,12 @@ shipping/order sections describe destinations. `ProductChangeNotifications`
 is a catalog information/price update feed, not a manufacturer process-change
 notice service; inventory changes alone do not trigger that feed.
 
-No JLCPCB component-origin field or lot-traceability API was verified in the
-public documentation. Keep those stages unknown until an exact-item response
-and field definition establish them.
+JLCPCB's inspected component-detail schema has no explicit COO, wafer-fabrication,
+chip-assembly, test-country or lot-traceability field. `assemblyComponentFlag`
+concerns PCBA eligibility, not a chip's assembly country. `eccnCode`, `rohsFlag`
+and generic parameters do not establish a manufacturing route. The helper leaves
+all origin assertions empty; successful live fields and their definitions still
+need review before adding any origin integration.
 
 Origin Lens already reads exact ST STM32 LCSC listing photos and recognizes
 supported markings locally. This establishes evidence about a photographed

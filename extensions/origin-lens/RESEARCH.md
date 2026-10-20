@@ -568,3 +568,50 @@ and global cancellation. All 86 tests pass. The browser preview verified the
 regional details using the fixture; it does not establish installed-extension
 permissions or service-worker behavior. Reloading the installed extension is
 still required for the two new Infineon host permissions.
+
+## ST ordering-code comparisons — 2026-10-20
+
+Version 0.10.0 adds a separate family comparison on both distributor sites.
+The live [STM32G491RE page](https://www.st.com/en/microcontrollers-microprocessors/stm32g491re.html#sample-buy)
+identified `PF269474`. Its Sample & Buy headers verify these attribute IDs:
+
+| Attribute | Meaning |
+| --- | --- |
+| 4363 | Package, including dimensions and pitch where reported |
+| 1069 | Packing Type |
+| 960 | Minimum operating temperature, °C (quick-view Min label) |
+| 962 | Maximum operating temperature, °C |
+| 5080 | Country of Origin |
+
+The existing `productsByParentId` operation returned seven unique CP mappings.
+`getListOfViewAttributes` returned each code's attributes. The production network
+adapter was also exercised live, independently of the captured-fixture UI test.
+All seven attribute requests succeeded:
+
+| Ordering code | Package | Packing | Operating °C | COO |
+| --- | --- | --- | --- | --- |
+| STM32G491RET6 | LQFP 64, 10×10×1.4 mm | Tray | −40 to 85 | Taiwan |
+| STM32G491RET6TR | LQFP 64, 10×10×1.4 mm | Tape and Reel | −40 to 85 | Taiwan |
+| STM32G491RET3 | LQFP 64, 10×10×1.4 mm | Tray | −40 to 125 | Taiwan |
+| STM32G491RET3TR | LQFP 64, 10×10×1.4 mm | Tape and Reel | −40 to 125 | Taiwan |
+| STM32G491REI3 | UFBGA 64, 5×5×0.6 mm, P 0.5 mm | Tray | −40 to 125 | Taiwan |
+| STM32G491REI6 | UFBGA 64, 5×5×0.6 mm, P 0.5 mm | Tray | −40 to 85 | Taiwan |
+| STM32G491REY6TR | WLCSP 64, 3.5×3.6×0.6 mm, P 0.4 mm | Tape and Reel | −40 to 85 | Taiwan |
+
+Full raw observations stay outside the repository. The sanitized
+`tests/fixtures/stm32g491re-options.json` retains the complete seven-code mapping
+and only the five relevant attribute IDs plus marketing status. Family reports
+use a separate versioned cache, never exact-part origin records. A row's missing
+or failed attributes remain unknown. A mismatch, duplicate CP, absent current
+code or changed column mapping prevents a comparison. Limits and stale/partial
+states are explicit; no inferred ordering codes or fabricated specifications.
+
+All 96 tests passed, covering all seven variants, comparisons from another
+current code, missing attributes, per-code origin differences, bad identities,
+bounded parallel requests, rate-limit stops, cancellation, family cache isolation,
+cross-distributor rendering, late responses after Off, failed refresh and Clear
+cache. Browser preview verified keyboard expansion and horizontal keyboard
+scrolling at 360px. Preview command:
+`node extensions/origin-lens/scripts/preview-panel.cjs --st-options`.
+It uses captured ST data and simulated browser-extension messaging, not the
+installed extension. Reload Origin Lens and the product page to load this version.

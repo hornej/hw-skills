@@ -1,5 +1,5 @@
 "use strict";
-importScripts("ocr.js", "core.js", "network.js", "credentials.js", "ocr-bridge.js");
+importScripts("ocr.js", "core.js", "st-options.js", "network.js", "credentials.js", "ocr-bridge.js");
 const inFlight = new Map();
 const settingRevisions = new Map();
 // Serial reservations avoid bursts across tabs; timestamps survive worker restarts.
@@ -72,7 +72,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
         const entry = { controller, componentType };
         entry.pending = (message.operation === "lcsc-ocr"
           ? OriginLensOCRBridge.run(message, controller.signal)
-          : OriginLensNetwork.run(message, digikeyListId, guardedFetch, { mouserApiKey })).finally(() => {
+          : OriginLensNetwork.run(message, digikeyListId, guardedFetch, { mouserApiKey, signal: controller.signal })).finally(() => {
           if (inFlight.get(key) === entry) inFlight.delete(key);
         });
         inFlight.set(key, entry);

@@ -67,7 +67,7 @@ toggle.addEventListener("change", async () => {
 document.getElementById("clear").addEventListener("click", async () => {
   try {
     const all = await chrome.storage.local.get(null);
-    const keys = Object.keys(all).filter(k => k.startsWith("origin-lens:v"));
+    const keys = Object.keys(all).filter(k => k.startsWith("origin-lens:v") || k.startsWith("origin-lens:options:"));
     await chrome.storage.local.remove(keys);
     status.textContent = `Cleared ${keys.length} cached result${keys.length === 1 ? "" : "s"}. Use Refresh on an open page.`;
   } catch { status.textContent = "Cache could not be cleared."; }

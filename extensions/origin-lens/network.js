@@ -138,10 +138,36 @@
     const family = C.stFamily(part);
     if (!family) throw new C.LookupError("unsupported", "Manufacturer lookup currently supports STM32 ordering codes from STMicroelectronics.");
     if (operation === "st-family") return read(`https://www.st.com/en/microcontrollers-microprocessors/${family}.html`, "html", fetcher);
-    if (operation === "st-origin") {
+    if (operation === "st-origin" || operation === "st-options") {
       if (!/^PF\d{1,12}$/.test(message.parentId || "")) throw new C.LookupError("request", "Invalid ST family identifier.");
       const products = await read(`https://ksmk.st.com/products/productsByParentId?parentId=${message.parentId}`, "json", fetcher);
       const product = C.stProduct(products, message.parentId, part);
+      if (operation === "st-options") {
+        const O = root.OriginLensOptions || require("./st-options.js");
+        const members = O.productsFor(products, message.parentId, part), observations = new Array(members.length);
+        // Bound concurrency and total work; preserve every enumerated code even when an attribute request fails.
+        const deadline = Date.now() + 45_000;
+        let next = 0, stopped;
+        await Promise.all(Array.from({ length: Math.min(3, members.length) }, async () => {
+          while (next < members.length) {
+            credentials.signal?.throwIfAborted();
+            const index = next++, member = members[index];
+            let attributes = [], error;
+            try {
+              if (stopped) throw stopped;
+              if (Date.now() >= deadline) throw new C.LookupError("timeout", "Comparison time limit reached; refresh to retry.");
+              const raw = await read(`https://ksmk.st.com/viewAttributes/getListOfViewAttributes?prmisId=${member.prmis_id}`, "json", fetcher);
+              attributes = O.attributesFor(raw, member.prmis_id);
+            } catch (e) {
+              credentials.signal?.throwIfAborted();
+              if (["auth", "rate"].includes(e.code)) stopped = e;
+              error = e instanceof C.LookupError ? e.message : "This ordering code could not be checked.";
+            }
+            observations[index] = { productId: member.prmis_id, attributes, checkedAt: new Date().toISOString(), ...(error ? { error } : {}) };
+          }
+        }));
+        return O.make(part, message.parentId, members, observations);
+      }
       const attributes = await read(`https://ksmk.st.com/viewAttributes/getListOfViewAttributes?prmisId=${product.prmis_id}`, "json", fetcher);
       return C.fromST(attributes, product, part);
     }

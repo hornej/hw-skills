@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const C = require('../core.js');
 const N = require('../network.js');
+const O = require('../st-options.js');
 const script = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const part = {provider:'mouser',host:'www.mouser.com',manufacturer:'onsemi',mpn:'FUSB302BMPX',sku:'512-FUSB302BMPX',sourceUrl:'https://www.mouser.com/en/ProductDetail/onsemi/FUSB302BMPX?qs=example'};
@@ -80,7 +81,7 @@ test('switching off aborts an active worker request and prevents follow-up reque
   assert.equal((await pending).ok,false);assert.equal(calls,1);
 });
 
-function pageHarness(saved, selectedPart=part, selectedType='other', reply=()=>({ok:false,code:'auth',message:'Test source unavailable'}), coreOverrides={}, apiReply=null) {
+function pageHarness(saved, selectedPart=part, selectedType='other', reply=()=>({ok:false,code:'auth',message:'Test source unavailable'}), coreOverrides={}, apiReply=null, optionsOverrides={}) {
   const panels=[], events={};let messages=0,apiMessages=0,fetches=0,observing=false,fetchSignal;
   class Node {
     constructor(){this.children=[];this.isConnected=false;this.events={};}
@@ -95,7 +96,7 @@ function pageHarness(saved, selectedPart=part, selectedType='other', reply=()=>(
   const anchor=new Node();
   const document={documentElement:{},body:{prepend:n=>anchor.insertAdjacentElement('',n)},createElement:tag=>{const n=new Node();n.tagName=tag;n.style={};return n;},getElementById:()=>anchor,querySelector:()=>({closest:()=>anchor}),querySelectorAll:()=>[]};
   vm.runInNewContext(script('content.js'),{
-    OriginLensOCR:require('../ocr.js'),OriginLens:{...C,...coreOverrides,readIdentity:()=>selectedPart,readComponentType:()=>selectedType},document,location:{href:selectedPart.sourceUrl},
+    OriginLensOptions:{...O,...optionsOverrides},OriginLensOCR:require('../ocr.js'),OriginLens:{...C,...coreOverrides,readIdentity:()=>selectedPart,readComponentType:()=>selectedType},document,location:{href:selectedPart.sourceUrl},
     window:{addEventListener:(event,fn)=>{events[event]=fn;}},
     MutationObserver:class{observe(){observing=true;}disconnect(){observing=false;}},
     setTimeout,clearTimeout,AbortController,AbortSignal,
@@ -235,7 +236,8 @@ test('all three supported source reports are reusable from either distributor',a
   await settle();
   for(const page of [dkPage,mouserPage]){
     for(const country of ['Taiwan','Malaysia','Singapore'])assert.ok(pageText(page).includes(country));
-    assert.equal(page.nodes().filter(n=>n.className==='report').length,4);assert.equal(page.messages(),1);assert.equal(page.fetches(),0);
+    // LCSC and the new, separately cached family comparison still need a lookup.
+    assert.equal(page.nodes().filter(n=>n.className==='report').length,4);assert.equal(page.messages(),2);assert.equal(page.fetches(),0);
   }
 });
 
@@ -413,4 +415,59 @@ test('worker blocks disabled types and aborts only requests for the type switche
   await saved.local.set({[C.typeKey('passives')]:false});assert.equal(signals[0].aborted,true);assert.equal(signals[1].aborted,false);
   assert.equal((await passive).ok,false);assert.equal((await request('passives')).code,'disabled');assert.equal(signals.length,2);
   await saved.local.set({enabled:false});assert.equal((await ic).ok,false);assert.equal(signals[1].aborted,true);
+});
+
+const stOptionsFixture=require('./fixtures/stm32g491re-options.json');
+const stOptionsPart={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND',sourceUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591'};
+function familyReport(age=0){
+  const checkedAt=new Date(Date.now()-age).toISOString();
+  return O.make(stOptionsPart,stOptionsFixture.parentId,stOptionsFixture.products,stOptionsFixture.products.map(p=>({productId:p.prmis_id,attributes:stOptionsFixture.attributes[p.prmis_id],checkedAt})),checkedAt);
+}
+
+test('all ordering options render from the same family cache on both distributors without increasing the exact-source count',async()=>{
+  const report=familyReport(),saved=storage({[O.key(stOptionsPart)]:report,...savedEntry(originRecord(stOptionsPart,'Malaysia'))});
+  const other={...stOptionsPart,provider:'mouser',host:'www.mouser.com',sku:'511-STM32G491RET6',sourceUrl:'https://www.mouser.com/en/ProductDetail/STMicroelectronics/STM32G491RET6'};
+  for(const identity of [stOptionsPart,other]){
+    const requests=[];const page=pageHarness(saved,identity,'ics',m=>{requests.push(m.operation);return {ok:false,code:'network',message:'Unavailable'};});
+    await settle();
+    assert.match(pageText(page),/1 source reporting origin/);
+    assert.match(pageText(page),/1 with different packing · 2 with a different temperature range in the same package · 3 in another package/);
+    assert.match(pageText(page),/Taiwan across all 7 codes/);
+    assert.match(pageText(page),/Compare all 7 ordering codes/);
+    assert.equal(page.nodes().filter(n=>n.tagName==='tr').length,8);
+    assert.equal(page.nodes().filter(n=>n.textContent==='Current part').length,1);
+    assert.match(pageText(page),/Malaysia/);
+    assert.equal(requests.some(op=>op.startsWith('st-')),true); // exact ST source is still missing
+    assert.equal(requests.includes('st-options'),false);
+    const table=page.nodes().find(n=>n.className==='options-table');
+    const panel=page.nodes().find(n=>n.className==='panel-disclosure');
+    panel.open=false;panel.events.toggle();panel.open=true;panel.events.toggle();
+    assert.equal(page.nodes().find(n=>n.className==='options-table'),table);
+  }
+});
+
+test('late family results cannot reappear or be cached after switching the component type off',async()=>{
+  const saved=storage();let finish;
+  const page=pageHarness(saved,stOptionsPart,'ics',undefined,{lookupDigiKey:async()=>originRecord(stOptionsPart,'Taiwan')},null,{lookup:()=>new Promise(resolve=>{finish=resolve;})});
+  await settle();assert.match(pageText(page),/Checking ST's complete family listing/);
+  await saved.local.set({[C.typeKey('ics')]:false});assert.equal(page.panelCount(),0);
+  finish(familyReport());await settle();
+  assert.equal(page.panelCount(),0);assert.equal(saved.values[O.key(stOptionsPart)],undefined);
+});
+
+test('failed family refresh preserves dated comparison and leaves exact source results independent',async()=>{
+  const report=familyReport(C.CACHE_TTL+100),saved=storage({[O.key(stOptionsPart)]:report,...savedEntry(originRecord(stOptionsPart,'Taiwan'))});
+  const page=pageHarness(saved,stOptionsPart,'ics',undefined,{},null,{lookup:async()=>{throw new C.LookupError('network','ST unavailable');}});
+  await settle();
+  assert.match(pageText(page),/Latest comparison unavailable: ST unavailable/);
+  assert.match(pageText(page),/Compare all 7 ordering codes/);
+  assert.match(pageText(page),/1 source reporting origin/);
+  assert.equal(saved.values[O.key(stOptionsPart)].checkedAt,report.checkedAt);
+});
+
+test('Clear cache removes family comparisons and source reports while retaining preferences and unrelated settings',async()=>{
+  const saved=storage({[O.key(stOptionsPart)]:familyReport(),...savedEntry(originRecord(stOptionsPart,'Taiwan')),enabled:false,'mouser-api-requests':[1,2]});
+  const popup=popupHarness(saved);await settle();await popup.get('clear').events.click();
+  assert.equal(Object.keys(saved.values).some(k=>k.startsWith('origin-lens:')),false);
+  assert.equal(saved.values.enabled,false);assert.deepEqual(saved.values['mouser-api-requests'],[1,2]);
 });

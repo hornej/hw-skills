@@ -1,0 +1,240 @@
+{
+  "captured": "2026-10-20",
+  "source": "https://www.st.com/en/microcontrollers-microprocessors/stm32g491re.html#sample-buy",
+  "parentId": "PF269474",
+  "products": [
+    {
+      "item_name": "STM32G491RET6",
+      "prmis_id": "CP531377",
+      "parent_id": "PF269474",
+      "p_163": "Active"
+    },
+    {
+      "item_name": "STM32G491REI6",
+      "prmis_id": "CP531383",
+      "parent_id": "PF269474",
+      "p_163": "Active"
+    },
+    {
+      "item_name": "STM32G491REY6TR",
+      "prmis_id": "CP531838",
+      "parent_id": "PF269474",
+      "p_163": "Active"
+    },
+    {
+      "item_name": "STM32G491RET6TR",
+      "prmis_id": "CP536364",
+      "parent_id": "PF269474",
+      "p_163": "Active"
+    },
+    {
+      "item_name": "STM32G491RET3",
+      "prmis_id": "CP542254",
+      "parent_id": "PF269474",
+      "p_163": "Active"
+    },
+    {
+      "item_name": "STM32G491REI3",
+      "prmis_id": "CP550576",
+      "parent_id": "PF269474",
+      "p_163": "Active"
+    },
+    {
+      "item_name": "STM32G491RET3TR",
+      "prmis_id": "CP560944",
+      "parent_id": "PF269474",
+      "p_163": "Active"
+    }
+  ],
+  "attributes": {
+    "CP531377": [
+      {
+        "prmis_id": "CP531377",
+        "attribute_name": "1069",
+        "attribute_value": "Tray"
+      },
+      {
+        "prmis_id": "CP531377",
+        "attribute_name": "4363",
+        "attribute_value": "LQFP 64 10x10x1.4 mm"
+      },
+      {
+        "prmis_id": "CP531377",
+        "attribute_name": "5080",
+        "attribute_value": "TAIWAN"
+      },
+      {
+        "prmis_id": "CP531377",
+        "attribute_name": "960",
+        "attribute_value": "-40"
+      },
+      {
+        "prmis_id": "CP531377",
+        "attribute_name": "962",
+        "attribute_value": "85"
+      }
+    ],
+    "CP531383": [
+      {
+        "prmis_id": "CP531383",
+        "attribute_name": "1069",
+        "attribute_value": "Tray"
+      },
+      {
+        "prmis_id": "CP531383",
+        "attribute_name": "4363",
+        "attribute_value": "UFBGA 64 5x5x0.6 P 0.5 mm"
+      },
+      {
+        "prmis_id": "CP531383",
+        "attribute_name": "5080",
+        "attribute_value": "TAIWAN"
+      },
+      {
+        "prmis_id": "CP531383",
+        "attribute_name": "960",
+        "attribute_value": "-40"
+      },
+      {
+        "prmis_id": "CP531383",
+        "attribute_name": "962",
+        "attribute_value": "85"
+      }
+    ],
+    "CP531838": [
+      {
+        "prmis_id": "CP531838",
+        "attribute_name": "1069",
+        "attribute_value": "Tape and Reel"
+      },
+      {
+        "prmis_id": "CP531838",
+        "attribute_name": "4363",
+        "attribute_value": "WLCSP 64 3.5x3.6x0.6 P 0.4 mm"
+      },
+      {
+        "prmis_id": "CP531838",
+        "attribute_name": "5080",
+        "attribute_value": "TAIWAN"
+      },
+      {
+        "prmis_id": "CP531838",
+        "attribute_name": "960",
+        "attribute_value": "-40"
+      },
+      {
+        "prmis_id": "CP531838",
+        "attribute_name": "962",
+        "attribute_value": "85"
+      }
+    ],
+    "CP536364": [
+      {
+        "prmis_id": "CP536364",
+        "attribute_name": "1069",
+        "attribute_value": "Tape and Reel"
+      },
+      {
+        "prmis_id": "CP536364",
+        "attribute_name": "4363",
+        "attribute_value": "LQFP 64 10x10x1.4 mm"
+      },
+      {
+        "prmis_id": "CP536364",
+        "attribute_name": "5080",
+        "attribute_value": "TAIWAN"
+      },
+      {
+        "prmis_id": "CP536364",
+        "attribute_name": "960",
+        "attribute_value": "-40"
+      },
+      {
+        "prmis_id": "CP536364",
+        "attribute_name": "962",
+        "attribute_value": "85"
+      }
+    ],
+    "CP542254": [
+      {
+        "prmis_id": "CP542254",
+        "attribute_name": "1069",
+        "attribute_value": "Tray"
+      },
+      {
+        "prmis_id": "CP542254",
+        "attribute_name": "4363",
+        "attribute_value": "LQFP 64 10x10x1.4 mm"
+      },
+      {
+        "prmis_id": "CP542254",
+        "attribute_name": "5080",
+        "attribute_value": "TAIWAN"
+      },
+      {
+        "prmis_id": "CP542254",
+        "attribute_name": "960",
+        "attribute_value": "-40"
+      },
+      {
+        "prmis_id": "CP542254",
+        "attribute_name": "962",
+        "attribute_value": "125"
+      }
+    ],
+    "CP550576": [
+      {
+        "prmis_id": "CP550576",
+        "attribute_name": "1069",
+        "attribute_value": "Tray"
+      },
+      {
+        "prmis_id": "CP550576",
+        "attribute_name": "4363",
+        "attribute_value": "UFBGA 64 5x5x0.6 P 0.5 mm"
+      },
+      {
+        "prmis_id": "CP550576",
+        "attribute_name": "5080",
+        "attribute_value": "TAIWAN"
+      },
+      {
+        "prmis_id": "CP550576",
+        "attribute_name": "960",
+        "attribute_value": "-40"
+      },
+      {
+        "prmis_id": "CP550576",
+        "attribute_name": "962",
+        "attribute_value": "125"
+      }
+    ],
+    "CP560944": [
+      {
+        "prmis_id": "CP560944",
+        "attribute_name": "1069",
+        "attribute_value": "Tape and Reel"
+      },
+      {
+        "prmis_id": "CP560944",
+        "attribute_name": "4363",
+        "attribute_value": "LQFP 64 10x10x1.4 mm"
+      },
+      {
+        "prmis_id": "CP560944",
+        "attribute_name": "5080",
+        "attribute_value": "TAIWAN"
+      },
+      {
+        "prmis_id": "CP560944",
+        "attribute_name": "960",
+        "attribute_value": "-40"
+      },
+      {
+        "prmis_id": "CP560944",
+        "attribute_name": "962",
+        "attribute_value": "125"
+      }
+    ]
+  }
+}

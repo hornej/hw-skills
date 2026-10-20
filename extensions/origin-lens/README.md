@@ -30,6 +30,8 @@ source values remain unchanged.
 Version 0.8.0 adds native collapse/expand while retaining a separate hide button.
 Version 0.9.0 adds Infineon's public ECCN & HTS Finder, including regional COO,
 assembly and diffusion records for exact full ordering codes.
+Version 0.10.0 compares every ordering code in the viewed STM32 base part's ST
+family listing, including package, packing, operating temperature and origin.
 
 ## Install or update
 
@@ -72,6 +74,40 @@ page reload starts expanded.
 The separate **×** still hides the panel for that page. Reload the page or turn
 Origin Lens off and on to bring it back. Collapse keeps source updates active;
 use the global or component-type switches to stop lookups.
+
+## Compare ordering options
+
+On supported STM32 product pages, **Ordering options** automatically checks ST's
+base-part listing. Open **Compare all … ordering codes** to see each full code's
+package (including dimensions), packing, operating-temperature limits, lifecycle
+status and declared origin. Changed fields are bold, the current code is marked,
+and each row links to ST plus exact-code searches on DigiKey and Mouser.
+
+For STM32G491RET6, ST currently lists seven STM32G491RE codes: one alternative
+with different packing, two with different temperature ranges in the same
+package, and three in UFBGA or WLCSP packages. The comparison uses explicit ST
+attributes; suffixes are not decoded into specifications. Package or temperature
+changes are not asserted to be drop-in replacements.
+
+This first family adapter supports the same STM32 scope as the existing ST
+origin adapter. ST's page identifies the family, and its returned CP records
+must include the exact viewed ordering code. All returned family members are
+enumerated; prefix search matches do not establish membership. Other
+manufacturers' family comparisons and distributor stock for these alternatives
+are not yet supported. Exact-part source reports remain separate.
+
+Family comparisons are cached separately and reused on either distributor and
+on sibling ordering codes. Successful results are fresh for one hour; failed
+attribute requests retain an explicit unknown row and retry after five minutes
+or **Refresh**. A failed full refresh retains the dated previous listing for up
+to seven days. At most 30 family reports are retained. Clear cache removes these
+alongside source reports.
+
+Requests use three concurrent attribute reads, a 45-second scheduling budget,
+and the existing 12-second per-request timeout. Every enumerated code remains
+visible if only some requests succeed. A family exceeding 64 codes displays an
+explicit limit and links to ST rather than silently truncating the comparison.
+No new credentials or host permissions are needed.
 
 ## Turn Origin Lens on or off
 
@@ -309,6 +345,7 @@ From the repository root, using Node 20 or newer:
 node --test extensions/origin-lens/tests/*.test.cjs
 node --check extensions/origin-lens/core.js
 node --check extensions/origin-lens/network.js
+node --check extensions/origin-lens/st-options.js
 node --check extensions/origin-lens/background.js
 node --check extensions/origin-lens/content.js
 node --check extensions/origin-lens/popup.js

@@ -3,6 +3,7 @@
   if (globalThis.__originLensLoaded) return;
   globalThis.__originLensLoaded = true;
   const C = globalThis.OriginLens;
+  const O = globalThis.OriginLensOptions;
   let identity, fingerprint = "", host, ui, generation = 0, timer, closed = false, collapsed = false;
   let enabled = false, settingsReady = false, lookupController, sourceChanges;
   const preferences = {}, changedPreferences = new Set();
@@ -33,6 +34,19 @@
       .status{font-size:11px;margin:10px 0 14px;color:var(--muted);overflow-wrap:anywhere}.status.error{color:var(--warning)}
       .results{border-top:1px solid var(--ink)}
       .report{padding:14px 0;border-bottom:1px solid var(--rule)}
+      .ordering-options{padding:14px 0;border-bottom:1px solid var(--rule)}
+      .ordering-options:empty{display:none}
+      .ordering-options h3{font-size:13px;margin:0}
+      .options-scroll{overflow:auto;margin-top:10px}
+      .options-table{border-collapse:collapse;width:100%;min-width:660px;font-size:11px;line-height:1.5}
+      .options-table caption{text-align:left;color:var(--muted);padding-bottom:8px}
+      .options-table th,.options-table td{padding:10px 8px;text-align:left;vertical-align:top;border-top:1px solid var(--rule)}
+      .options-table thead th{font-weight:400;color:var(--muted)}
+      .options-table tbody th{min-width:175px;font-weight:400}
+      .options-table tr[data-current]{background:var(--hover)}
+      .options-table .changed{font-weight:700}
+      .option-links{display:flex;gap:10px;margin-top:5px}
+      .option-change{display:block;color:var(--muted);font-weight:400;margin-top:4px}
       .report-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
       .report h3{font-size:13px;margin:0;overflow-wrap:anywhere}
       .country{font-size:16px;line-height:1.3;font-weight:700;text-align:right;overflow-wrap:anywhere}
@@ -51,7 +65,7 @@
       .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
       button{font:inherit;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:0;padding:6px 10px;min-height:32px}
       button:hover{background:var(--hover)}button:disabled{opacity:.55;cursor:wait}
-      :is(button,a,summary,input):focus-visible{outline:2px solid var(--link);outline-offset:3px}
+      :is(button,a,summary,input,[tabindex]):focus-visible{outline:2px solid var(--link);outline-offset:3px}
       .close{position:absolute;right:16px;top:16px;font-size:18px;font-weight:400;line-height:1;padding:0;width:28px;min-height:28px}
       footer{margin-top:12px;font-size:11px;color:var(--muted)}
       form{margin-top:8px}label{display:block;margin-bottom:5px}
@@ -79,10 +93,12 @@
     const part = el("p", `${identity.manufacturer} · ${identity.mpn}`, disclosure); part.className = "part";
     const status = el("p", "Checking origin…", disclosure); status.className = "status"; status.setAttribute("role", "status");
     const results = el("div", undefined, disclosure); results.className = "results";
+    const options = el("section", undefined, disclosure); options.className = "ordering-options";
+    options.setAttribute("aria-label", "Ordering options");
     const actions = el("div", undefined, disclosure); actions.className = "actions";
     const refresh = el("button", "Refresh", actions); refresh.type = "button"; refresh.addEventListener("click", () => load(true));
     el("footer", "Catalog declarations; shipment origin may vary by lot. Declared origin does not establish every manufacturing location.", disclosure);
-    ui = { status, results, refresh };
+    ui = { status, results, options, refresh };
     const anchor = identity.provider === "mouser" ? document.getElementById("pdpProdInfo") : document.querySelector("h1")?.closest("table");
     (anchor || document.querySelector("h1"))?.insertAdjacentElement("afterend", host);
     if (!host.isConnected) document.body.prepend(host);
@@ -139,6 +155,76 @@
       return offset > 0 && /^(?:of|and|the|d)$/.test(lower)
         ? lower : lower.charAt(0).toLocaleUpperCase("en") + lower.slice(1);
     });
+  }
+
+  function showOptions(state, part) {
+    const section = ui.options;
+    section.replaceChildren();
+    if (!C.stFamily(part)) return;
+    el("h3", `Ordering options · ${C.stFamily(part).toUpperCase()}`, section);
+    if (!state.report) {
+      el("p", state.pending ? "Checking ST's complete family listing…" : state.error || "Comparison unavailable.", section).className = "note";
+      const a = el("a", "ST family table", section); a.href = O.url(part); a.target = "_blank"; a.rel = "noopener noreferrer";
+      return;
+    }
+    const options = O.comparison(state.report, part), successful = options.filter(r => !r.error);
+    const counts = group => options.filter(r => r.group === group).length;
+    const summaries = [
+      counts("packing") && `${counts("packing")} with different packing`,
+      counts("temperature") && `${counts("temperature")} with a different temperature range in the same package`,
+      counts("package") && `${counts("package")} in another package`
+    ].filter(Boolean);
+    el("p", summaries.length ? `Alternatives: ${summaries.join(" · ")}.` : "No confirmed package, packing or temperature alternatives in this listing.", section).className = "note";
+    const origins = options.map(r => r.origin.values.map(v => v.toLowerCase()).sort().join(" / "));
+    if (origins[0] && origins.every(v => v === origins[0])) {
+      el("p", `Reported origin: ${options[0].origin.values.map(countryName).join(" / ")} across all ${options.length} codes.`, section).className = "note";
+    } else {
+      const different = options.filter(r => !r.current && r.changes.origin === "different").length;
+      el("p", `${options.filter(r => r.origin.values.length).length} of ${options.length} codes report origin${different ? ` · ${different} with a different reported origin` : ""}.`, section).className = "note";
+    }
+    if (state.pending || state.stale || state.error || successful.length < options.length) {
+      el("p", state.pending ? "Updating saved comparison…" :
+        state.error ? `Latest comparison unavailable: ${state.error} Showing the dated saved listing.` :
+        state.stale ? "Showing a dated saved listing; the latest comparison could not be confirmed." :
+        `${successful.length} of ${options.length} codes checked. Unavailable attributes remain unknown; refresh to retry.`, section).className = "status error";
+    }
+    const details = el("details", undefined, section);
+    el("summary", `Compare all ${options.length} ordering codes`, details);
+    el("p", "Changes are relative to the current ordering code. Package or temperature changes require design review; matching these fields does not establish interchangeability.", details).className = "note";
+    const scroll = el("div", undefined, details); scroll.className = "options-scroll"; scroll.tabIndex = 0;
+    scroll.setAttribute("role", "region"); scroll.setAttribute("aria-label", "Ordering-code comparison; scroll horizontally for all columns");
+    const table = el("table", undefined, scroll); table.className = "options-table";
+    el("caption", "ST catalog · changed fields are bold · operating temperature in °C", table);
+    const header = el("tr", undefined, el("thead", undefined, table));
+    for (const label of ["Ordering code", "Package", "Packing", "Temperature", "Origin"]) el("th", label, header).scope = "col";
+    const body = el("tbody", undefined, table);
+    const value = field => field.values.join(" / ") || "Not reported";
+    for (const option of options) {
+      const tr = el("tr", undefined, body);
+      if (option.current) tr.setAttribute("data-current", "");
+      const heading = el("th", undefined, tr); heading.scope = "row";
+      const link = el("a", option.mpn, heading);
+      link.href = `https://estore.st.com/en/${option.mpn.toLowerCase()}-cpn.html`; link.target = "_blank"; link.rel = "noopener noreferrer";
+      const changes = ["package", "packing", "temperature", "origin"].filter(name => option.changes[name] === "different");
+      el("span", option.current ? "Current part" : changes.length ? `Changed: ${changes.join(", ")}` : "No confirmed differences", heading).className = "option-change";
+      el("span", option.status || "Status not reported", heading).className = "option-change";
+      const links = el("span", undefined, heading); links.className = "option-links";
+      for (const [label, href] of [["DigiKey", `https://www.digikey.com/en/products?keywords=${encodeURIComponent(option.mpn)}`],
+        ["Mouser", `https://www.mouser.com/c/?q=${encodeURIComponent(option.mpn)}`]]) {
+        const a = el("a", label, links); a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.setAttribute("aria-label", `Search ${label} for ${option.mpn}`);
+      }
+      const temperature = option.temperatureMin.values.length && option.temperatureMax.values.length ?
+        `${value(option.temperatureMin)} to ${value(option.temperatureMax)}` : "Not reported";
+      for (const [name, text] of [["package", value(option.package)], ["packing", value(option.packing)],
+        ["temperature", temperature], ["origin", option.origin.values.map(countryName).join(" / ") || "Not reported"]]) {
+        const cell = el("td", text, tr);
+        if (!option.current && option.changes[name] === "different") cell.className = "changed";
+      }
+      if (option.error) el("span", option.error, heading).className = "option-change";
+    }
+    const a = el("a", "ST family table", details); a.href = state.report.sourceUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
+    el("p", `${state.cached ? "Saved · " : ""}Listing checked ${new Date(state.report.checkedAt).toLocaleString()} · all ${options.length} codes returned by ST for this base part. Distributor stock is not checked here.`, details).className = "note";
   }
 
   function showRow(row, state, provider, part) {
@@ -302,6 +388,8 @@
     };
     ui.refresh.disabled = true; ui.status.className = "status"; ui.status.textContent = "Checking sources…";
     ui.results.replaceChildren();
+    let optionsState = C.stFamily(part) ? { pending: true } : {};
+    showOptions(optionsState, part);
     const states = {}, rows = {};
     for (const provider of providers) {
       rows[provider] = el("section", undefined, ui.results); rows[provider].className = "report";
@@ -316,7 +404,7 @@
       ui.status.className = "status";
       const photos = results.filter(r => r.photoEvidence?.images.length).length;
       ui.status.textContent = `${count} source${count === 1 ? "" : "s"} reporting origin${photos ? " · reference photos available" : ""}${pending ? " · checking remaining sources…" : "."}`;
-      ui.refresh.disabled = pending;
+      ui.refresh.disabled = pending || optionsState.pending;
     };
     let catalogReady = false;
     const catalog = {}, changedReports = new Set();
@@ -340,7 +428,8 @@
     if (!current()) return;
     for (const [key, entry] of Object.entries(stored)) if (!changedReports.has(key)) catalog[key] = entry;
     catalogReady = true;
-    const request = async (operation, extra = {}) => {
+    const requests = new Map();
+    const requestOnce = async (operation, extra = {}) => {
       if (!current()) throw new C.LookupError("cancelled", "Product page changed.");
       let response;
       try { response = await chrome.runtime.sendMessage({ type: "origin-lens:lookup", operation, part, ...extra }); }
@@ -348,7 +437,40 @@
       if (!response?.ok) throw new C.LookupError(response?.code || "network", response?.message || "Source lookup failed.");
       return response.data;
     };
-    await Promise.allSettled(providers.map(async provider => {
+    // Exact ST origin and family comparison share the same verified product-page fetch.
+    const request = (operation, extra = {}) => {
+      if (operation !== "st-family") return requestOnce(operation, extra);
+      if (!requests.has(operation)) requests.set(operation, requestOnce(operation, extra));
+      return requests.get(operation);
+    };
+    const loadOptions = async () => {
+      if (!C.stFamily(part)) return;
+      const saved = O.saved(stored, part);
+      try {
+        optionsState = saved ? { ...saved, pending: force || saved.stale } : { pending: true };
+        showOptions(optionsState, part); update();
+        if (force || !saved || saved.stale) {
+          const report = await O.lookup(part, request);
+          if (!current()) return;
+          O.rows(report, part);
+          optionsState = { report };
+          try {
+            await chrome.storage.local.set({ [O.key(part)]: report });
+            const all = await chrome.storage.local.get(null);
+            const entries = Object.entries(all).filter(([key]) => key.startsWith("origin-lens:options:"))
+              .sort((a,b) => Date.parse(b[1]?.checkedAt || 0) - Date.parse(a[1]?.checkedAt || 0));
+            const remove = entries.filter(([key, r], i) => !key.startsWith(O.PREFIX) || i >= 30 ||
+              !Number.isFinite(Date.parse(r?.checkedAt)) || Date.now() - Date.parse(r.checkedAt) >= C.CACHE_RETENTION).map(([key]) => key);
+            if (remove.length) await chrome.storage.local.remove(remove);
+          } catch { /* Live comparisons remain usable without persistent storage. */ }
+        }
+      } catch (error) {
+        optionsState = { ...saved, error: error instanceof C.LookupError ? error.message : "The family listing could not be checked." };
+      }
+      if (!current()) return;
+      optionsState.pending = false; showOptions(optionsState, part); update();
+    };
+    await Promise.allSettled([loadOptions(), ...providers.map(async provider => {
       try {
         if (provider === "st" && !C.stFamily(part)) throw new C.LookupError("unsupported", "No direct manufacturer adapter for this part. Distributor reports are checked separately.");
         // A storage failure should not prevent a live lookup.
@@ -384,7 +506,7 @@
       }
       if (!current()) return;
       showRow(rows[provider], states[provider], provider, part); update();
-    }));
+    })]);
   }
 
   function check() {

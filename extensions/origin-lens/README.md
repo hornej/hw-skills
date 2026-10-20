@@ -34,6 +34,8 @@ Version 0.10.0 compares every ordering code in the viewed STM32 base part's ST
 family listing, including package, packing, operating temperature and origin.
 Version 0.10.1 keeps Mouser key status and controls inside Data sources & cache
 and reduces row spacing so the collapsed settings fit within Chrome's popup.
+Version 0.11.0 adds exact-part Harwin declared COO and Samtec probable-origin
+estimates from public manufacturer product pages, without account setup.
 
 ## Install or update
 
@@ -162,6 +164,8 @@ selections remain in effect; the recovery control can reset them to automatic.
 | STMicroelectronics | For supported STM32 ordering codes, read the family page's PF identifier, resolve the exact full code to its CP identifier, then read declared origin from attribute 5080 |
 | Microchip | Public Product API; require one exact full ordering code and manufacturer, then read declared COO, assembly country and wafer-fab country |
 | Infineon | Public ECCN & HTS Finder; exact OPN match, with all returned regions and material variants retained; declared COO, assembly and diffusion |
+| Harwin | Public product page; exact item identity and its Country of Origin field, with ISO country codes displayed as names |
+| Samtec | Public product page; exact manufacturer, full ordering code and SKU; **probable COO**, stored and displayed as an estimate separately from declared COO |
 | LCSC reference photos | ST STM32 microcontroller catalog search, exact manufacturer/MPN/SKU metadata, and part-specific image URLs; reviewed markings describe only the photographed sample |
 
 Each source has a separate result, source link, observation time, and expandable
@@ -169,6 +173,23 @@ assembly, diffusion, and testing fields. Different declarations remain visible
 in their respective source rows. There is no vote, merged country, or assumption
 that another distributor's inventory establishes the origin of the units being
 purchased. Stage locations are never inferred from declared origin.
+
+### Harwin and Samtec product pages
+
+These adapters need no key or sign-in. Only parts identified as Harwin / Harwin
+Inc. or Samtec / Samtec Inc. use their respective manufacturer page. Fetches
+omit cookies and reject redirects. Full ordering codes and canonical URLs must
+match; a series page, near match, ambiguous identity or changed schema is rejected.
+Unknown country values remain unresolved. Website layouts can change; these are
+observed public page fields, not documented integration APIs.
+
+Harwin's Country of Origin is a catalog declaration. Samtec explicitly calls its
+value **probable COO** and says it may change before shipment. The panel shows
+`Malaysia · probable`, for example, with a link to Samtec's quantity-specific
+pricing and delivery tool. That estimate does not increment the declared-origin
+source count, participate in declaration comparisons, or populate assembly,
+fabrication or testing. Its qualifier survives caching and failed refreshes.
+Neither source establishes the manufacturing route of a particular shipment.
 
 ### Infineon regional records
 
@@ -235,7 +256,8 @@ other lots or parts with a different ordering-code suffix.
 
 Manufacturer and full MPN must match, including packaging and temperature suffixes.
 The explicit Nexperia / Nexperia USA Inc., Microchip Technology / Microchip
-Technology Inc., ST / STMicroelectronics, and Infineon / Infineon Technologies aliases are accepted; each source retains
+Technology Inc., ST / STMicroelectronics, Infineon / Infineon Technologies,
+Harwin / Harwin Inc., and Samtec / Samtec Inc. aliases are accepted; each source retains
 its original manufacturer name. Other unrecognized name differences, near matches,
 and ambiguous results are rejected. No general company-suffix stripping or fuzzy
 brand matching is used. DigiKey may canonicalize a cut-tape
@@ -278,6 +300,8 @@ not read the API-key store. Host permissions cover exactly:
 - `https://eu.mouser.com/*`
 - `https://api.mouser.com/*`
 - `https://www.microchip.com/*`
+- `https://www.harwin.com/*`
+- `https://www.samtec.com/*`
 - `https://www.st.com/*`
 - `https://ksmk.st.com/*`
 - `https://www.lcsc.com/*`
@@ -297,6 +321,10 @@ use existing browser sessions; ST and Microchip requests omit credentials.
 Infineon parts request the public search token from `www.infineon.com` and send
 the full ordering code to its dedicated Coveo host. Both omit cookies and disable
 redirects. No account information, search history, or analytics identifiers are sent.
+Harwin and Samtec parts request one exact-order-code product page from their
+respective `www.harwin.com` or `www.samtec.com` host. These GETs omit cookies and
+disable redirects. Only origin fields and matching identity are retained; page
+scripts, unrelated product data and analytics metadata are discarded.
 Supported STM32 parts also send the full MPN to LCSC's microcontroller search
 and retrieve the exact product metadata. LCSC requests omit cookies. Up to three
 photos are fetched for OCR, and a known reviewed image is fetched for fingerprint
@@ -328,7 +356,7 @@ credential storage, not an encrypted vault. Clear cached results retains the key
 enforce a local ceiling of 30/minute and 1,000/rolling day across worker restarts.
 Other applications using the same key may consume additional quota.
 
-Positive origin, manufacturing-stage reports, and matched reference-photo records
+Positive origin, separately qualified probable-origin estimates, manufacturing-stage reports, and matched reference-photo records
 are keyed by reporting source, source host, exact manufacturer/MPN and source SKU.
 The newest matching report is reusable across sites, while same-site views retain
 SKU matching and US/EU Mouser website reports stay separate. Each source keeps its original
@@ -344,6 +372,7 @@ responses do not overwrite a saved positive report or advance its check time.
 From the repository root, using Node 20 or newer:
 
 ```text
+pnpm --dir extensions/origin-lens install --frozen-lockfile
 node --test extensions/origin-lens/tests/*.test.cjs
 node --check extensions/origin-lens/core.js
 node --check extensions/origin-lens/network.js
@@ -362,6 +391,11 @@ cross-tab toggle behavior, category detection, per-type request cancellation,
 settings initialization races, popup persistence, failed-save recovery, and
 contextual list guidance that disappears after a successful retry, and verified
 manufacturer alias matching without merging conflicting origin declarations.
+Harwin and Samtec tests parse minimal live-derived HTML fixtures with LinkeDOM
+(test-only; not shipped or loaded by the extension). They cover exact-code and
+canonical checks, duplicate/changed schemas, missing countries, fixed requests,
+type cancellation, cross-site cache reuse, stale/invalid records, and preserving
+the Samtec estimate qualifier in rendering and source counts.
 Sharing tests cover all three supported sources on both distributor views,
 updates between open pages, failed refreshes retaining dated reports, late
 responses, cache-read races, legacy records, source/region/SKU isolation, stale
@@ -422,6 +456,14 @@ has not yet been verified. The preview can be run with
 `node extensions/origin-lens/scripts/preview-panel.cjs --infineon`.
 See
 [RESEARCH.md](RESEARCH.md) for exact observations and remaining validation limits.
+
+For 0.11.0, the actual bounded network operations fetched two Samtec and two
+Harwin pages without credentials. Both parsers passed against the full live
+HTML, including the native browser's inert-template parser in a local panel
+preview. The preview displayed Samtec's `Malaysia · probable` separately from
+declared-origin counts and Harwin's `United Kingdom` as a declaration.
+Installed-extension behavior with the two added host permissions still requires
+an extension reload and product-page refresh.
 
 ## Known limits and references
 

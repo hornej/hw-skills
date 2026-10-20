@@ -142,6 +142,9 @@
     if (provider === "mouser") return `https://www.mouser.com/c/?q=${encodeURIComponent(part.mpn)}`;
     if (provider === "microchip") return C.microchipUrl(part);
     if (provider === "infineon") return C.infineonUrl();
+    if (["samtec", "harwin"].includes(provider)) {
+      try { return C.manufacturerPageUrl(provider, part); } catch { return null; }
+    }
     const family = C.stFamily(part);
     return family ? `https://www.st.com/en/microcontrollers-microprocessors/${family}.html#sample-buy` : null;
   }
@@ -233,9 +236,10 @@
     el("h3", (provider === "st" && !C.stFamily(part) ? "Manufacturer" : C.PROVIDERS[provider]) + (provider === part.provider ? " · this site" : ""), header);
     if (provider === "lcsc") { showPhotoRow(row, header, state, part); return; }
     const result = state.result;
+    const probable = provider === "samtec" && result?.fields.probableCoo?.values.length;
     const apiSetup = provider === "mouser" && ["api-unconfigured", "api-auth"].includes(state.code);
-    const country = el("span", result?.fields.declaredCoo.values.map(countryName).join(" / ") || (state.pending ? "…" : state.code === "unsupported" ? "Not supported" : apiSetup ? (state.code === "api-auth" ? "Check API key" : "Setup required") : state.error ? "Unavailable" : "Not reported"), header); country.className = "country";
-    const message = result ? (state.error ? "Latest check unavailable. Showing the saved report." : state.pending ? "Saved report · checking for an update…" : state.stale ? "Saved report · may be outdated" : result.fields.declaredCoo.values.length ? "Declared origin · exact part matched" : "Exact part matched; declared origin is not available.")
+    const country = el("span", (probable ? result.fields.probableCoo.values.map(countryName).join(" / ") + " · probable" : result?.fields.declaredCoo.values.map(countryName).join(" / ")) || (state.pending ? "…" : state.code === "unsupported" ? "Not supported" : apiSetup ? (state.code === "api-auth" ? "Check API key" : "Setup required") : state.error ? "Unavailable" : "Not reported"), header); country.className = "country";
+    const message = result ? (state.error ? "Latest check unavailable. Showing the saved report." : state.pending ? "Saved report · checking for an update…" : state.stale ? "Saved report · may be outdated" : probable ? "Manufacturer estimate · exact part matched" : result.fields.declaredCoo.values.length ? "Declared origin · exact part matched" : "Exact part matched; declared origin is not available.")
       : state.pending ? "Checking this source…" : state.error || "Exact part matched; declared origin is not available.";
     const status = el("p", message, row);
     status.className = "status" + (state.error && state.code !== "unsupported" ? " error" : "");
@@ -262,6 +266,12 @@
       link.href = url; link.target = "_blank"; link.rel = "noopener";
     }
     if (!result) return;
+    if (provider === "samtec") {
+      el("p", "Samtec predicts this origin; it may change before shipment. No manufacturing stages are established by this estimate.", row).className = "note";
+      const link = el("a", "Quantity-specific origin at Samtec", row);
+      link.href = "https://www.samtec.com/my-samtec/pricing-delivery?" + new URLSearchParams({ partNumber: part.mpn, quantity: "1" });
+      link.target = "_blank"; link.rel = "noopener noreferrer";
+    }
     if (provider === "infineon") {
       el("p", "All returned catalog regions and material variants; regional records are shown below.", row).className = "note";
       if (result.fields.declaredCoo.raw.includes("YY")) el("p", "Some records report COO as YY: origin is only confirmed at shipment.", row).className = "note";
@@ -271,7 +281,7 @@
     const details = el("details", undefined, row);
     el("summary", "Manufacturing & match details", details);
     const fields = el("dl", undefined, details);
-    const labels = { assembly: "Assembly", diffusion: "Wafer fabrication / diffusion", testing: "Testing" };
+    const labels = { ...(provider === "samtec" ? { declaredCoo: "Declared origin" } : {}), assembly: "Assembly", diffusion: "Wafer fabrication / diffusion", testing: "Testing" };
     for (const [key, label] of Object.entries(labels)) {
       const box = el("div", undefined, fields);
       el("dt", label, box);
@@ -400,10 +410,11 @@
     const update = () => {
       const results = Object.values(states).map(s => s.result).filter(Boolean);
       const count = results.filter(r => r.fields.declaredCoo.values.length).length;
+      const estimates = results.filter(r => r.identity.provider === "samtec" && r.fields.probableCoo?.values.length).length;
       const pending = Object.values(states).some(s => s.pending);
       ui.status.className = "status";
       const photos = results.filter(r => r.photoEvidence?.images.length).length;
-      ui.status.textContent = `${count} source${count === 1 ? "" : "s"} reporting origin${photos ? " · reference photos available" : ""}${pending ? " · checking remaining sources…" : "."}`;
+      ui.status.textContent = `${count} source${count === 1 ? "" : "s"} reporting origin${estimates ? " · manufacturer estimate available" : ""}${photos ? " · reference photos available" : ""}${pending ? " · checking remaining sources…" : "."}`;
       ui.refresh.disabled = pending || optionsState.pending;
     };
     let catalogReady = false;
@@ -488,6 +499,7 @@
             : provider === "mouser" ? await C.lookupMouserAuto(part, request, () => part.provider === "mouser" ? C.fromMouser(document, part) : C.lookupMouser(part, request, C.parseHtml, saved?.result.sourceUrl))
             : provider === "lcsc" ? await C.lookupLCSC(part, request, C.parseHtml, saved?.result.sourceUrl)
             : ["microchip", "infineon"].includes(provider) ? await request(provider)
+            : ["samtec", "harwin"].includes(provider) ? await C.lookupManufacturerPage(provider, part, request, C.parseHtml)
             : await C.lookupST(part, request);
           if (!current()) return;
           C.assertMatch(result.identity, part);

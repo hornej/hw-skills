@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Origin Lens — DigiKey & Mouser",
   "description": "Compare component origin reports on DigiKey and Mouser, with local OCR of LCSC package photos. Exact part matching.",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -20,6 +20,8 @@
     "https://eu.mouser.com/*",
     "https://api.mouser.com/*",
     "https://www.microchip.com/*",
+    "https://www.harwin.com/*",
+    "https://www.samtec.com/*",
     "https://www.st.com/*",
     "https://ksmk.st.com/*",
     "https://www.lcsc.com/*",

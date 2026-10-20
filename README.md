@@ -8,8 +8,8 @@ Python helpers make repeatable file analysis and catalog queries available
 without requiring UI automation for every step.
 
 The [Origin Lens Chrome prototype](extensions/origin-lens/README.md) compares
-DigiKey, Mouser, ST STM32, Microchip, and Infineon origin reports on distributor product pages,
-with separate LCSC package-photo evidence and local marking recognition.
+DigiKey, Mouser, ST STM32, Microchip, Infineon, and Harwin origin reports on distributor product pages,
+with separate Samtec probable-origin estimates and LCSC package-photo evidence with local marking recognition.
 Its DigiKey lookup reads an existing MyLists context without adding products;
 each source retains its own exact-part match, declaration, and timestamp.
 

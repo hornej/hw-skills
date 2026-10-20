@@ -99,7 +99,7 @@ function pageHarness(saved, selectedPart=part, selectedType='other', reply=()=>(
     OriginLensOptions:{...O,...optionsOverrides},OriginLensOCR:require('../ocr.js'),OriginLens:{...C,...coreOverrides,readIdentity:()=>selectedPart,readComponentType:()=>selectedType},document,location:{href:selectedPart.sourceUrl},
     window:{addEventListener:(event,fn)=>{events[event]=fn;}},
     MutationObserver:class{observe(){observing=true;}disconnect(){observing=false;}},
-    setTimeout,clearTimeout,AbortController,AbortSignal,
+    setTimeout,clearTimeout,AbortController,AbortSignal,URLSearchParams,
     fetch:async(url,options)=>{fetches++;fetchSignal=options.signal;return new Promise((resolve,reject)=>fetchSignal.addEventListener('abort',()=>reject(fetchSignal.reason),{once:true}));},
     chrome:{storage:saved,runtime:{sendMessage:async message=>{
       // Existing website/cache scenarios model a browser with no API key.
@@ -121,6 +121,41 @@ function originRecord(identity,country,age=0){
 }
 const savedEntry=result=>{const key=C.sourceCacheKey(result.identity.provider,result.identity);return {[key]:{key,result}};};
 const pageText=page=>page.nodes().map(n=>n.textContent||'').join(' ');
+
+test('manufacturer rows load on either distributor and keep Samtec estimates labeled through cache reuse', async()=>{
+  const { DOMParser }=require('linkedom');
+  const parse=html=>new DOMParser().parseFromString(html,'text/html');
+  for(const provider of ['samtec','harwin']){
+    const mpn=provider==='samtec'?'SQT-103-01-F-Q':'S8411-45R';
+    const html=fs.readFileSync(path.join(__dirname,'fixtures',`${provider}-${mpn.toLowerCase()}.html`),'utf8');
+    for(const site of ['digikey','mouser']){
+      const selected={provider:site,host:`www.${site}.com`,manufacturer:C.PROVIDERS[provider]+(site==='digikey'?' Inc.':''),mpn,sku:'example',
+        sourceUrl:site==='digikey'?`https://www.digikey.com/en/products/detail/${provider}/${mpn}/1`:`https://www.mouser.com/en/ProductDetail/${provider}/${mpn}`};
+      const saved=storage(),calls=[];
+      const page=pageHarness(saved,selected,'connectors',message=>{
+        calls.push(message.operation);
+        return message.operation===provider?{ok:true,data:{url:C.manufacturerPageUrl(provider,selected),html}}
+          :{ok:false,code:'auth',message:'Test source unavailable'};
+      },{parseHtml:parse});
+      await settle();await settle();
+      assert.equal(calls.filter(x=>x===provider).length,1);
+      const text=pageText(page);
+      assert.match(text,provider==='samtec'?/Malaysia · probable/:/China/);
+      if(provider==='samtec'){
+        assert.match(text,/Manufacturer estimate · exact part matched/);
+        assert.match(text,/0 sources reporting origin · manufacturer estimate available/);
+        assert.doesNotMatch(text,/Declared origin · exact part matched/);
+        assert.match(text,/No manufacturing stages are established/);
+      }else assert.match(text,/1 source reporting origin/);
+      const cached=C.savedSource(saved.values,provider,selected);
+      assert.ok(cached);
+      const again=pageHarness(saved,selected,'connectors');
+      await settle();await settle();
+      assert.match(pageText(again),provider==='samtec'?/Malaysia · probable/:/China/);
+      assert.match(pageText(again),/Saved · checked/);
+    }
+  }
+});
 
 test('collapse retains reports without new lookups; expand and hide remain independent',async()=>{
   const saved=storage({...savedEntry(originRecord(nexDk,'China')),...savedEntry(originRecord(nexMouser,'Philippines'))});

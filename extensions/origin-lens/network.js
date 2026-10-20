@@ -5,7 +5,7 @@
   const MAX_BYTES = 4 * 1024 * 1024;
   const infineonOrg = "infineontechnologiesproduction6kx2o63f";
   const infineonSearch = `https://${infineonOrg}.org.coveo.com/rest/search/v2`;
-  const allowedHosts = ["www.digikey.com", "www.mouser.com", "eu.mouser.com", "api.mouser.com", "www.microchip.com", "www.st.com", "ksmk.st.com", "www.lcsc.com", "assets.lcsc.com", "www.infineon.com", `${infineonOrg}.org.coveo.com`];
+  const allowedHosts = ["www.digikey.com", "www.mouser.com", "eu.mouser.com", "api.mouser.com", "www.microchip.com", "www.st.com", "ksmk.st.com", "www.lcsc.com", "assets.lcsc.com", "www.infineon.com", `${infineonOrg}.org.coveo.com`, "www.harwin.com", "www.samtec.com"];
 
   function validatePart(part) {
     if (!part || !["digikey", "mouser"].includes(part.provider) || ![part.manufacturer, part.mpn, part.sku].every(v => typeof v === "string" && v.trim() && v.length <= 180 && !/[\x00-\x1f]/.test(v))) {
@@ -29,7 +29,7 @@
     const maxBytes = kind === "text" ? 16384 : MAX_BYTES;
     const isApi = u.hostname === "api.mouser.com";
     const mouserWebsite = ["www.mouser.com", "eu.mouser.com"].includes(u.hostname);
-    const name = isApi ? "Mouser API" : mouserWebsite ? "Mouser" : u.hostname.endsWith(".lcsc.com") ? "LCSC" : u.hostname === "www.microchip.com" ? "Microchip" : u.hostname === "www.infineon.com" || u.href === infineonSearch ? "Infineon" : "ST";
+    const name = isApi ? "Mouser API" : mouserWebsite ? "Mouser" : u.hostname.endsWith(".lcsc.com") ? "LCSC" : u.hostname === "www.microchip.com" ? "Microchip" : u.hostname === "www.infineon.com" || u.href === infineonSearch ? "Infineon" : u.hostname === "www.harwin.com" ? "Harwin" : u.hostname === "www.samtec.com" ? "Samtec" : "ST";
     let r;
     try {
       r = await fetcher(u.href, { method: postBody ? "POST" : "GET", credentials: mouserWebsite ? "include" : "omit", cache: "no-store",
@@ -112,6 +112,9 @@
     if (operation === "microchip") {
       if (C.manufacturerProvider(part) !== "microchip") throw new C.LookupError("request", "Unsupported Microchip manufacturer identity.");
       return C.fromMicrochip(await read(C.microchipUrl(part), "json", fetcher), part);
+    }
+    if (["samtec", "harwin"].includes(operation)) {
+      return read(C.manufacturerPageUrl(operation, part), "html", fetcher);
     }
     if (operation === "infineon") {
       if (C.manufacturerProvider(part) !== "infineon" || !/^[a-z0-9][a-z0-9 /+._-]{1,79}$/i.test(part.mpn)) throw new C.LookupError("request", "Unsupported Infineon ordering code.");

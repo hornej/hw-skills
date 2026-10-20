@@ -112,7 +112,7 @@ test('manifest limits access to supported product pages and bundles all scripts'
   const manifest = JSON.parse(fs.readFileSync(path.join(dir,'manifest.json'),'utf8'));
   assert.deepEqual(manifest.permissions,['storage','offscreen']);
   assert.equal(manifest.manifest_version,3);
-  assert.deepEqual(manifest.host_permissions, ['https://www.digikey.com/*', 'https://www.mouser.com/*', 'https://eu.mouser.com/*', 'https://api.mouser.com/*', 'https://www.microchip.com/*', 'https://www.st.com/*', 'https://ksmk.st.com/*', 'https://www.lcsc.com/*', 'https://assets.lcsc.com/*', 'https://www.infineon.com/*', 'https://infineontechnologiesproduction6kx2o63f.org.coveo.com/*']);
+  assert.deepEqual(manifest.host_permissions, ['https://www.digikey.com/*', 'https://www.mouser.com/*', 'https://eu.mouser.com/*', 'https://api.mouser.com/*', 'https://www.microchip.com/*', 'https://www.harwin.com/*', 'https://www.samtec.com/*', 'https://www.st.com/*', 'https://ksmk.st.com/*', 'https://www.lcsc.com/*', 'https://assets.lcsc.com/*', 'https://www.infineon.com/*', 'https://infineontechnologiesproduction6kx2o63f.org.coveo.com/*']);
   assert.equal(manifest.background.service_worker,'background.js');
   for (const group of manifest.content_scripts) for (const file of group.js) assert.ok(fs.existsSync(path.join(dir,file)));
   assert.ok(manifest.content_scripts[0].matches.every(pattern => pattern.startsWith('https://') && !pattern.includes('<all_urls>')));

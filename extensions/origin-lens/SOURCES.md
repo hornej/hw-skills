@@ -7,6 +7,8 @@ presented as direct manufacturer declarations. Missing fields stay unknown.
 
 | Source | Coverage / access | Origin fields |
 | --- | --- | --- |
+| Harwin product pages | Exact product code and canonical page; public, no credentials | Declared COO from `countryOfOrigin`; recognized ISO codes displayed as names |
+| Samtec product pages | Exact manufacturer, full MPN, SKU and canonical page; public, no credentials | **Probable COO** only; a manufacturer estimate, separate from declarations and manufacturing stages |
 | Mouser Search API | Exact manufacturer + full MPN across its catalog; personal Search API key | Declared COO, assembly, diffusion when returned in `TradeCompliance` |
 | Mouser website | Current US/EU product page or cross-site page fetch; fallback when no API key is configured | Same named compliance fields, subject to page availability |
 | DigiKey | Signed-in, read-only catalog lookup using an existing empty or populated list | Declared COO |
@@ -82,6 +84,37 @@ the photos and detected text without assigning a country.
 The pasted conversation's specific PCN plant mappings were not
 independently validated in this integration and are not used by the extension.
 
+## Harwin and Samtec verification
+
+Harwin and Samtec were added in 0.11.0 after live network and parser checks on
+2026-10-20:
+
+- [Harwin S8411-45R](https://www.harwin.com/products/S8411-45R): `CN` → China.
+- [Harwin H3192-05](https://www.harwin.com/products/H3192-05): `GB` → United Kingdom.
+- [Samtec SQT-103-01-F-Q](https://www.samtec.com/products/sqt-103-01-f-q):
+  probable `MALAYSIA` → Malaysia.
+- [Samtec TSM-106-03-L-SV](https://www.samtec.com/products/tsm-106-03-l-sv):
+  probable `VIETNAM` → Vietnam.
+
+Samtec's origin table explicitly describes a prediction that may change before
+shipment. The extension preserves it in `probableCoo`, leaving declared COO and
+all stage fields empty. Harwin's field is under the exact product's attributes
+in its server-rendered page data and is also displayed in Product Characteristics.
+Both pages are fetched as inert HTML; no provider scripts are executed. Each
+adapter checks the requested URL, canonical URL and exact returned product code.
+These are observed website fields rather than supported public API contracts.
+Sanitized fixture excerpts omit analytics and unrelated content. Distributor
+manufacturer aliases were checked against [DigiKey Harwin](https://www.digikey.com/en/products/detail/harwin-inc/S8411-45R/3131055)
+and [DigiKey Samtec](https://www.digikey.com/en/products/detail/samtec-inc/SQT-103-01-F-S/6678716).
+
+Additional investigation during this release:
+
+- TI's import tool requires myTI login; it was not added as an automatic source.
+- ADI's current MAX6067 reliability report provides qualification data, but no
+  wafer or assembly country was verified. It was not converted into origin evidence.
+- Molex's [COO request form](https://www.molex.com/en-us/country-of-origin)
+  delivers results by email. No form was submitted or automatic adapter added.
+
 ## Researched candidates, not integrated
 
 | Source | Current finding | Next evidence needed |
@@ -111,6 +144,8 @@ adapter or host permissions were added on the basis of API availability alone.
    permission. Credentials stay in the worker; report URLs cannot include them.
 4. Return the shared record shape: source identity, checkedAt, sourceKind,
    sourceUrl and distinct declaredCoo/assembly/diffusion/testing fields.
+   Estimates use a separate probableCoo field and remain excluded from
+   declared-origin counts and comparisons.
 5. Test ambiguous/near matches, missing fields, auth/quota/schema errors,
    cache provenance, and master/type cancellation. Verify live before claiming
    support; document any installed-browser test still pending.

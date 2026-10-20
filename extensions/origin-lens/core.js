@@ -16,6 +16,8 @@
     if (name === "microchip technology inc.") return "microchip technology";
     if (name === "st") return "stmicroelectronics"; // LCSC brand 74.
     if (name === "infineon") return "infineon technologies"; // Mouser's specification label.
+    if (name === "samtec inc.") return "samtec";
+    if (name === "harwin inc.") return "harwin";
     return name;
   }
   const sameManufacturer = (a, b) => !!manufacturerKey(a) && manufacturerKey(a) === manufacturerKey(b);
@@ -79,6 +81,7 @@
   }
   function hasSourceEvidence(result) {
     return result?.identity?.provider === "lcsc" ? validLCSCPhotos(result)
+      : ["samtec", "harwin"].includes(result?.identity?.provider) ? validManufacturerPageReport(result)
       : result?.identity?.provider === "infineon" ? validInfineonReport(result) && hasOriginEvidence(result) : hasOriginEvidence(result);
   }
 
@@ -204,6 +207,8 @@
   function manufacturerProvider(part) {
     if (manufacturerKey(part.manufacturer) === "microchip technology") return "microchip";
     if (manufacturerKey(part.manufacturer) === "infineon technologies") return "infineon";
+    if (manufacturerKey(part.manufacturer) === "samtec") return "samtec";
+    if (manufacturerKey(part.manufacturer) === "harwin") return "harwin";
     return "st";
   }
   const microchipUrl = part => `https://www.microchip.com/designresources/product-catalog/api/productInfo?part=${encodeURIComponent(part.mpn)}&pagesize=100&pagenumber=1`;
@@ -266,6 +271,91 @@
     } catch { return false; }
   }
 
+  function manufacturerPageUrl(provider, part) {
+    if (!["samtec", "harwin"].includes(provider) || manufacturerProvider(part) !== provider ||
+        !/^[a-z0-9][a-z0-9.-]{1,78}[a-z0-9]$/i.test(part.mpn) || part.mpn.includes("..")) {
+      throw new LookupError("identity", "Unsupported manufacturer or full ordering code.");
+    }
+    const mpn = provider === "samtec" ? part.mpn.toLowerCase() : part.mpn.toUpperCase();
+    return `https://www.${provider}.com/products/${encodeURIComponent(mpn)}`;
+  }
+  function manufacturerCountry(rawValue, provider) {
+    const raw = field([rawValue]).raw;
+    const names = new Intl.DisplayNames(["en"], { type: "region", fallback: "none" });
+    // Harwin publishes ISO alpha-2 codes; Samtec publishes English country names.
+    // Unknown strings stay unresolved, never become a country or a manufacturing stage.
+    const country = provider === "harwin" ? (countryCodes.has(raw[0]) ? names.of(raw[0]) : undefined)
+      : [...countryCodes].map(code => names.of(code)).find(name => name && same(name, raw[0]));
+    return { raw, values: country ? [country] : [], status: country ? "reported" : "unknown" };
+  }
+  function manufacturerPageRecord(provider, part, rawCountry) {
+    const sourceUrl = manufacturerPageUrl(provider, part);
+    const identity = { provider, host: new URL(sourceUrl).hostname,
+      manufacturer: provider === "samtec" ? "Samtec" : "Harwin",
+      mpn: normalize(part.mpn).toUpperCase(), sku: normalize(part.mpn).toUpperCase(), sourceUrl };
+    return record(identity, { [provider === "samtec" ? "probableCoo" : "declaredCoo"]: manufacturerCountry(rawCountry, provider) },
+      provider === "samtec" ? "Samtec probable COO" : "Harwin product data");
+  }
+  function validManufacturerPageReport(result) {
+    try {
+      const id = result.identity, provider = id.provider;
+      const key = provider === "samtec" ? "probableCoo" : "declaredCoo";
+      const raw = result.fields[key].raw;
+      if (!Array.isArray(raw) || raw.length !== 1 || typeof raw[0] !== "string" || raw[0].length > 80 ||
+          !same(id.sku, id.mpn) || id.host !== `www.${provider}.com`) return false;
+      const expected = manufacturerPageRecord(provider, id, raw[0]);
+      return result.sourceUrl === expected.sourceUrl && id.sourceUrl === expected.sourceUrl &&
+        result.sourceKind === expected.sourceKind && expected.fields[key].values.length === 1 &&
+        JSON.stringify(result.fields) === JSON.stringify(expected.fields);
+    } catch { return false; }
+  }
+  function fromManufacturerPage(doc, href, provider, part) {
+    const url = manufacturerPageUrl(provider, part);
+    const canonicals = [...doc.querySelectorAll('link[rel="canonical"]')];
+    if (href !== url || canonicals.length !== 1 || canonicals[0].getAttribute("href") !== url) {
+      throw new LookupError("identity", "The manufacturer page did not match the exact ordering code.");
+    }
+    if (provider === "harwin") {
+      const scripts = [...doc.querySelectorAll('script#__NEXT_DATA__[type="application/json"]')];
+      let data;
+      try { if (scripts.length === 1) data = JSON.parse(scripts[0].textContent); } catch { /* Reject below. */ }
+      const props = data?.props?.pageProps, product = props?.product;
+      if (data?.page !== "/products/[id]" || !same(data.query?.id, part.mpn) ||
+          !same(props?.param, part.mpn) || !same(product?.name, part.mpn) || !same(product?.slug, part.mpn)) {
+        throw new LookupError("identity", "Harwin did not return the exact full ordering code.");
+      }
+      const origin = product?.attributes?.countryOfOrigin;
+      if (origin === undefined || origin !== null && (origin.name !== "Country of Origin" ||
+          typeof origin.value !== "string" || origin.value.length > 80)) {
+        throw new LookupError("schema", "Harwin's product origin field was missing or changed.");
+      }
+      return manufacturerPageRecord(provider, part, origin?.value);
+    }
+    const products = productJson(doc);
+    const product = products.length === 1 ? products[0] : null;
+    const heading = doc.querySelector("h1");
+    const headingCode = normalize([...(heading?.childNodes || [])].filter(n => n.nodeType === 3).map(n => n.textContent).join(" "));
+    if (!product || !sameManufacturer(product.manufacturer?.name, part.manufacturer) ||
+        !sameManufacturer(product.brand?.name, part.manufacturer) || !same(product.offers?.mpn, part.mpn) ||
+        !same(product.offers?.sku, part.mpn) || product.offers?.url !== url || !same(headingCode, part.mpn)) {
+      throw new LookupError("identity", "Samtec did not return one exact manufacturer and ordering-code match.");
+    }
+    const tables = [...doc.querySelectorAll("table")].filter(t =>
+      normalize(t.querySelector("th")?.textContent) === "Country of Origin (“COO”) Information");
+    if (tables.length !== 1) throw new LookupError("schema", "Samtec's probable-origin section was missing or changed.");
+    const paragraphs = [...tables[0].querySelectorAll("p")].filter(p => /^Probable COO:/.test(normalize(p.textContent)));
+    const raw = normalize(paragraphs[0]?.querySelector("span")?.textContent);
+    if (paragraphs.length !== 1 || !raw || raw.length > 80 ||
+        !normalize(paragraphs[0].textContent).startsWith(`Probable COO: ${raw}.`)) {
+      throw new LookupError("schema", "Samtec's probable-origin field was missing or changed.");
+    }
+    return manufacturerPageRecord(provider, part, raw);
+  }
+  async function lookupManufacturerPage(provider, part, request, parse = parseHtml) {
+    const page = await request(provider);
+    return fromManufacturerPage(parse(page.html), page.url, provider, part);
+  }
+
   async function getJson(path, fetcher = fetch) {
     // All network access is same-origin and read-only. No arbitrary page-supplied URLs.
     if (!path.startsWith("/en/mylists/api/lists/")) throw new LookupError("request", "Unsupported lookup path.");
@@ -298,7 +388,7 @@
     return fromDigiKey(data, identity);
   }
 
-  const PROVIDERS = { digikey: "DigiKey", mouser: "Mouser", st: "STMicroelectronics", microchip: "Microchip", infineon: "Infineon", lcsc: "LCSC · package photos" };
+  const PROVIDERS = { digikey: "DigiKey", mouser: "Mouser", st: "STMicroelectronics", microchip: "Microchip", infineon: "Infineon", harwin: "Harwin", samtec: "Samtec", lcsc: "LCSC · package photos" };
   function assertMatch(found, requested) {
     if (!found || !sameManufacturer(found.manufacturer, requested.manufacturer) || !same(found.mpn, requested.mpn)) {
       throw new LookupError("identity", "No verified match for this exact manufacturer and ordering code. No origin assigned.");
@@ -321,6 +411,7 @@
     if (provider === "lcsc") return "www.lcsc.com";
     if (provider === "microchip") return "www.microchip.com";
     if (provider === "infineon") return "www.infineon.com";
+    if (["samtec", "harwin"].includes(provider)) return `www.${provider}.com`;
     return provider === "digikey" ? "www.digikey.com" : provider === "st" ? "www.st.com" : part.provider === "mouser" ? part.host : "www.mouser.com";
   }
   function sourceCacheKey(provider, part) {
@@ -360,7 +451,7 @@
       try {
         if (provider === "microchip" && (r.sourceUrl !== microchipUrl(found) || found.sourceUrl !== r.sourceUrl)) continue;
         if (provider === "infineon" && (r.sourceUrl !== infineonUrl() || found.sourceUrl !== r.sourceUrl || !same(found.sku, found.mpn))) continue;
-        if (!["st", "microchip", "infineon"].includes(provider) && (productUrl(r.sourceUrl, provider) !== productUrl(found.sourceUrl, provider) ||
+        if (!["st", "microchip", "infineon", "samtec", "harwin"].includes(provider) && (productUrl(r.sourceUrl, provider) !== productUrl(found.sourceUrl, provider) ||
           new URL(r.sourceUrl).hostname !== found.host)) continue;
       } catch { continue; }
       matches.push({ result: r, cached: true, stale: age >= CACHE_TTL });
@@ -570,7 +661,7 @@
   }
 
   const api = { VERSION, CACHE_TTL, CACHE_RETENTION, CACHE_PREFIX, PROVIDERS, COMPONENT_TYPES, PREFERENCE_KEYS, typeKey, componentTypeEnabled, classifyCategories, readComponentType, LookupError, normalize, same, field, parseListId, cacheKey, isFresh, readIdentity, fromDigiKey, fromMouser, getJson, discoverList, lookupDigiKey,
-    hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, infineonUrl, fromInfineon, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
+    hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, infineonUrl, fromInfineon, manufacturerPageUrl, fromManufacturerPage, lookupManufacturerPage, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
     lcscSupported, lcscSearchUrl, lcscImageUrl, lcscReview, validLCSCPhotos, lcscCandidate, fromLCSC, lookupLCSC };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OriginLens = Object.freeze(api);

@@ -1,6 +1,6 @@
 {
   "name": "origin-lens",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "private": true,
   "scripts": {
     "build:ocr": "node scripts/build-ocr-assets.cjs",
@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@tesseract.js-data/eng": "1.0.0",
+    "linkedom": "0.18.13",
     "tesseract.js": "7.0.0",
     "tesseract.js-core": "7.0.0"
   }

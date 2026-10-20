@@ -238,14 +238,15 @@ test('blocked Mouser fallback offers extension setup instead of a website sign-i
   assert.equal(button.disabled,false);
 });
 
-test('configured API populates and shares Mouser reports on either site, refreshes after key changes and honors Off',async()=>{
+test('configured API fetches live Mouser reports on each site without saving them, refreshes after key changes and honors Off',async()=>{
   const saved=storage(),report={...originRecord(nexMouser,'Philippines'),sourceKind:'Mouser Search API'};
   const apiReply=()=>({ok:true,data:report});
   const dkPage=pageHarness(saved,nexDk,'discretes',undefined,{lookupDigiKey:async()=>originRecord(nexDk,'China')},apiReply);
   await settle();assert.match(pageText(dkPage),/Mouser Search API/);assert.match(pageText(dkPage),/Philippines/);assert.equal(dkPage.messages(),0);assert.equal(dkPage.apiMessages(),1);
   const mouserPage=pageHarness(saved,nexMouser,'discretes',undefined,{},apiReply);await settle();
-  assert.match(pageText(mouserPage),/Philippines/);assert.equal(mouserPage.apiMessages(),0);
-  await saved.local.set({mouserApiRevision:'new-key'});await settle();assert.equal(mouserPage.apiMessages(),1);assert.equal(dkPage.apiMessages(),2);
+  assert.match(pageText(mouserPage),/Philippines/);assert.equal(mouserPage.apiMessages(),1);
+  assert.equal(Object.values(saved.values).some(entry=>entry?.result?.sourceKind==='Mouser Search API'),false);
+  await saved.local.set({mouserApiRevision:'new-key'});await settle();assert.equal(mouserPage.apiMessages(),2);assert.equal(dkPage.apiMessages(),2);
   await saved.local.set({enabled:false});await saved.local.set({mouserApiRevision:'removed-key'});await settle();
   assert.equal(dkPage.panelCount()+mouserPage.panelCount(),0);assert.equal(dkPage.apiMessages(),2);
 });
@@ -304,6 +305,30 @@ test('all three supported source reports are reusable from either distributor',a
   }
 });
 
+test('ST exposes both PCN assembly countries on both sites, including legacy catalog caches and failed lookups',async()=>{
+  const dk={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND'};
+  const mouser={...nexMouser,manufacturer:dk.manufacturer,mpn:dk.mpn,sku:'511-STM32G491RET6'};
+  const catalog=C.fromST([{prmis_id:'CP531377',attribute_name:'5080',attribute_value:'TAIWAN'}],
+    {item_name:dk.mpn,prmis_id:'CP531377',parent_id:'PF269474'},dk);
+  const walk=n=>[n,...n.children.flatMap(walk)];
+  for(const selected of [dk,mouser])for(const cached of [true,false]){
+    const page=pageHarness(storage(cached?savedEntry(catalog):{}),selected,'ics');await settle();
+    const row=page.nodes().find(n=>n.className==='report'&&walk(n).some(c=>c.tagName==='h3'&&c.textContent==='STMicroelectronics'));
+    const nodes=walk(row),text=nodes.map(n=>n.textContent||'').join(' ');
+    assert.ok(nodes.some(n=>n.className==='country'&&n.textContent==='Taiwan / China'));
+    assert.match(text,/Declared COO · ST catalog/);assert.match(text,/Assembly locations · ST PCN/);
+    assert.match(text,/ASE Kaohsiung \(Taiwan\)/);assert.match(text,/JSCC \(China\)/);
+    assert.match(text,/Published 2024-04-12 · reviewed 2026-10-20/);
+    assert.match(text,/shipment lot is not verified/);
+    assert.ok(nodes.some(n=>n.tagName==='a'&&n.href===C.stAssemblyDocuments(dk)[0].sourceUrl));
+    if(cached){assert.match(text,/Assembly of shipment lot/);assert.match(text,/Not verified/);}
+    else assert.match(text,/ST catalog Not reported/);
+    assert.deepEqual(catalog.fields.declaredCoo.values,['TAIWAN']);assert.deepEqual(catalog.fields.assembly.values,[]);
+  }
+  const sibling=pageHarness(storage(),{...dk,mpn:'STM32G491REI6'},'ics');await settle();
+  assert.doesNotMatch(pageText(sibling),/MDG\/24\/14363|Assembly locations · ST PCN/);
+});
+
 test('LCSC photo evidence appears on both sites, stays outside the COO count and respects Off',async()=>{
   const dkPart={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND',sourceUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591'};
   const mouserPart={...nexMouser,manufacturer:dkPart.manufacturer,mpn:dkPart.mpn,sku:'511-STM32G491RET6',sourceUrl:'https://www.mouser.com/en/ProductDetail/STMicroelectronics/STM32G491RET6'};
@@ -316,7 +341,7 @@ test('LCSC photo evidence appears on both sites, stays outside the COO count and
   const dkPage=pageHarness(saved,dkPart,'ics'),mouserPage=pageHarness(saved,mouserPart,'ics',undefined,{fromMouser:()=>originRecord(mouserPart,'Taiwan')});
   await settle();
   for(const page of [dkPage,mouserPage]){
-    assert.match(pageText(page),/China · sample/);assert.match(pageText(page),/Reviewed marking CHN · assembly country of the photographed sample/);
+    assert.match(pageText(page),/China · sample/);assert.match(pageText(page),/Reviewed marking CHN · interpreted assembly country of the photographed sample/);
     assert.match(pageText(page),/2 sources reporting origin · reference photos available/);
     assert.ok(page.nodes().some(n=>n.tagName==='img'&&n.src===image&&n.referrerPolicy==='no-referrer'));
     assert.ok(page.nodes().some(n=>n.tagName==='a'&&n.href===front));
@@ -364,24 +389,30 @@ test('old underside galleries stay hidden during refresh and cannot return when 
 });
 
 test('automatic markings render on both sites with raw text and stay separate from catalog COO',async()=>{
-  const O=require('../ocr.js'),dk={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32F103C8T6'};
+ for(const marking of ['MYS','TWN']){
+  const O=require('../ocr.js'),taiwan=marking==='TWN',country=taiwan?'Taiwan':'Malaysia';
+  const dk={...nexDk,manufacturer:'STMicroelectronics',mpn:taiwan?'STM32G491REI6':'STM32F103C8T6'};
   const mouser={...nexMouser,manufacturer:dk.manufacturer,mpn:dk.mpn};
-  const url='https://www.lcsc.com/product-detail/C8734.html',image='https://assets.lcsc.com/images/lcsc/900x900/20230221_STMicroelectronics-STM32F103C8T6_C8734_blank.jpg';
-  const product={'@type':'Product',mpn:dk.mpn,sku:'C8734',brand:{name:'ST'},offers:{url},image:[image]};
+  const sku=taiwan?'C3228560':'C8734',date=taiwan?'20230711':'20230221';
+  const url=`https://www.lcsc.com/product-detail/${sku}.html`,image=`https://assets.lcsc.com/images/lcsc/900x900/${date}_STMicroelectronics-${dk.mpn}_${sku}_blank.jpg`;
+  const product={'@type':'Product',mpn:dk.mpn,sku,brand:{name:'ST'},offers:{url},image:[image]};
   const result=C.fromLCSC({querySelectorAll:()=>[{textContent:JSON.stringify(product)}]},url,dk);
-  const readings=[{imageUrl:image,sha256:'a'.repeat(64),passes:['gray','contrast'].map(variant=>({rotation:0,variant,text:'STM32F 103C8T6 MYS',words:[{text:'MYS',confidence:90}]}))}];
+  const readings=[{imageUrl:image,sha256:'a'.repeat(64),passes:(taiwan?['contrast','red']:['gray','contrast']).map(variant=>({rotation:0,variant,text:dk.mpn+' '+marking,words:[{text:marking,confidence:90}]}))}];
   result.photoEvidence.ocr={version:O.VERSION,engine:O.ENGINE,processedAt:new Date().toISOString(),readings,...O.summarize(readings,dk)};
   const saved=storage({...savedEntry(result)});
   for(const selected of [dk,mouser]){
     const page=pageHarness(saved,selected,'ics');await settle();
-    assert.match(pageText(page),/Malaysia · auto-read/);
-    assert.match(pageText(page),/Automatically read marking MYS/);
+    assert.ok(pageText(page).includes(country+' · auto-read'));
+    assert.ok(pageText(page).includes('Automatically read marking '+marking));
     assert.match(pageText(page),/processed on this device/);
-    assert.match(pageText(page),/STM32F 103C8T6 MYS/);
+    assert.ok(pageText(page).includes(dk.mpn+' '+marking));
     assert.match(pageText(page),/0 sources reporting origin · reference photos available/);
     assert.doesNotMatch(pageText(page),/Visual review/);
+    assert.ok(page.nodes().some(n=>n.tagName==='a'&&n.href===(taiwan?O.COUNTRY_CODE_URL:O.INTERPRETATION_URL)));
+    if(taiwan)assert.match(pageText(page),/not a part-specific manufacturing declaration/);
   }
   await saved.local.set({enabled:false});
+ }
 });
 
 test('failed refresh retains dated shared reports, uses known Mouser URL, and type/global off still suppress updates',async()=>{

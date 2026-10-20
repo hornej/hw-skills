@@ -615,3 +615,79 @@ scrolling at 360px. Preview command:
 `node extensions/origin-lens/scripts/preview-panel.cjs --st-options`.
 It uses captured ST data and simulated browser-extension messaging, not the
 installed extension. Reload Origin Lens and the product page to load this version.
+
+## 2026-10-20 — TWN and blue-watermarked photos (0.12.2)
+
+The user supplied a clear TWN-marked STM32G491REI6 photo. Two separate causes
+prevented a result: the literal mapping allowed only CHN/MYS, and the existing
+grayscale pass scored TWN at 55 despite the contrast pass reading it at 91.
+Adding only the code mapping would still leave this sample unreadable.
+
+Added TWN/Taiwan and PHL/Philippines using the explicit device country-code
+definitions in ST PCN MMS-MMY/09/4452, page 7 (Anglia's copy; see `SOURCES.md`).
+That document covers EPROMs; the UI discloses that applying its code mapping to
+an STM32 sample is an interpretation. No plant or wafer-code mapping was added.
+
+A third preprocessing variant takes the red channel before contrast inversion.
+Blue catalog watermarks become dark while neutral laser lettering remains
+bright. The existing grayscale and luminance-contrast passes run first; a
+successful pair skips the fallback. Any two distinct variants must agree at
+the same rotation, in the same image, with each word score at least 80.
+Duplicate variants, separated letters, embedded codes, conflicting countries,
+and different STM32 families remain rejected. The cap is now 12 passes per
+image; the existing three-image and 60-second job bounds are unchanged.
+
+Actual browser verification with bundled Tesseract.js, WASM and English data:
+
+| Photo | Mark | Minimum agreeing score | Passes |
+| --- | --- | --- | --- |
+| User's PNG attachment | TWN / Taiwan | 88 | gray 55, contrast 91, red 88 |
+| Original C3228560 JPEG | TWN / Taiwan | 88 | gray 55, contrast 91, red 88 |
+| C3231005 JPEG regression | CHN / China | 91 | gray + contrast |
+| C8734 JPEG regression | MYS / Malaysia | 86 | gray + contrast |
+
+The original C3228560 output is saved as an offline regression fixture. Image
+hashes, source links and timestamps are recorded in `SOURCES.md`; photographs
+and full browser reports remain in the existing local evidence directory.
+
+OCR schema version 2 forces previously unreadable version-1 cached photos to
+be scanned again without discarding other origin sources. After the user
+reloaded Origin Lens, the installed extension on their exact DigiKey product
+page displayed **Taiwan · auto-read**, **TWN**, **88/100**, and a processing time
+of 2026-10-20 15:54:27 America/Denver. The three declared-origin reports remained
+separate. This validates the installed service-worker/offscreen path in addition
+to the local browser smoke check. The automated browser cannot open internal
+Chrome extension-management URLs, so the user performed the reload.
+
+All 121 extension tests, JavaScript syntax checks and the whitespace check passed.
+
+## 2026-10-20 — ST catalog COO and documented assembly routes (0.12.3)
+
+The ST catalog currently declares Taiwan for `STM32G491RET6`, but ST PCN
+MDG/24/14363, published 2024-04-12, documents existing assembly flows at ASE
+Kaohsiung (Taiwan) and JSCC (China). The reviewed public product list includes
+the exact `STM32G491RET6` and `STM32G491RET6TR` codes. The source URL and document
+SHA-256 are recorded in `SOURCES.md` and in the reviewed evidence record.
+
+The ST source row now shows **Taiwan / China** with separate, visible labels
+for **Declared COO · ST catalog** and **Assembly locations · ST PCN**. The
+document link, publication/review dates and site names stay visible. The notice
+establishes documented assembly routes, not the origin of a shipment lot.
+Shipment assembly, wafer fabrication and test remain unverified when the live
+catalog does not report them. The ordering-options summary now explicitly
+describes its countries as ST catalog declarations.
+
+This is a small reviewed-document registry for those two exact codes, not an
+automatic PCN crawler or a family-wide inference. It renders independently of
+cached catalog records and failed live requests, without changing their stored
+declared COO. Refresh does not advance the document's review date. LCSC photo
+evidence remains a separate source.
+
+All 123 extension tests and JavaScript syntax/whitespace checks passed. Tests
+cover cached records, a failed catalog request, both distributor pages, exact
+identity limits, multiple catalog COO values and unchanged manufacturing fields.
+The synthetic browser preview showed both countries and their labels at 360px
+and 760px without horizontal overflow. A screenshot is retained with the local
+2026-10-20 STM32G491RET6 evidence. This verifies rendering, not the installed
+extension. Browser policy blocks `chrome://extensions`; the user must reload
+Origin Lens there and refresh the product page to activate version 0.12.3.

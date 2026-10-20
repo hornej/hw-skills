@@ -72,12 +72,18 @@ test('failed website fallback explains missing API setup without masking cancell
   }
 });
 
-test('API reports follow exact parts across US/EU pages but website regions and different SKUs remain isolated',()=>{
+test('API reports are live only; previously cached API results cannot be reused on any site',()=>{
   const result=C.fromMouserApi(data(),part),k=C.sourceCacheKey('mouser',result.identity),entries={[k]:{key:k,result}};
   const eu={...result.identity,host:'eu.mouser.com',sourceUrl:result.sourceUrl.replace('www.mouser','eu.mouser')};
-  assert.ok(C.savedSource(entries,'mouser',part));assert.ok(C.savedSource(entries,'mouser',eu));
+  assert.equal(C.cacheableSource(result),false);
+  assert.equal(C.sourceFresh(entries[k],'mouser',result.identity),false);
+  assert.equal(C.isFresh(result,result.identity),false);
+  assert.equal(C.savedSource(entries,'mouser',part),null);assert.equal(C.savedSource(entries,'mouser',eu),null);
   assert.equal(C.savedSource(entries,'mouser',{...eu,sku:'other'}),null);
-  result.sourceKind='Mouser Product & Trade Compliance';assert.equal(C.savedSource(entries,'mouser',eu),null);
+  const website={...result,sourceKind:'Mouser Product & Trade Compliance'};
+  const websiteEntries={[k]:{key:k,result:website}};
+  assert.ok(C.cacheableSource(website));assert.ok(C.savedSource(websiteEntries,'mouser',part));
+  assert.equal(C.savedSource(websiteEntries,'mouser',eu),null);
 });
 
 const microPart={...part,manufacturer:'Microchip Technology',mpn:'PIC10F200-E/MC',sku:'PIC10F200-E/MC-ND',sourceUrl:'https://www.digikey.com/en/products/detail/microchip-technology/PIC10F200-E-MC/12345'};
@@ -96,7 +102,8 @@ test('Microchip public API preserves declared COO, assembly and wafer countries 
 function workerHarness(initial={},transport=async()=>response(data())){
   const values={...initial},listeners=[];let listener,calls=0;
   const storage={onChanged:{addListener:fn=>listeners.push(fn)},local:{
-    get:async keys=>Object.fromEntries((Array.isArray(keys)?keys:[keys]).map(k=>[k,values[k]])),
+    get:async keys=>keys===null?{...values}:Object.fromEntries((Array.isArray(keys)?keys:[keys]).map(k=>[k,values[k]])),
+    remove:async keys=>{for(const k of keys)delete values[k];},
     set:async update=>{Object.assign(values,update);for(const fn of listeners)fn(Object.fromEntries(Object.entries(update).map(([k,v])=>[k,{newValue:v}])),'local');}
   }};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../background.js'),'utf8'),{
@@ -111,6 +118,20 @@ test('worker keeps credentials out of replies/storage and enforces persistent re
   const limited=workerHarness({'mouser-api-requests':Array(30).fill(Date.now())});const reply=await limited.ask();
   assert.equal(reply.code,'rate');assert.equal(limited.calls(),0);assert.ok(!JSON.stringify(reply).includes(key));
   const off=workerHarness({enabled:false});assert.equal((await off.ask()).code,'disabled');assert.equal(off.calls(),0);
+});
+
+test('worker migration deletes old API reports but retains preferences, request counts and other sources',async()=>{
+  const result=C.fromMouserApi(data(),part),k=C.sourceCacheKey('mouser',result.identity);
+  const websiteKey=k+'-website',times=[Date.now()];
+  const saved={enabled:true,'mouser-api-requests':times,mouserApiRevision:'revision',
+    [k]:{key:k,result},'origin-lens:v1:legacy':{...result,version:1},
+    [websiteKey]:{key:websiteKey,result:{...result,sourceKind:'Mouser Product & Trade Compliance'}}};
+  assert.deepEqual(C.disallowedCacheKeys(saved).sort(),[k,'origin-lens:v1:legacy'].sort());
+  const h=workerHarness(saved);await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(h.values[k],undefined);assert.equal(h.values['origin-lens:v1:legacy'],undefined);
+  assert.ok(h.values[websiteKey]);assert.equal(h.values.enabled,true);
+  assert.deepEqual(h.values['mouser-api-requests'],times);assert.equal(h.values.mouserApiRevision,'revision');
+  assert.equal(h.calls(),0);
 });
 test('key changes and global off abort pending API requests',async()=>{
   for(const change of [{enabled:false},{mouserApiRevision:'changed'}]){

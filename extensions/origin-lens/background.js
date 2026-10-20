@@ -2,6 +2,14 @@
 importScripts("ocr.js", "core.js", "st-options.js", "network.js", "credentials.js", "ocr-bridge.js");
 const inFlight = new Map();
 const settingRevisions = new Map();
+// Remove API reports saved by older releases, even if no product page is open.
+// Report selection also rejects these records if storage is temporarily busy.
+(async () => {
+  try {
+    const keys = OriginLens.disallowedCacheKeys(await chrome.storage.local.get(null));
+    if (keys.length) await chrome.storage.local.remove(keys);
+  } catch { /* A later worker start or product-page load retries cleanup. */ }
+})();
 // Serial reservations avoid bursts across tabs; timestamps survive worker restarts.
 // This accounts for this browser only. Other clients may share the API quota.
 let reservations = Promise.resolve();

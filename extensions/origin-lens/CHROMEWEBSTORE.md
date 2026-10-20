@@ -2,9 +2,8 @@
 
 Last updated: 2026-10-20
 
-**Draft only.** No store item has been submitted or published. This record
-describes the implemented extension and identifies work still needed before
-submission. Recheck it against the release manifest and code when packaging.
+**Release candidate 0.12.4 prepared; not submitted.** Publisher: Basement Labs.
+This record contains the submission copy and remaining dashboard/manual checks.
 Installation and release steps are in the [README](README.md#install-or-update).
 
 ## Store listing
@@ -31,8 +30,8 @@ package markings on your device. Photo observations and probable-origin
 estimates are labeled separately from declared country of origin.
 
 Select the component types you want to see, collapse the panel, or turn the
-extension off. Passives are hidden by default. Previously checked reports are
-saved locally and show when they were checked.
+extension off. Passives are hidden by default. Eligible source reports are saved
+locally with check times. Mouser API reports are requested live and are not cached.
 
 After installation, open a supported product page. Configure sources in the
 extension's Data sources & cache section. Automatic Mouser lookup uses your own
@@ -60,15 +59,16 @@ electronic component ordering codes on DigiKey and Mouser product pages.
 | Asset | Dimensions | Status | File / planned content |
 | --- | --- | --- | --- |
 | Store icon | 128 × 128 PNG | Existing; dimensions verified | `icons/icon-128.png` |
-| Screenshot 1 | 1280 × 800 | Needed | Product page with multiple source reports and check times |
-| Screenshot 2 | 1280 × 800 | Recommended; needed | Settings, component-type controls and source setup |
-| Screenshot 3 | 1280 × 800 | Optional | STM32 ordering options and qualified photo evidence |
-| Small promotional tile | 440 × 280 | Required; needed | Origin Lens icon and restrained product presentation |
+| Screenshot 1 | 1280 × 800 JPEG | Prepared | `store-assets/01-source-reports.jpg` |
+| Screenshot 2 | 1280 × 800 JPEG | Prepared | `store-assets/02-component-controls.jpg` |
+| Screenshot 3 | 1280 × 800 JPEG | Prepared | `store-assets/03-package-photo.jpg` |
+| Small promotional tile | 440 × 280 JPEG | Prepared | `store-assets/promo-440x280.jpg` |
 | Marquee image | 1400 × 560 | Optional; not prepared | — |
 
-Capture actual release behavior. Exclude account details and credentials from
-images. Use the existing plain visual style; no slogans or implied supplier
-endorsement. See Google's [image requirements](https://developer.chrome.com/docs/webstore/images).
+Capture details and the editable tile are in [store-assets](store-assets/README.md).
+Images exclude account details and credentials. They use the existing plain
+visual style; no slogans or implied supplier endorsement. See Google's
+[image requirements](https://developer.chrome.com/docs/webstore/images).
 
 ## Permissions justification
 
@@ -132,7 +132,7 @@ Requests use the fixed operations in `network.js`. Data requests do not create
 lists, add items, place orders or modify supplier accounts. Each source also
 controls its own server-side request logging and retention.
 
-**Local storage and deletion:** Preferences and source reports use local
+**Local storage and deletion:** Preferences and eligible source reports use local
 extension storage; the Mouser key uses a separate extension IndexedDB database.
 There is no Chrome sync of these records. The credential store is not an
 encrypted vault. Origin/photo reports are limited to 100 cached records, with a
@@ -141,6 +141,10 @@ comparisons are limited to 30 records. Expiry is enforced on use/save; idle
 records may remain on disk until a later save or deletion. **Clear cached
 results** removes reports but retains the key. **Remove key** removes the saved
 key. Uninstalling removes the extension's local data.
+
+Mouser API response reports are not persisted or reused from the report cache.
+Older cached API reports are removed on worker startup or product-page load.
+Only request timestamps are retained to enforce local API request limits.
 
 **Controls:** Disabling Origin Lens or a component type stops its lookups.
 Collapsing or hiding a panel does not disable its source updates. Each browser
@@ -157,14 +161,17 @@ confirm them in the dashboard for the actual submitted release:
 
 ## Privacy policy
 
-**Public privacy-policy URL: Pending.** Prepare and host a policy that identifies
-the publisher/contact and covers the inventory above, direct supplier requests,
-credentials, local storage, deletion and third-party handling. The README and
-this draft are not substitutes for completing the store's privacy disclosures.
+**Public privacy-policy URL:**
+[Origin Lens privacy policy](https://github.com/hornej/hw-skills/blob/josh-origin-lens-store-release/extensions/origin-lens/PRIVACY.md).
+
+The [policy source](PRIVACY.md) identifies Basement Labs and
+info@basementlabs.net, with direct supplier requests, credentials, retention,
+deletion and support handling. Verify the public URL without authentication
+before submitting. The policy does not replace the dashboard disclosures.
 
 ## Distribution
 
-**Proposed visibility:** Unlisted, for sharing a link with coworkers.
+**Selected visibility:** Unlisted, for sharing a link with coworkers.
 Anyone with the link could install it. Use Private instead if installation must
 be limited to named Google accounts or configured groups.
 
@@ -177,10 +184,10 @@ Unlisted and Private submissions still require review.
 
 ## Developer information
 
-- **Publisher name:** Pending.
-- **Verified contact email:** Pending.
-- **Support URL/email:** Pending; select a maintained issue tracker or contact.
-- **Proposed homepage:** [Origin Lens README](https://github.com/hornej/hw-skills/tree/josh-coo-extension-prototype/extensions/origin-lens).
+- **Publisher name:** Basement Labs.
+- **Contact email:** info@basementlabs.net; complete Google's email verification.
+- **Support:** [Email Basement Labs](mailto:info@basementlabs.net) or [public issue tracker](https://github.com/hornej/hw-skills/issues). Do not post credentials or confidential data in issues.
+- **Homepage:** [Origin Lens README](https://github.com/hornej/hw-skills/tree/josh-origin-lens-store-release/extensions/origin-lens).
 - **Store item ID and installation URL:** Not created.
 
 Do not place personal credentials, reviewer account passwords or API keys in
@@ -194,26 +201,79 @@ the first item; increase it for subsequent uploads to that same item.
 
 | Version | Date | Changes | Status |
 | --- | --- | --- | --- |
-| To be selected at packaging | — | Initial store release | Draft; not submitted |
+| 0.12.4 | 2026-10-20 | Initial store candidate; live-only Mouser API results, privacy policy and store assets; includes current OCR and ST document-evidence updates | Prepared; not submitted |
 
 ## Review notes and remaining work
 
 - [ ] Select the publisher account; complete registration, verified email and
   2-Step Verification.
-- [ ] Finalize the release version and test the packaged extension in desktop
-  Chrome, including source failures, settings, cross-site reports and local OCR.
-- [ ] Capture store screenshots and create the small promotional tile.
-- [ ] Publish the privacy policy; reconcile dashboard disclosures and listing.
-- [ ] Recheck permission scope and all named hosts against the release code.
-- [ ] Create a clean runtime ZIP with `manifest.json` at its root. Exclude the
-  repository wrapper, `.git`, `node_modules`, tests, build scripts, development
-  configs, README/store metadata and credentials. Preserve bundled OCR assets
-  and their license files. Load this exact archive's extracted contents to test.
-- [ ] Provide reviewer instructions for a public ST example, source setup and
-  expected unavailable states. Confirm a missing personal key or login does not
-  prevent testing the public manufacturer results.
+- [x] Set the release version to 0.12.4 on the release branch.
+- [x] Prepare store screenshots and the small promotional tile.
+- [x] Prepare the privacy policy, dashboard data inventory and listing copy.
+- [x] Recheck permission scope: two extension permissions and fourteen named hosts.
+- [x] Provide an allowlisted runtime ZIP builder with root manifest, licenses,
+  pinned OCR assets, checksum and per-file inventory.
+- [ ] Load the exact release ZIP's extracted contents in desktop Chrome for the
+  final installation check. Disable the unpacked prototype first to avoid
+  duplicate panels. Browser automation cannot operate the extension manager.
+- [ ] Confirm the published policy URL and final dashboard data selections.
 - [ ] Select visibility/regions, submit for review and record the resulting
   item ID, version and outcome here.
+
+### Release build and reviewer instructions
+
+Run `python extensions/origin-lens/scripts/package-release.py` from the release
+checkout. Upload `extensions/origin-lens/dist/origin-lens-0.12.4.zip`, not the
+repository archive. The adjacent `.sha256` and `-inventory.json` identify the
+exact contents. Development scripts, tests, store assets and credentials are
+excluded. The ZIP includes the extension license and bundled OCR notices.
+
+1. Open [STM32G491RET6 on DigiKey](https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591).
+   Origin Lens appears in the product details. The ST catalog, reviewed ST
+   assembly notice and matched LCSC sample evidence can be inspected without a
+   personal API key. Expand the photo and ordering-code comparison as needed.
+2. Use the panel's title to collapse/expand it and its separate × control to hide
+   it. From the toolbar popup, turn Origin Lens off/on; open pages update. Passives
+   are off by default and can be enabled independently.
+3. Open the exact part on Mouser using a source link. Each row retains its own
+   source identity; public manufacturer coverage is available on either site.
+4. No publisher account or payment is required. Mouser API lookup is optional:
+   save a valid Search API key in **Data sources & cache**, then **Refresh**.
+   With no key, the extension tries the Mouser website and may show **Setup
+   required** if that source is inaccessible. Missing credentials do not block
+   the public manufacturer rows. A key supplied for reviewer testing must be
+   authorized by its issuer and entered through the dashboard's private review
+   instructions, never in this repository or ZIP.
+5. TI requires the reviewer's own normal myTI browser sign-in. With no session,
+   its row explains the sign-in requirement. Website protection, supplier changes
+   or unavailable part data may produce an explicit unavailable/unknown result;
+   the extension does not assign a country from an unmatched part.
+
+Run the offline suite with `node --test extensions/origin-lens/tests/*.test.cjs`.
+It exercises matching, rendering, toggles, cancellation, credentials, source
+failure paths, local OCR interpretation, migration and cache behavior. It does
+not replace the final packaged-extension installation check.
+
+### Sharing keys
+
+Unlisted and Private control discovery/installation, not credential secrecy.
+Neither protects a key embedded in the package or shares a signed-in session.
+This candidate uses each user's own optional Mouser key and browser sessions.
+A future authenticated team backend needs provider-approved use and revised
+privacy disclosures; it has not been built. See [shared credentials](README.md#shared-credentials).
+
+### Validation record — October 20, 2026
+
+- All 124 offline tests passed on the isolated release checkout, including
+  live-only Mouser reports on both distributor pages and legacy-cache removal.
+- All first-party JavaScript files passed Node syntax checks.
+- The package contains 32 runtime/license files; manifest references, PNG icon
+  dimensions, pinned OCR SHA-256 values and ZIP integrity were checked.
+- Three JPEG screenshots are exactly 1280 × 800; the JPEG promotional tile is
+  exactly 440 × 280. Captures were visually checked for account details and keys.
+- The existing installed interface was exercised on DigiKey for source refresh,
+  collapse/expand and the photo disclosure. The release ZIP itself still needs
+  the final manual load-unpacked check before store submission.
 
 ### Known limits to disclose
 

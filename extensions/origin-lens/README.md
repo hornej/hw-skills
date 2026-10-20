@@ -45,6 +45,14 @@ It also fixes strict manufacturer-report cache checks when extension messaging
 or storage reorders object keys, without accepting changed evidence values.
 Version 0.12.1 restricts LCSC photo previews, links and OCR to top-side views
 and documents API-key enrollment and configuration.
+Version 0.12.2 recognizes TWN (Taiwan) and PHL (Philippines), adds a red-channel
+fallback for blue-watermarked photos, and refreshes earlier OCR results automatically.
+Version 0.12.3 adds reviewed ST assembly notices to the manufacturer row. For
+STM32G491RET6 and STM32G491RET6TR, Taiwan and China are both visible, with the
+catalog's declared COO and the notice's assembly locations labeled separately.
+Version 0.12.4 prepares an unlisted store release with a privacy policy, store
+graphics and reproducible packaging. Mouser API reports are now live-only, and
+previously cached API reports are removed automatically.
 
 ## Install or update
 
@@ -164,9 +172,27 @@ Remove or disable the unpacked copy to avoid duplicate panels.
 
 ### Publish to the Chrome Web Store
 
-The submission process is straightforward, but the prototype still needs store
-assets, privacy documentation and release verification. The draft
-[store listing and readiness record](CHROMEWEBSTORE.md) tracks those items.
+The [store listing and readiness record](CHROMEWEBSTORE.md) contains the listing
+copy, permission explanations, privacy disclosures and reviewer steps. The
+[store assets](store-assets/README.md) contain three screenshots, the small
+promotional tile and capture details. The publisher is **Basement Labs**, with
+**info@basementlabs.net** as the public support/privacy contact. See the
+[privacy policy](PRIVACY.md).
+
+Build the runtime-only release with Python 3 from the repository root:
+
+```text
+python extensions/origin-lens/scripts/package-release.py
+```
+
+The script writes `dist/origin-lens-<version>.zip`, a SHA-256 checksum, a
+per-file inventory and `dist/origin-lens-<version>-publish-kit.zip` containing the
+separate store materials. Upload the inner runtime ZIP as the extension; the
+publication kit is for organizing the submission. The script checks manifest assets,
+icon sizes, bundled OCR hashes and common credential-literal patterns. The ZIP
+excludes development tools, tests, store graphics, source documents and settings.
+Keep the inventory with the release; test the exact archive's extracted contents
+before submission.
 
 1. [Register a developer account](https://developer.chrome.com/docs/webstore/register)
    and pay Google's one-time registration fee. Set a publisher name and verified
@@ -178,8 +204,7 @@ assets, privacy documentation and release verification. The draft
    [Prepare your extension](https://developer.chrome.com/docs/webstore/prepare).
 3. Complete the listing, screenshots, small promotional image, privacy-policy
    URL, data-use disclosures, permission explanations and reviewer instructions.
-   The existing icon can be reused. The readiness record lists missing assets
-   and the current data flows.
+   Use the prepared assets and current data-flow inventory in the readiness record.
 4. Choose **Unlisted** (or another desired visibility), submit for review, then
    share the approved store link. Approval and review time are not guaranteed.
    See Google's [publishing guide](https://developer.chrome.com/docs/webstore/publish).
@@ -188,6 +213,26 @@ assets, privacy documentation and release verification. The draft
    Chrome distributes it automatically; it is not instantaneous, and changes to
    permissions can require user action. Pushing to GitHub alone does not publish
    a store update. See [Update your item](https://developer.chrome.com/docs/webstore/update).
+
+### Shared credentials
+
+Private visibility restricts who can install an extension; it does not make
+bundled keys secret or share a browser's signed-in session. This release contains
+no publisher keys. Each browser needs its own configured Mouser key and any
+required supplier sign-in.
+
+A future team service could authenticate users and hold provider-approved
+application credentials on a server, with request limits and revocation. That
+requires the provider's permission for this application and audience; private
+distribution does not change those terms. [Mouser's API terms](https://www.mouser.com/apiterms/)
+restrict key disclosure, application reuse and API-content caching. [TI's API
+terms](https://www.ti.com/developer-api/product-information-api-suite/reference/api-terms-of-use.html)
+also restrict credential disclosure and third-party distribution. Confirm the
+intended service with each provider before enabling shared access.
+
+TI origin in this release uses the myTI website session. Product Information
+Suite credentials do not replace that flow. No shared server or credential
+service is included in this release.
 
 ## Get API keys
 
@@ -454,17 +499,23 @@ using an ST employee's explanation. The review is bundled with its original
 review time, exact image URL and SHA-256 fingerprint. The worker checks the
 current image bytes before displaying **China · sample**. A changed or
 unavailable image loses that annotation; its available photos stay inspectable.
-All matched STM32 listings now also run **local OCR**, including images without
+All matched STM32 listings also run **local OCR**, including images without
 a bundled review. The reader crops the dark package, upscales it, tries grayscale
-and contrast-enhanced passes, and checks four orientations. It examines up to
-three top-side listing photos and stops when one sample yields usable evidence.
-Only literal **CHN → China** and **MYS → Malaysia** are interpreted, using ST's
-documented explanation. A country needs both image variants at the same rotation
-to agree with word scores of at least 80/100. Scores are heuristic, not calibrated
-probabilities. Other markings, including plant/lot codes, remain uninterpreted.
+and contrast-enhanced passes, and checks four orientations. If those passes do
+not agree, a red-channel contrast pass suppresses blue catalog watermarks while
+retaining neutral package lettering. It examines up to three top-side listing
+photos, at most 12 passes per photo, and stops when one sample yields usable evidence.
+Literal **CHN → China**, **MYS → Malaysia**, **TWN → Taiwan** and
+**PHL → Philippines** are interpreted. CHN/MYS follow ST's STM32 explanation;
+TWN/PHL use ST's explicit country-code definitions in PCN 4452. That PCN covers
+EPROMs, so the photo details disclose the interpretation being applied to STM32.
+A country still needs two distinct image variants at the same rotation to agree
+with word scores of at least 80/100. The grayscale/contrast fast path remains.
+Scores are heuristic, not calibrated probabilities. Other markings, including
+plant/lot codes, remain uninterpreted.
 Conflicts and a clearly different STM32 family suppress automatic country claims.
 
-An automatic result appears as **China · auto-read** (or **Malaysia · auto-read**).
+An automatic result appears as **Taiwan · auto-read**, for example.
 Expand the photo details for detected text, source photos and processing time.
 Weak/unreadable results retain the photos without assigning a country. Photo
 identity is established from exact catalog metadata; OCR does not reliably read
@@ -472,6 +523,9 @@ the entire part number. It cannot establish that a listing photo depicts the
 current stock or independently authenticate the part.
 The existing fingerprint-checked manual review remains labeled **China · sample**;
 the new automatic reading is shown separately in its details.
+OCR evidence version 2 invalidates earlier saved readings, including unreadable
+ones, so reloading the extension and product page triggers a fresh scan without
+clearing other sources' cached reports.
 
 Tesseract.js 7.0.0 and its English model run in a temporary offscreen document
 and dedicated worker. Jobs are serialized, bounded to 60 seconds, cancellable by
@@ -591,16 +645,40 @@ credential storage, not an encrypted vault. Clear cached results retains the key
 enforce a local ceiling of 30/minute and 1,000/rolling day across worker restarts.
 Other applications using the same key may consume additional quota.
 
-Positive origin, separately qualified probable-origin estimates, manufacturing-stage reports, and matched reference-photo records
+Except for Mouser API results, positive origin, separately qualified probable-origin estimates, manufacturing-stage reports, and matched reference-photo records
 are keyed by reporting source, source host, exact manufacturer/MPN and source SKU.
 The newest matching report is reusable across sites, while same-site views retain
 SKU matching and US/EU Mouser website reports stay separate. Each source keeps its original
-check time. Configured Mouser API lookup takes priority on either website.
+check time. Configured Mouser API lookup is available on either website.
 Up to 100 records are retained. Reports younger than one hour are reused; older
 reports are refreshed and can serve as labeled fallbacks for up to seven days.
 Expired and old-version records are pruned on save. Idle records may remain on
 disk until the next save, **Clear cached results**, or uninstall. Failed or empty
 responses do not overwrite a saved positive report or advance its check time.
+
+Mouser Search API reports are displayed live on the current page and are not
+persisted or reused from the report cache. Previously stored API reports are
+removed when the updated worker starts or a product page loads. Only request
+timestamps are retained for API rate limiting. This follows Mouser's published
+[API caching restriction](https://www.mouser.com/apiterms/); it does not change
+the treatment of reports retrieved from the separate website interface.
+
+## Reviewed ST assembly notices
+
+The ST source combines its live catalog declaration with separately dated,
+reviewed manufacturer documents. For `STM32G491RET6` and `STM32G491RET6TR`,
+PCN **MDG/24/14363** documents ASE Kaohsiung (Taiwan) and JSCC (China).
+The row shows **Taiwan / China**, an explicit **Declared COO · ST catalog**
+field, and **Assembly locations · ST PCN**, with a link and publication/review
+dates. These are routes documented in a notice, not a verified shipment lot.
+
+The reviewed evidence is bundled and matched by exact manufacturer/ordering
+code. It appears with existing cached declarations and when a catalog request
+fails; refreshing the catalog does not advance the document's review date.
+This is not an automatic PDF/PCN crawler. Other codes have no reviewed PCN
+coverage yet; their assembly remains unverified. Adding evidence requires
+reviewing the exact code, sites, source document and scope. LCSC photographs
+remain in their own sample-evidence row and do not change ST's declaration.
 
 ## Validation
 
@@ -648,7 +726,8 @@ YY and unknown codes, exact OPN/suffix matching, incomplete responses, token
 redaction, fixed hosts, credential-free lookup, cancellation, and cache sharing.
 API tests cover exact-part/SKU ambiguity, manufacturing-stage separation, secret
 redaction, cookie-free requests, no-key-only fallback, local rate limiting,
-key-change cancellation, API report sharing between US/EU, and Microchip mapping.
+key-change cancellation, live-only API results on both sites, legacy API-cache
+removal, and Microchip mapping.
 Recovery tests cover missing-key fallback errors, trusted settings navigation,
 the setup shortcut and keyboard focus, and cancellation/error preservation.
 Photo tests cover exact metadata and image-SKU matching, suffix and ambiguity
@@ -658,8 +737,12 @@ They also cover top-side filtering regardless of gallery order, bottom-only
 listings, rejection of old mixed-view caches and exclusion of underside links.
 OCR tests cover confidence/consensus, unsupported codes, conflicting readings,
 part mismatch, bounded records, forged observations, old-cache refresh, image
-allowlists, cancellation and offscreen lifecycle. Asset hashes check that the
-bundled engine and model match the pinned build.
+allowlists, cancellation and offscreen lifecycle. The C3228560 fixture contains
+real browser OCR output from the original LCSC photograph (provenance in
+`SOURCES.md`); it reproduces the weak grayscale reading and successful fallback.
+Tests also cover literal TWN/PHL codes, blue-watermark suppression, preserving
+the two-pass fast path, and country-specific reference links on both distributors.
+Asset hashes check that the bundled engine and model match the pinned build.
 
 To rebuild OCR assets after an intentional dependency update, run `pnpm install
 --ignore-scripts` and `pnpm run build:ocr` in this directory. Normal unpacked

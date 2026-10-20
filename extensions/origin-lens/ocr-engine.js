@@ -57,7 +57,7 @@
           crop.width=Math.round(box.width*scale); crop.height=Math.round(box.height*scale);
           crop.getContext("2d").drawImage(bitmap,box.x,box.y,box.width,box.height,0,0,crop.width,crop.height);
           for (const rotation of [0,90,180,270]) {
-            for (const variant of ["gray","contrast"]) {
+            for (const variant of O.VARIANTS) {
               signal.throwIfAborted();
               const canvas=document.createElement("canvas"), sideways=rotation%180!==0;
               canvas.width=sideways?crop.height:crop.width; canvas.height=sideways?crop.width:crop.height;
@@ -65,9 +65,12 @@
               context.translate(canvas.width/2,canvas.height/2); context.rotate(rotation*Math.PI/180);
               context.drawImage(crop,-crop.width/2,-crop.height/2);
               const pixels=context.getImageData(0,0,canvas.width,canvas.height);
-              O.grayscale(pixels.data,variant==="contrast"); context.putImageData(pixels,0,0);
+              O.grayscale(pixels.data,variant!=="gray",variant==="red"); context.putImageData(pixels,0,0);
               const {data}=await abortable(worker.recognize(canvas,{}, {text:true,blocks:true}),signal);
               reading.passes.push(O.packPass(data,rotation,variant));
+              // Keep the existing fast path; use the watermark-suppressed pass
+              // only when the first two variants did not produce usable evidence.
+              if(O.summarize(readings,part).status!=="unreadable") break;
             }
             const summary=O.summarize(readings,part);
             if(summary.status!=="unreadable") break;

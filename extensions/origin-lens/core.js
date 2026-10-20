@@ -114,11 +114,22 @@
     return CACHE_PREFIX + JSON.stringify([identity.provider, identity.host, manufacturerKey(identity.manufacturer), identity.mpn, identity.sku]);
   }
 
+  function cacheableSource(record) {
+    // Mouser's Search API terms prohibit caching API content. Website reports
+    // have a distinct sourceKind; never relabel an API result to retain it.
+    return !!record && record.sourceKind !== "Mouser Search API";
+  }
+
+  function disallowedCacheKeys(entries) {
+    return Object.entries(entries).filter(([key, entry]) => key.startsWith("origin-lens:v") &&
+      (entry?.result || entry)?.sourceKind === "Mouser Search API").map(([key]) => key);
+  }
+
   function isFresh(record, identity, now = Date.now()) {
     const age = now - Date.parse(record?.checkedAt);
     return record?.version === VERSION && record?.identity &&
       cacheKey(record.identity) === cacheKey(identity) && Number.isFinite(age) && age >= 0 && age < CACHE_TTL &&
-      hasSourceEvidence(record);
+      cacheableSource(record) && hasSourceEvidence(record);
   }
 
   function productJson(doc) {
@@ -496,7 +507,7 @@
     const age = now - Date.parse(r?.checkedAt);
     return r?.version === VERSION && r.identity?.provider === provider && r.identity.host === sourceHost(provider, part) &&
       sameManufacturer(r.identity.manufacturer, part.manufacturer) && same(r.identity.mpn, part.mpn) &&
-      Number.isFinite(age) && age >= 0 && age < CACHE_TTL && hasSourceEvidence(r) &&
+      Number.isFinite(age) && age >= 0 && age < CACHE_TTL && cacheableSource(r) && hasSourceEvidence(r) &&
       (provider !== "lcsc" || r.photoEvidence?.ocr?.version === OCR.VERSION);
   }
 
@@ -506,9 +517,8 @@
     const matches = [];
     for (const [key, entry] of Object.entries(entries)) {
       const r = entry?.result, found = r?.identity;
-      if (!key.startsWith(CACHE_PREFIX) || entry?.key !== key || r?.version !== VERSION ||
-          found?.provider !== provider || (found.host !== sourceHost(provider, part) &&
-            !(provider === "mouser" && r.sourceKind === "Mouser Search API" && ["www.mouser.com", "eu.mouser.com"].includes(found.host))) ||
+      if (!key.startsWith(CACHE_PREFIX) || entry?.key !== key || r?.version !== VERSION || !cacheableSource(r) ||
+          found?.provider !== provider || found.host !== sourceHost(provider, part) ||
           !sameManufacturer(found.manufacturer, part.manufacturer) || !same(found.mpn, part.mpn) ||
           !normalize(found.sku) || !Array.isArray(r.fields?.declaredCoo?.values) ||
           !hasSourceEvidence(r) || !r.fields.declaredCoo.values.every(v => typeof v === "string" && normalize(v))) continue;
@@ -694,6 +704,21 @@
     return result;
   }
 
+  function stAssemblyDocuments(part) {
+    // Reviewed manufacturer evidence, independent of the live catalog/cache.
+    // Exact reviewed ordering codes only: a shared family or packing suffix is
+    // not sufficient. These are routes in a dated PCN, never shipment origin.
+    if (!sameManufacturer(part?.manufacturer, "STMicroelectronics") ||
+        !["STM32G491RET6", "STM32G491RET6TR"].some(mpn => same(mpn, part?.mpn))) return [];
+    return [{
+      id: "MDG/24/14363", publishedOn: "2024-04-12", reviewedOn: "2026-10-20",
+      sourceUrl: "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/6161/MDG-24-14363.pdf",
+      documentSha256: "3765a7830d577652c783aaa8ad6c221fce3f6c6d33d8f4373a10c327d2f0966b",
+      scope: "assembly-routes-in-pcn", lotVerified: false,
+      sites: [{ name: "ASE Kaohsiung", country: "Taiwan" }, { name: "JSCC", country: "China" }]
+    }];
+  }
+
   function stFamily(part) {
     // This is only a candidate page path. The page's PF ID and exact order-code
     // mapping must both be verified; a family prefix is never origin evidence.
@@ -738,8 +763,8 @@
 
   const api = { VERSION, CACHE_TTL, CACHE_RETENTION, CACHE_PREFIX, PROVIDERS, COMPONENT_TYPES, PREFERENCE_KEYS, typeKey, componentTypeEnabled, classifyCategories, readComponentType, LookupError, normalize, same, field, parseListId, cacheKey, isFresh, readIdentity, fromDigiKey, fromMouser, getJson, discoverList, lookupDigiKey,
     TI_SHIP_TO, tiUrl, tiRequest, fromTI,
-    hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, infineonUrl, fromInfineon, manufacturerPageUrl, fromManufacturerPage, lookupManufacturerPage, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
-    lcscSupported, lcscSearchUrl, lcscImageUrl, lcscReview, validLCSCPhotos, lcscCandidate, fromLCSC, lookupLCSC };
+    cacheableSource, disallowedCacheKeys, hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, infineonUrl, fromInfineon, manufacturerPageUrl, fromManufacturerPage, lookupManufacturerPage, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
+    stAssemblyDocuments, lcscSupported, lcscSearchUrl, lcscImageUrl, lcscReview, validLCSCPhotos, lcscCandidate, fromLCSC, lookupLCSC };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OriginLens = Object.freeze(api);
 })(globalThis);

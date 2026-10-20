@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Origin Lens — DigiKey & Mouser",
   "description": "Compare component origin reports on DigiKey and Mouser, with local OCR of LCSC package photos. Exact part matching.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -23,7 +23,9 @@
     "https://www.st.com/*",
     "https://ksmk.st.com/*",
     "https://www.lcsc.com/*",
-    "https://assets.lcsc.com/*"
+    "https://assets.lcsc.com/*",
+    "https://www.infineon.com/*",
+    "https://infineontechnologiesproduction6kx2o63f.org.coveo.com/*"
   ],
   "background": { "service_worker": "background.js" },
   "action": {

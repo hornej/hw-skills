@@ -508,3 +508,63 @@ Evidence is saved locally under
 `%LOCALAPPDATA%/hw-skills/origin-lens-evidence/2026-10-20/` as
 `ocr-G491-browser.json`, `ocr-F103-browser.json`, `lcsc-C8734.json` and the two
 photographs. These are test artifacts, not bundled user data or sample photos.
+
+## Collapsible panel and Infineon — 2026-10-20
+
+Version 0.8.0 keeps the panel's reports inside a native details/summary disclosure.
+Collapse/Expand leaves one header row; the independent × hides the whole panel.
+Neither collapse nor expansion repeats lookups. The choice lasts for the current
+page, including remounts. A browser preview verified pointer collapse, Enter to
+expand, narrow 360px layout and hide; 78 tests passed. The accumulated prototype
+was committed and pushed on `josh-coo-extension-prototype` as `23e8f3a`.
+
+Version 0.9.0 adds a direct Infineon adapter. The public
+[ECCN & HTS Finder](https://www.infineon.com/search/eccn-hts-finder) exposes these
+operations in its own frontend code:
+
+1. GET `/content/ifx/en/search/eccn-hts-finder.coveoSearch.txt` on
+   `www.infineon.com`, returning a short-lived public `Search Token`.
+2. POST `https://infineontechnologiesproduction6kx2o63f.org.coveo.com/rest/search/v2`,
+   pipeline `IFXECCNAndHTSFinder`, search hub `IFXEccnAndHtsFinderSearchHub`.
+   An exact `@opn_name=="FULL_CODE"` query returns region/material records.
+
+Only these fixed endpoints are used; cookies and redirects are disabled. The
+public token remains in memory and is excluded from caches, messages and logs.
+The extension does not execute Infineon's JavaScript, send analytics events,
+open an account, or accept any website agreement. The visible finder page has a
+legal acknowledgement before its interactive UI; that acknowledgement was not
+accepted by the browser agent. The public read-only service was tested separately.
+This is an observed website service, not a supported integration API contract.
+
+Live results:
+
+| Full OPN | Rows | Observation |
+| --- | ---: | --- |
+| CYW43439KUBGT | 12 | All returned variants: CoO YY, CoA TW, CoD CN |
+| IRLML6344TRPBF | 48 | Region/material-dependent CoO CN, PH, GB or YY; CoA CN/PH; CoD GB or YY |
+| AMM12S62LB2ZXKMA1 | 12 | Regional/material CoO KR/AT/YY; CoA KR; CoD AT/YY |
+
+The actual extension network/parser code returned CYW43439KUBGT at
+`2026-10-20T16:47:24Z` and IRLML6344TRPBF at `2026-10-20T16:50:42Z`.
+The third part was checked during endpoint investigation. Infineon's
+[product page](https://www.infineon.com/part/AMM12S62LB2Z) labels CoA as assembly
+and CoD as diffusion; its
+[knowledge-base explanation](https://community.infineon.com/t5/Knowledge-Base-Articles/Semiconductors-Country-of-Diffusion-VS-Country-of-Origin/ta-p/256790)
+identifies diffusion as wafer fabrication. No test country is inferred.
+
+The finder explains that `YY` COO is only available at shipment. The adapter
+retains YY and other unresolved raw codes but assigns no country to them.
+Country lists summarize all returned variants; expandable regional records keep
+the region, SP, material and separate field values together. No destination is
+assumed. Complete responses are required, with a 100-record bound. Manufacturer
+matching accepts Infineon Technologies and the verified Mouser short name
+Infineon; it does not alias acquired brands or remove OPN suffixes.
+
+Sanitized fixtures contain all 12 and 48 records for the first two parts, with
+only OPN, SP, material, region and origin fields retained. Tests cover exact
+identity, ambiguity, incomplete responses, missing codes, country disagreements,
+cross-site cache sharing, tampered reports, errors/token redaction, bounded reads,
+and global cancellation. All 86 tests pass. The browser preview verified the
+regional details using the fixture; it does not establish installed-extension
+permissions or service-worker behavior. Reloading the installed extension is
+still required for the two new Infineon host permissions.

@@ -1,6 +1,6 @@
 # Origin Lens source coverage
 
-Verified 2026-10-19; installed Mouser API path confirmed 2026-10-20. Sources remain separate; distributor declarations are never
+Updated 2026-10-20; installed Mouser API path confirmed that day. Sources remain separate; distributor declarations are never
 presented as direct manufacturer declarations. Missing fields stay unknown.
 
 ## Implemented
@@ -12,6 +12,7 @@ presented as direct manufacturer declarations. Missing fields stay unknown.
 | DigiKey | Signed-in, read-only catalog lookup using an existing empty or populated list | Declared COO |
 | STMicroelectronics | Supported STM32 full ordering codes; public family/ordering-code services | Declared COO; multiple values kept |
 | Microchip | Exact full ordering code in public Product API; Microchip Technology / Microchip Technology Inc. naming | Declared COO, assembly, wafer fabrication |
+| Infineon | Public ECCN & HTS Finder search; exact full OPN and verified Infineon manufacturer name; no personal key/login | Declared COO, assembly, diffusion; all returned regions and material variants retained |
 | LCSC reference photos | Exact ST STM32 catalog match; no key/login; automatic search and local OCR | Photo markings, automatic CHN/MYS assembly interpretation, and separately reviewed evidence; never current-stock COO |
 
 Mouser's API supplies distributor reports for many manufacturers without building
@@ -35,6 +36,23 @@ Evidence and reference links:
 - Microchip's catalog name was verified against the
   [DigiKey product](https://www.digikey.com/en/products/detail/microchip-technology/PIC10F200-E-MC/1947985)
   and [Mouser product](https://www.mouser.com/ProductDetail/Microchip-Technology/PIC10F200-E-MC?qs=WqWCsLCZBkrsCaKJCW5d9A%3D%3D).
+- [Infineon ECCN & HTS Finder](https://www.infineon.com/search/eccn-hts-finder)
+  exposes `eccn_coo`, `eccn_coa`, and `eccn_cod`. Its public frontend uses a
+  temporary token from Infineon and a dedicated Coveo search tenant. This is an
+  observed website service, not a documented supported integration API.
+  [Infineon's product page](https://www.infineon.com/part/AMM12S62LB2Z)
+  explicitly labels CoA as Country of Assembly and CoD as Country of Diffusion.
+  Its [diffusion explanation](https://community.infineon.com/t5/Knowledge-Base-Articles/Semiconductors-Country-of-Diffusion-VS-Country-of-Origin/ta-p/256790)
+  identifies diffusion as wafer fabrication; this adapter uses the explicitly
+  separate CoO/CoA fields instead of inferring one from the other.
+  Live CYW43439KUBGT returned 12 regional/material records: COO `YY`, assembly
+  `TW`, diffusion `CN`. IRLML6344TRPBF returned 48 records, including regional
+  COO differences and unknown wafer codes. Raw `YY` stays unresolved; the finder
+  says declared COO is only available at shipment for those records.
+  Full sanitized result fixtures preserve every row, excluding unrelated search
+  metadata and tokens. Exact Infineon naming was verified on
+  [DigiKey](https://www.digikey.com/en/products/detail/infineon-technologies/CYW43439KUBGT/16637075)
+  and [Mouser](https://www.mouser.com/en/ProductDetail/Infineon-Technologies/CYW43439KUBGT?qs=iLbezkQI%2Bsimvupr%2BuwCJA%3D%3D).
 - [LCSC STM32G491RET6 / C3231005](https://www.lcsc.com/product-detail/C3231005.html)
   supplied exact Product JSON-LD with brand **ST**, full MPN, SKU, canonical
   product link and three 900×900 part-specific image URLs. Brand 74 is ST.

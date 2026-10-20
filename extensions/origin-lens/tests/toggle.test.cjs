@@ -194,6 +194,22 @@ test('Microchip report appears beside both distributors and manufacturing-only r
   assert.doesNotMatch(pageText(page),/No direct manufacturer adapter/);assert.ok(C.savedSource(saved.values,'microchip',identity));
 });
 
+test('Infineon regional declarations render and share on either distributor without presenting YY as a country',async()=>{
+  const identity={...nexDk,manufacturer:'Infineon Technologies',mpn:'IRLML6344TRPBF'};
+  const report=C.fromInfineon(require('./fixtures/infineon-irlml6344.json'),identity);
+  const saved=storage();
+  const page=pageHarness(saved,identity,'discretes',message=>message.operation==='infineon'?{ok:true,data:report}:{ok:false,code:'network',message:'Offline'});
+  await settle();
+  assert.match(pageText(page),/Infineon ECCN & HTS Finder/);assert.match(pageText(page),/Regional origin records/);
+  assert.match(pageText(page),/All returned catalog regions/);assert.match(pageText(page),/Regions: US/);
+  assert.match(pageText(page),/Unresolved \(YY\)/);assert.match(pageText(page),/United Kingdom/);
+  assert.match(pageText(page),/origin is only confirmed at shipment/);
+  assert.ok(C.savedSource(saved.values,'infineon',identity));
+  const mouser=pageHarness(saved,{...nexMouser,manufacturer:identity.manufacturer,mpn:identity.mpn},'discretes');
+  await settle();assert.match(pageText(mouser),/Regional origin records/);assert.match(pageText(mouser),/United Kingdom/);
+  await saved.local.set({enabled:false});assert.equal(page.panelCount()+mouser.panelCount(),0);
+});
+
 test('reports learned on either distributor appear in both open pages despite failed cross-site requests',async()=>{
   const saved=storage(),dkResult=originRecord(nexDk,'China'),mouserResult=originRecord(nexMouser,'Philippines');
   const unavailable=()=>({ok:false,code:'auth',message:'Source verification required'});

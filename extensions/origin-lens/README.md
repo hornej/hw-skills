@@ -28,6 +28,8 @@ Version 0.7.1 normalizes uppercase country names in the panel (for example,
 TAIWAN → Taiwan), including saved results and manufacturing details. Original
 source values remain unchanged.
 Version 0.8.0 adds native collapse/expand while retaining a separate hide button.
+Version 0.9.0 adds Infineon's public ECCN & HTS Finder, including regional COO,
+assembly and diffusion records for exact full ordering codes.
 
 ## Install or update
 
@@ -121,6 +123,7 @@ selections remain in effect; the recovery control can reset them to automatic.
 | Mouser | Authenticated Search API on either site when configured; otherwise the existing compliance section / exact product-page lookup |
 | STMicroelectronics | For supported STM32 ordering codes, read the family page's PF identifier, resolve the exact full code to its CP identifier, then read declared origin from attribute 5080 |
 | Microchip | Public Product API; require one exact full ordering code and manufacturer, then read declared COO, assembly country and wafer-fab country |
+| Infineon | Public ECCN & HTS Finder; exact OPN match, with all returned regions and material variants retained; declared COO, assembly and diffusion |
 | LCSC reference photos | ST STM32 microcontroller catalog search, exact manufacturer/MPN/SKU metadata, and part-specific image URLs; reviewed markings describe only the photographed sample |
 
 Each source has a separate result, source link, observation time, and expandable
@@ -128,6 +131,25 @@ assembly, diffusion, and testing fields. Different declarations remain visible
 in their respective source rows. There is no vote, merged country, or assumption
 that another distributor's inventory establishes the origin of the units being
 purchased. Stage locations are never inferred from declared origin.
+
+### Infineon regional records
+
+Infineon needs no personal API key or login. The worker obtains a temporary public
+search token from Infineon and sends the exact full OPN to Infineon's dedicated
+Coveo search service. Neither remote JavaScript nor analytics is loaded.
+The token stays in memory for that lookup and is never included in reports.
+
+The top-level country list includes all returned catalog regions and material
+variants. **Manufacturing & match details → Regional origin records** retains
+each region's declaration, SP number and material numbers. A US declaration can
+differ from one for China, the EU or Singapore. No destination is assumed.
+Infineon's `YY` is unresolved, not a country; for declared COO, Infineon says it
+is only confirmed at shipment. Original country codes remain in the saved report,
+and recognized codes are displayed as country names. Unknown codes remain unresolved.
+Searches returning more than 100 records or incomplete pages are rejected rather
+than displaying a partial list. Legacy Cypress/International Rectifier brand names
+are not automatically equated to Infineon; the distributor must identify the part
+as Infineon Technologies or its verified short name, Infineon.
 
 ### LCSC photo evidence
 
@@ -175,7 +197,7 @@ other lots or parts with a different ordering-code suffix.
 
 Manufacturer and full MPN must match, including packaging and temperature suffixes.
 The explicit Nexperia / Nexperia USA Inc., Microchip Technology / Microchip
-Technology Inc., and ST / STMicroelectronics aliases are accepted; each source retains
+Technology Inc., ST / STMicroelectronics, and Infineon / Infineon Technologies aliases are accepted; each source retains
 its original manufacturer name. Other unrecognized name differences, near matches,
 and ambiguous results are rejected. No general company-suffix stripping or fuzzy
 brand matching is used. DigiKey may canonicalize a cut-tape
@@ -222,6 +244,8 @@ not read the API-key store. Host permissions cover exactly:
 - `https://ksmk.st.com/*`
 - `https://www.lcsc.com/*`
 - `https://assets.lcsc.com/*`
+- `https://www.infineon.com/*`
+- `https://infineontechnologiesproduction6kx2o63f.org.coveo.com/*`
 
 Chrome host permissions apply to the whole host. A background service worker needs
 them to fetch the other sources while viewing a distributor page. Content scripts
@@ -232,6 +256,9 @@ Automatic lookup sends the product MPN to DigiKey and Mouser and, for supported
 STM32 parts, requests the relevant ST family and ordering-code data. Microchip
 parts also request Microchip's public catalog. DigiKey and Mouser website requests
 use existing browser sessions; ST and Microchip requests omit credentials.
+Infineon parts request the public search token from `www.infineon.com` and send
+the full ordering code to its dedicated Coveo host. Both omit cookies and disable
+redirects. No account information, search history, or analytics identifiers are sent.
 Supported STM32 parts also send the full MPN to LCSC's microcontroller search
 and retrieve the exact product metadata. LCSC requests omit cookies. Up to three
 photos are fetched for OCR, and a known reviewed image is fetched for fingerprint
@@ -244,7 +271,7 @@ with redirects disabled. API auth/quota errors do not trigger website fallback.
 The extension never extracts passwords or cookies. Browser cookie settings and
 site verification can still prevent cross-site session use.
 
-Mouser uses a read-only catalog POST; the other sources use GET. No lists, alternates, carts, quotes, or
+Mouser and Infineon use read-only catalog search POSTs; the other requests use GET. No lists, alternates, carts, quotes, or
 accounts are changed. DigiKey discovery reads one list metadata response, uses
 its ID, and discards unrelated metadata. It does not request list contents. HTML
 is parsed in a disconnected inert template; source scripts and page resources
@@ -300,6 +327,9 @@ Sharing tests cover all three supported sources on both distributor views,
 updates between open pages, failed refreshes retaining dated reports, late
 responses, cache-read races, legacy records, source/region/SKU isolation, stale
 and expired reports, and direct refresh through a known Mouser product URL.
+Infineon tests cover live-derived public fixtures, regional/material disagreements,
+YY and unknown codes, exact OPN/suffix matching, incomplete responses, token
+redaction, fixed hosts, credential-free lookup, cancellation, and cache sharing.
 API tests cover exact-part/SKU ambiguity, manufacturing-stage separation, secret
 redaction, cookie-free requests, no-key-only fallback, local rate limiting,
 key-change cancellation, API report sharing between US/EU, and Microchip mapping.
@@ -344,6 +374,13 @@ STM32F103C8T6, both from two agreeing passes, without consulting manual reviews.
 Browser cancellation also stopped a job. These checks establish OCR operation
 in the in-app browser; installed extension/offscreen behavior still needs a
 reload and product-page refresh. No installed-extension result is claimed here.
+Version 0.8.0's collapse, keyboard expansion, hide action and narrow layout were
+checked in the isolated browser preview; 78 tests passed. Version 0.9.0's actual
+Infineon network/parser path was verified against live CYW43439KUBGT and
+IRLML6344TRPBF responses. The full suite now has 86 passing tests. Infineon needs
+an extension reload for its two new host permissions; installed browser access
+has not yet been verified. The preview can be run with
+`node extensions/origin-lens/scripts/preview-panel.cjs --infineon`.
 See
 [RESEARCH.md](RESEARCH.md) for exact observations and remaining validation limits.
 

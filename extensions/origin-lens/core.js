@@ -15,6 +15,7 @@
     if (name === "nexperia usa inc.") return "nexperia";
     if (name === "microchip technology inc.") return "microchip technology";
     if (name === "st") return "stmicroelectronics"; // LCSC brand 74.
+    if (name === "infineon") return "infineon technologies"; // Mouser's specification label.
     return name;
   }
   const sameManufacturer = (a, b) => !!manufacturerKey(a) && manufacturerKey(a) === manufacturerKey(b);
@@ -77,7 +78,8 @@
     });
   }
   function hasSourceEvidence(result) {
-    return result?.identity?.provider === "lcsc" ? validLCSCPhotos(result) : hasOriginEvidence(result);
+    return result?.identity?.provider === "lcsc" ? validLCSCPhotos(result)
+      : result?.identity?.provider === "infineon" ? validInfineonReport(result) && hasOriginEvidence(result) : hasOriginEvidence(result);
   }
 
   function parseListId(input) {
@@ -201,6 +203,7 @@
 
   function manufacturerProvider(part) {
     if (manufacturerKey(part.manufacturer) === "microchip technology") return "microchip";
+    if (manufacturerKey(part.manufacturer) === "infineon technologies") return "infineon";
     return "st";
   }
   const microchipUrl = part => `https://www.microchip.com/designresources/product-catalog/api/productInfo?part=${encodeURIComponent(part.mpn)}&pagesize=100&pagenumber=1`;
@@ -213,6 +216,54 @@
     if (!same(p.sku, part.mpn) || ![p.country_of_origin, p.assembly_country, p.wafer_fab_country].every(v => typeof v === "string")) throw new LookupError("schema", "Microchip is missing expected identity or origin fields.");
     return record({ provider: "microchip", host: "www.microchip.com", manufacturer: p.manufacturer, mpn: p.part_number, sku: p.sku, sourceUrl: microchipUrl(part) },
       { declaredCoo: field([p.country_of_origin]), assembly: field([p.assembly_country]), diffusion: field([p.wafer_fab_country]) }, "Microchip Product API");
+  }
+
+  const infineonUrl = () => "https://www.infineon.com/search/eccn-hts-finder";
+  const countryCodes = new Set(("AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW").split(" "));
+  function infineonField(rawValues) {
+    const raw = field(rawValues).raw;
+    const names = new Intl.DisplayNames(["en"], { type: "region", fallback: "none" });
+    // YY means unresolved until shipment, not a country. Preserve every raw code.
+    const values = [...new Set(raw.filter(v => countryCodes.has(v)).map(v => names.of(v)).filter(Boolean))];
+    return { raw, values, status: values.length > 1 ? "multiple" : values.length ? "reported" : "unknown" };
+  }
+  function fromInfineon(data, part) {
+    if (manufacturerProvider(part) !== "infineon") throw new LookupError("identity", "This part is not a verified Infineon manufacturer match.");
+    if (!Array.isArray(data?.results) || !Number.isInteger(data.totalCount) || data.totalCount !== data.results.length || data.totalCount > 100) {
+      throw new LookupError("schema", "Infineon returned an incomplete or unexpected result set.");
+    }
+    const matches = data.results.map(r => r?.raw).filter(r => Array.isArray(r?.opn_name) && r.opn_name.some(mpn => same(mpn, part.mpn)));
+    if (!matches.length) throw new LookupError("identity", "Infineon did not return an exact full ordering-code match.");
+    const rows = matches.map(r => {
+      if (r.opn_name.length !== 1 || typeof r.sp_number !== "string" || !/^SP\d{1,15}$/.test(r.sp_number) ||
+          typeof r.material_number !== "string" || !/^\d{1,20}$/.test(r.material_number) ||
+          !Array.isArray(r.region_of_operations) || !r.region_of_operations.length || r.region_of_operations.length > 10 ||
+          !r.region_of_operations.every(v => typeof v === "string" && /^(?:All|[A-Z]{2})$/.test(v)) ||
+          !["eccn_coo", "eccn_coa", "eccn_cod"].every(k => r[k] === undefined || r[k] === null || typeof r[k] === "string" && /^(?:[A-Z]{2}|NULL)?$/.test(r[k]))) {
+        throw new LookupError("schema", "Infineon is missing expected ordering-code, region or origin fields.");
+      }
+      return { sp: r.sp_number, material: r.material_number, regions: [...r.region_of_operations],
+        declaredCoo: infineonField([r.eccn_coo]), assembly: infineonField([r.eccn_coa]), diffusion: infineonField([r.eccn_cod]) };
+    });
+    const result = record({ provider: "infineon", host: "www.infineon.com", manufacturer: "Infineon Technologies",
+      mpn: normalize(part.mpn), sku: normalize(part.mpn), sourceUrl: infineonUrl() },
+      Object.fromEntries(["declaredCoo", "assembly", "diffusion"].map(key => [key, infineonField(rows.flatMap(r => r[key].raw))])),
+      "Infineon ECCN & HTS Finder");
+    result.regionalReports = rows;
+    return result;
+  }
+  function validInfineonReport(result) {
+    try {
+      if (!Array.isArray(result.regionalReports) || !result.regionalReports.length || result.regionalReports.length > 100) return false;
+      const rows = result.regionalReports.map(r => {
+        if (!["declaredCoo", "assembly", "diffusion"].every(k => Array.isArray(r[k]?.raw) && r[k].raw.length <= 1)) throw new Error();
+        return { raw: { opn_name: [result.identity.mpn], sp_number: r.sp, material_number: r.material, region_of_operations: r.regions,
+          eccn_coo: r.declaredCoo.raw[0], eccn_coa: r.assembly.raw[0], eccn_cod: r.diffusion.raw[0] } };
+      });
+      const derived = fromInfineon({ totalCount: rows.length, results: rows }, result.identity);
+      return JSON.stringify(result.fields) === JSON.stringify(derived.fields) &&
+        JSON.stringify(result.regionalReports) === JSON.stringify(derived.regionalReports);
+    } catch { return false; }
   }
 
   async function getJson(path, fetcher = fetch) {
@@ -247,7 +298,7 @@
     return fromDigiKey(data, identity);
   }
 
-  const PROVIDERS = { digikey: "DigiKey", mouser: "Mouser", st: "STMicroelectronics", microchip: "Microchip", lcsc: "LCSC · package photos" };
+  const PROVIDERS = { digikey: "DigiKey", mouser: "Mouser", st: "STMicroelectronics", microchip: "Microchip", infineon: "Infineon", lcsc: "LCSC · package photos" };
   function assertMatch(found, requested) {
     if (!found || !sameManufacturer(found.manufacturer, requested.manufacturer) || !same(found.mpn, requested.mpn)) {
       throw new LookupError("identity", "No verified match for this exact manufacturer and ordering code. No origin assigned.");
@@ -269,6 +320,7 @@
   function sourceHost(provider, part) {
     if (provider === "lcsc") return "www.lcsc.com";
     if (provider === "microchip") return "www.microchip.com";
+    if (provider === "infineon") return "www.infineon.com";
     return provider === "digikey" ? "www.digikey.com" : provider === "st" ? "www.st.com" : part.provider === "mouser" ? part.host : "www.mouser.com";
   }
   function sourceCacheKey(provider, part) {
@@ -307,7 +359,8 @@
       if (!validKeys.includes(key)) continue;
       try {
         if (provider === "microchip" && (r.sourceUrl !== microchipUrl(found) || found.sourceUrl !== r.sourceUrl)) continue;
-        if (!["st", "microchip"].includes(provider) && (productUrl(r.sourceUrl, provider) !== productUrl(found.sourceUrl, provider) ||
+        if (provider === "infineon" && (r.sourceUrl !== infineonUrl() || found.sourceUrl !== r.sourceUrl || !same(found.sku, found.mpn))) continue;
+        if (!["st", "microchip", "infineon"].includes(provider) && (productUrl(r.sourceUrl, provider) !== productUrl(found.sourceUrl, provider) ||
           new URL(r.sourceUrl).hostname !== found.host)) continue;
       } catch { continue; }
       matches.push({ result: r, cached: true, stale: age >= CACHE_TTL });
@@ -517,7 +570,7 @@
   }
 
   const api = { VERSION, CACHE_TTL, CACHE_RETENTION, CACHE_PREFIX, PROVIDERS, COMPONENT_TYPES, PREFERENCE_KEYS, typeKey, componentTypeEnabled, classifyCategories, readComponentType, LookupError, normalize, same, field, parseListId, cacheKey, isFresh, readIdentity, fromDigiKey, fromMouser, getJson, discoverList, lookupDigiKey,
-    hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
+    hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, infineonUrl, fromInfineon, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
     lcscSupported, lcscSearchUrl, lcscImageUrl, lcscReview, validLCSCPhotos, lcscCandidate, fromLCSC, lookupLCSC };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OriginLens = Object.freeze(api);

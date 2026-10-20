@@ -1,0 +1,197 @@
+{
+  "totalCount": 12,
+  "results": [
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641144",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641142",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641144",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641141",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641142",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641142",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641144",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641142",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641141",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641141",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641141",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "CYW43439KUBGT"
+        ],
+        "sp_number": "SP005653001",
+        "material_number": "99641144",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "TW",
+        "eccn_cod": "CN"
+      }
+    }
+  ]
+}

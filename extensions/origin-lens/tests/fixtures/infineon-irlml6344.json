@@ -1,0 +1,773 @@
+{
+  "totalCount": 48,
+  "results": [
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99482119",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521055",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "GB",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521054",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "GB",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471579",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470551",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521055",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575988",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520952",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471578",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99482119",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471579",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471577",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470551",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470552",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471578",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471577",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470552",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575988",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "GB",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520953",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521054",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471578",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575989",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471579",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520952",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575989",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "GB",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575989",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99482119",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471577",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575988",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471578",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520953",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471577",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470552",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521054",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470551",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "YY",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521055",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521054",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470551",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99521055",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99470552",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575988",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520953",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520952",
+        "region_of_operations": [
+          "All",
+          "SG"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520953",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "GB",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99520952",
+        "region_of_operations": [
+          "All",
+          "US"
+        ],
+        "eccn_coo": "GB",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99482119",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99471579",
+        "region_of_operations": [
+          "All",
+          "EU"
+        ],
+        "eccn_coo": "CN",
+        "eccn_coa": "CN",
+        "eccn_cod": "YY"
+      }
+    },
+    {
+      "raw": {
+        "opn_name": [
+          "IRLML6344TRPBF"
+        ],
+        "sp_number": "SP001574050",
+        "material_number": "99575989",
+        "region_of_operations": [
+          "All",
+          "CN"
+        ],
+        "eccn_coo": "PH",
+        "eccn_coa": "PH",
+        "eccn_cod": "GB"
+      }
+    }
+  ]
+}

@@ -3,19 +3,23 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const files = new Set(['core.js', 'ocr.js', 'content.js']);
+const fixture = process.argv.includes('--infineon') ? require('../tests/fixtures/infineon-irlml6344.json') : null;
 const mock = `
 const C={...OriginLens}, listeners=[], values={};window.OriginLens=C;
 const part={provider:'digikey',host:'www.digikey.com',manufacturer:'Nexperia USA Inc.',
 mpn:'PSMN040-100MSEX',sku:'1727-1086-2-ND',
 sourceUrl:'https://www.digikey.com/en/products/detail/nexperia-usa-inc/PSMN040-100MSEX/4004849'};
+const fixture=${JSON.stringify(fixture)};
+if(fixture){Object.assign(part,{manufacturer:'Infineon Technologies',mpn:'IRLML6344TRPBF',sku:'IRLML6344TRPBFTR-ND',sourceUrl:'https://www.digikey.com/en/products/detail/infineon-technologies/IRLML6344TRPBF/2538152'});document.querySelector('h1').textContent=part.mpn;}
 C.readIdentity=()=>part;C.readComponentType=()=>'discretes';
 C.lookupDigiKey=async()=>C.fromDigiKey({manufacturer:part.manufacturer,
 manufacturerPartNumber:part.mpn,digiKeyPartNumber:part.sku,countryOfOrigin:'China'},part);
+if(fixture)C.lookupDigiKey=async()=>{throw new C.LookupError('network','Synthetic preview: no network request.');};
 window.chrome={storage:{onChanged:{addListener:f=>listeners.push(f)},local:{
 get:async keys=>keys===null?{...values}:Object.fromEntries(keys.map(k=>[k,values[k]])),
 set:async next=>{Object.assign(values,next);listeners.forEach(f=>f(Object.fromEntries(Object.entries(next).map(([k,v])=>[k,{newValue:v}])),'local'));},
 remove:async keys=>keys.forEach(k=>delete values[k])}},
-runtime:{sendMessage:async()=>({ok:false,code:'network',message:'Synthetic preview: no network request.'})}};
+runtime:{sendMessage:async message=>fixture&&message.operation==='infineon'?{ok:true,data:C.fromInfineon(fixture,part)}:{ok:false,code:'network',message:'Synthetic preview: no network request.'}}};
 document.querySelector('#width').addEventListener('change',e=>document.querySelector('main').style.maxWidth=e.target.value+'px');
 `;
 http.createServer((req,res)=>{

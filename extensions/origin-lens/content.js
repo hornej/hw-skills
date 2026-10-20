@@ -67,7 +67,9 @@
     el("span", "Country of origin", summary).className = "panel-title";
     el("span", "Origin Lens", summary).className = "tag";
     const action = el("span", collapsed ? "Expand" : "Collapse", summary); action.className = "disclosure-action";
+    const mountedHost = host;
     disclosure.addEventListener("toggle", () => {
+      if (host !== mountedHost) return;
       collapsed = !disclosure.open;
       action.textContent = collapsed ? "Expand" : "Collapse";
     });
@@ -123,6 +125,7 @@
     if (provider === "digikey") return "https://www.digikey.com/";
     if (provider === "mouser") return `https://www.mouser.com/c/?q=${encodeURIComponent(part.mpn)}`;
     if (provider === "microchip") return C.microchipUrl(part);
+    if (provider === "infineon") return C.infineonUrl();
     const family = C.stFamily(part);
     return family ? `https://www.st.com/en/microcontrollers-microprocessors/${family}.html#sample-buy` : null;
   }
@@ -173,6 +176,10 @@
       link.href = url; link.target = "_blank"; link.rel = "noopener";
     }
     if (!result) return;
+    if (provider === "infineon") {
+      el("p", "All returned catalog regions and material variants; regional records are shown below.", row).className = "note";
+      if (result.fields.declaredCoo.raw.includes("YY")) el("p", "Some records report COO as YY: origin is only confirmed at shipment.", row).className = "note";
+    }
     el("span", `${state.cached ? (state.stale ? "Last known · checked" : "Saved · checked") : "Checked"} ${new Date(result.checkedAt).toLocaleString()}`, source);
     if (state.error) el("p", state.error, row).className = "note";
     const details = el("details", undefined, row);
@@ -187,6 +194,23 @@
       if (!values.length) value.className = "unknown";
     }
     const note = el("p", `${result.identity.manufacturer} · ${result.identity.mpn} · ${result.returnedSku || result.identity.sku}`, details); note.className = "note";
+    if (provider === "infineon") {
+      // Group identical declarations without losing their material or region scope.
+      const groups = new Map();
+      for (const report of result.regionalReports || []) {
+        const regions = report.regions.filter(v => v !== "All").join(", ") || "All";
+        const key = JSON.stringify([report.sp, regions, ...["declaredCoo", "assembly", "diffusion"].map(k => report[k].raw)]);
+        if (!groups.has(key)) groups.set(key, { report, regions, materials: [] });
+        groups.get(key).materials.push(report.material);
+      }
+      const regional = el("details", undefined, details);
+      el("summary", "Regional origin records", regional);
+      for (const { report, regions, materials } of groups.values()) {
+        el("p", `Regions: ${regions} · SP: ${report.sp} · materials: ${[...new Set(materials)].join(", ")}`, regional).className = "note";
+        const value = key => report[key].values.map(countryName).join(" / ") || (report[key].raw.length ? `Unresolved (${report[key].raw.join(", ")})` : "Not reported");
+        el("p", `COO: ${value("declaredCoo")} · Assembly: ${value("assembly")} · Wafer fabrication: ${value("diffusion")}`, regional).className = "note";
+      }
+    }
     if (provider === "digikey") el("p", part.provider === "digikey" && result.returnedSku && !C.same(result.returnedSku, part.sku)
       ? `Requested ${part.sku}; DigiKey resolved ${result.returnedSku}. Catalog origin for the exact ordering code.`
       : "Read-only DigiKey catalog lookup.", details).className = "note";
@@ -341,7 +365,7 @@
           const result = provider === "digikey" ? (part.provider === "digikey" ? await C.lookupDigiKey(part, stored.digikeyListId || "", pageFetch) : await request("digikey"))
             : provider === "mouser" ? await C.lookupMouserAuto(part, request, () => part.provider === "mouser" ? C.fromMouser(document, part) : C.lookupMouser(part, request, C.parseHtml, saved?.result.sourceUrl))
             : provider === "lcsc" ? await C.lookupLCSC(part, request, C.parseHtml, saved?.result.sourceUrl)
-            : provider === "microchip" ? await request("microchip")
+            : ["microchip", "infineon"].includes(provider) ? await request(provider)
             : await C.lookupST(part, request);
           if (!current()) return;
           C.assertMatch(result.identity, part);

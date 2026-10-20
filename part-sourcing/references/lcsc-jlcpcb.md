@@ -84,6 +84,28 @@ Java SDK, separate business packages, and app ID/access key/secret key credentia
 [Basic rules](https://api.jlcpcb.com/docs/start) specify HTTPS POST, JSON, and
 business-status checks in addition to HTTP status.
 
+### Authentication requirements
+
+The rendered [request-signature guide](https://api.jlcpcb.com/docs/api-request-signature)
+specifies **App ID, AccessKey and SecretKey**. Use `JLC_API_APP_ID`,
+`JLC_API_ACCESS_KEY` and `JLC_API_SECRET_KEY` as the credential names when wiring
+a client. An access key alone does not supply the application ID.
+
+Sign the UTF-8 string `METHOD\nPATH_WITH_QUERY\nTIMESTAMP\nNONCE\nBODY\n`,
+including the final newline, using HMAC-SHA256 with SecretKey and Base64-encode
+the digest. The timestamp is Unix seconds; the nonce is 32 random alphanumeric
+characters. POST signs the exact JSON bytes sent; GET has an empty body.
+The single-line Authorization header uses the `JOP` scheme with quoted `appid`,
+`accesskey`, `nonce`, `timestamp` and `signature` fields. The SDK's documented
+service origin is `https://open.jlcpcb.com`; operation paths still require the
+entitled Components documentation.
+
+The documented request-signing flow does **not** use a tokenization public/private
+key pair. Do not load those keys for catalog requests unless the applicable
+operation's documentation establishes a separate need. Their other purpose has
+not been verified. Keep keys, signatures and signing inputs out of logs, command
+arguments, reports and repositories; reject redirects on authenticated requests.
+
 **No standalone JLCPCB transport is implemented yet.** Public pages inspected
 did not expose the component request/response schema or its business SDK download.
 Obtain the entitled Components documentation/SDK from the approved account,

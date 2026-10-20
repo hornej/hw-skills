@@ -8,6 +8,11 @@ LCSC needs approved production access for its current API contract; see
 [LCSC and JLCPCB](lcsc-jlcpcb.md). JLCPCB's app credentials are not interchangeable
 with LCSC's, and no JLCPCB launcher is implemented.
 
+For JLCPCB onboarding, prepare `JLC_API_APP_ID`, `JLC_API_ACCESS_KEY` and
+`JLC_API_SECRET_KEY`. The documented HMAC request signature does not require the
+tokenization public/private keys. See the authentication section in
+[LCSC and JLCPCB](lcsc-jlcpcb.md) before using any JLC credentials.
+
 ## Environment credentials
 
 Inject the selected provider's variables through your preferred secret manager

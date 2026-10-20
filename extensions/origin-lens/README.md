@@ -32,6 +32,8 @@ Version 0.9.0 adds Infineon's public ECCN & HTS Finder, including regional COO,
 assembly and diffusion records for exact full ordering codes.
 Version 0.10.0 compares every ordering code in the viewed STM32 base part's ST
 family listing, including package, packing, operating temperature and origin.
+Version 0.10.1 keeps Mouser key status and controls inside Data sources & cache
+and reduces row spacing so the collapsed settings fit within Chrome's popup.
 
 ## Install or update
 
@@ -46,7 +48,7 @@ family listing, including package, packing, operating temperature and origin.
    shared list. The part being viewed does **not** need to be in that list.
    Sign-in and network failures do not ask you to create a list.
 
-5. Open Origin Lens → **Mouser API settings**, enter your **Mouser Search API
+5. Open Origin Lens → **Data sources & cache**, enter your **Mouser Search API
    key**, and choose **Save key**. You can instead import a JSON settings file
    with `format: "origin-lens-api-settings-v1"` and `mouserSearchApiKey`. Never
    commit that file. The saved key is not displayed when reopening the popup.

@@ -250,7 +250,7 @@
         try {
           const response = await chrome.runtime.sendMessage({ type: "origin-lens:open-mouser-settings" });
           if (!response?.ok) throw new Error("Settings unavailable");
-        } catch { el("p", "Open Origin Lens from the toolbar, then choose Mouser API settings.", row).className = "note"; }
+        } catch { el("p", "Open Origin Lens from the toolbar, then expand Data sources & cache.", row).className = "note"; }
         finally { setup.disabled = false; }
       });
       if (!result) return;

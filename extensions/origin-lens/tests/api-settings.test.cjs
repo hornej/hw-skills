@@ -37,15 +37,12 @@ test('saving prevents navigation, validates before storage, clears the field, an
  assert.equal(h.saved(),undefined);assert.match(h.node('api-state').textContent,/No key/);assert.equal(h.updates(),2);
 });
 
-test('API setup is discoverable and a direct setup link reveals and focuses the extension form',async()=>{
+test('API status stays in source settings and a direct setup link reveals and focuses the form',async()=>{
  const h=harness();await new Promise(resolve=>setImmediate(resolve));
- assert.match(h.node('api-overview-state').textContent,/not configured/);
- h.node('api-settings').events.click();
- assert.equal(h.node('source-settings').open,true);assert.equal(h.node('api-settings').attributes['aria-expanded'],'true');
- assert.equal(h.node('api-form').scrolled,true);assert.equal(h.node('mouser-key').focused,true);
- h.node('source-settings').open=false;h.node('source-settings').events.toggle();
- assert.equal(h.node('api-settings').attributes['aria-expanded'],'false');
+ assert.match(h.node('api-state').textContent,/No key/);
+ assert.ok(!h.node('source-settings').open);
  await h.import(JSON.stringify({format:'origin-lens-api-settings-v1',mouserSearchApiKey:key}));
- assert.equal(h.node('api-overview-state').textContent,'Mouser: API key saved');
- const linked=harness('#api-form');assert.equal(linked.node('source-settings').open,true);assert.equal(linked.node('mouser-key').focused,true);
+ assert.equal(h.node('api-state').textContent,'Key saved · API lookup enabled');
+ const linked=harness('#api-form');assert.equal(linked.node('source-settings').open,true);
+ assert.equal(linked.node('api-form').scrolled,true);assert.equal(linked.node('mouser-key').focused,true);
 });

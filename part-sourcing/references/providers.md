@@ -117,6 +117,18 @@ the skill or assume ordinary catalog credential setup supplies it.
 - Both preserve COO as declared origin, with quote or lot context. See
   [origin evidence](origin.md) for limitations and primary schema links.
 
+## LCSC and JLCPCB
+
+Both have official partner APIs, confirmed 2026-10-20. Read
+[LCSC and JLCPCB access](lcsc-jlcpcb.md) for enrollment, current versus legacy
+contracts, scope, and source links.
+
+The `lcsc` helper implements v3.4 read-only product search/details and uses
+`LCSC_API_KEY` / `LCSC_API_SECRET`. Offline tests verify signing, matching,
+pricing, incomplete pages and failures; production credentials and IP access
+still need authenticated acceptance testing. JLCPCB is an access/documentation
+route pending its entitled component schema, not a working CLI integration.
+
 ## Failures, records, and Findchips
 
 Stop a provider on authentication, quota, or transport failure; retain completed

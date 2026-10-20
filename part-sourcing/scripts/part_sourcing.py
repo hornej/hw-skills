@@ -4,11 +4,13 @@ import argparse
 import csv
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
+import hashlib
 import io
 import json
 import os
 from pathlib import Path
 import re
+import secrets
 import sys
 import tempfile
 import time
@@ -20,6 +22,7 @@ SCHEMA = "part-sourcing-v1"
 NEXAR = "https://api.nexar.com/graphql"
 MOUSER = "https://api.mouser.com/api/v1/search/partnumber"
 DIGIKEY = "https://api.digikey.com"
+LCSC = "https://api.lcsc.com/rest/api/agent/product/v1"
 STAGES = ("declared_coo", "wafer_fabrication", "assembly", "test")
 
 
@@ -288,6 +291,119 @@ def normalize_mouser(batch):
     return offers, statuses, origins
 
 
+def lcsc_headers(params, api_key, secret, *, nonce=None, timestamp=None):
+    """Current LCSC v3.4 guide: SHA-256, headers, sorted encoded query values."""
+    nonce = nonce if nonce is not None else secrets.token_hex(8)
+    timestamp = str(int(time.time()) if timestamp is None else timestamp)
+    query = urlencode(sorted((name, str(value)) for name, value in params.items()))
+    signed = f"key={api_key}&nonce={nonce}&secret={secret}&timestamp={timestamp}"
+    if query:
+        signed += "&" + query
+    return {"key": api_key, "nonce": nonce, "timestamp": timestamp,
+            "signature": hashlib.sha256(signed.encode("utf-8")).hexdigest()}
+
+
+def lcsc_mpn(product):
+    # The guide's field tables and examples use different names. Reject a conflict.
+    values = [product[name] for name in ("manufacturerProductNumber", "manufacturerProductCode")
+              if product.get(name) is not None]
+    if not values or not all(key(v) for v in values) or len({key(v) for v in values}) != 1:
+        raise SourcingError("LCSC returned missing or conflicting manufacturer part numbers")
+    return values[0]
+
+
+def lcsc_manufacturer_matches(manufacturer, requested):
+    actual = key(manufacturer.get("name"))
+    if actual == key(requested):
+        return True
+    # Verified LCSC brand 74 is ST; keep the reported name in the offer as well.
+    return (integer(manufacturer.get("id")) == 74 and actual == "st" and
+            key(requested) == "stmicroelectronics")
+
+
+def normalize_lcsc(batch):
+    response = batch["response"]
+    if response.get("success") is not True or response.get("code") != 200:
+        raise SourcingError("LCSC rejected the request; check API access, IP whitelist, signature and quota")
+    result = response.get("result")
+    if not isinstance(result, dict):
+        raise SourcingError("LCSC response lacks product data")
+    detail = batch.get("operation") == "productdetails"
+    products = [result] if detail else result.get("products")
+    if not isinstance(products, list):
+        raise SourcingError("LCSC response lacks a product list")
+    count = 1 if detail else integer(result.get("productCount"))
+    offset = batch.get("request", {}).get("offset", 0)
+    truncated = not detail and (count is None or offset != 0 or count != len(products))
+    for product in products:
+        if (not isinstance(product, dict) or not isinstance(product.get("manufacturer"), dict) or
+                not key(product["manufacturer"].get("name")) or
+                not re.fullmatch(r"C\d{1,12}", str(product.get("lcscProductNumber", "")))):
+            raise SourcingError("LCSC returned an incomplete catalog identity")
+        lcsc_mpn(product)
+    offers, statuses, origins = [], [], []
+    for requested in batch["parts"]:
+        candidates = [p for p in products if key(lcsc_mpn(p)) == key(requested["mpn"])]
+        exact = [p for p in candidates if lcsc_manufacturer_matches(p["manufacturer"], requested["manufacturer"])]
+        sku = batch.get("request", {}).get("lcscProductNumber")
+        if detail and (len(exact) != 1 or exact[0]["lcscProductNumber"] != sku):
+            raise SourcingError("LCSC detail does not match the requested manufacturer, MPN and SKU")
+        duplicate = len({p["lcscProductNumber"] for p in exact}) != len(exact)
+        status = ("ambiguous" if duplicate else "truncated" if truncated else "exact" if exact
+                  else "identity_mismatch" if candidates else "not_found")
+        statuses.append({**requested, "status": status, "hits": count,
+                         "observed_at": batch["checked_at"]})
+        if duplicate:
+            continue
+        for product in exact:
+            pricing = product.get("productPrice") or {}
+            if not isinstance(pricing, dict):
+                raise SourcingError("LCSC pricing has an unexpected shape")
+            if pricing and (
+                    pricing.get("lcscProductNumber") != product["lcscProductNumber"] or
+                    key(lcsc_mpn(pricing)) != key(lcsc_mpn(product)) or
+                    not isinstance(pricing.get("manufacturer"), dict) or
+                    key(pricing["manufacturer"].get("name")) != key(product["manufacturer"]["name"])):
+                raise SourcingError("LCSC pricing identity does not match its catalog item")
+            breaks = pricing.get("standardPricing") or []
+            if not isinstance(breaks, list) or any(not isinstance(p, dict) for p in breaks):
+                raise SourcingError("LCSC price breaks have an unexpected shape")
+            stock_values = {n for n in (integer(product.get("quantityAvailable")),
+                                       integer(pricing.get("quantityAvailable"))) if n is not None}
+            inventory = next(iter(stock_values)) if len(stock_values) == 1 else None
+            stock_conflict = len(stock_values) > 1 or (
+                inventory is not None and isinstance(product.get("isInStock"), bool) and
+                product["isInStock"] != (inventory > 0))
+            if stock_conflict:
+                inventory = None
+            photos = product.get("productPhotoURL") or []
+            source = product.get("productDetailURL") or batch["source_url"]
+            offers.append({"provider": "lcsc", "manufacturer": requested["manufacturer"],
+                "reported_manufacturer": product["manufacturer"]["name"],
+                "mpn": lcsc_mpn(product), "match_status": status, "seller": "LCSC",
+                "sku": product["lcscProductNumber"], "source_url": source,
+                "observed_at": batch["checked_at"], "authorized_by_aggregator": None,
+                "inventory_quantity": inventory, "inventory_conflict": stock_conflict,
+                "moq": integer(product.get("minimumOrderQuantity"), 1),
+                "order_multiple": integer(product.get("incrementQuantity"), 1),
+                "standard_package": integer(product.get("manufacturerStandardPackageQuantity"), 1),
+                "package": product.get("package"), "packaging": product.get("packageType"),
+                "restriction": "Not currently for sale" if product.get("isOnSale") is False else None,
+                "reeling_fee": pricing.get("lcscReelFee"),
+                "datasheet_url": product.get("datasheetURL"),
+                "reference_photo_urls": photos if isinstance(photos, list) else [],
+                "prices": [{"quantity": p.get("breakQuantity"), "price": p.get("unitPrice"),
+                            "discount_rate": p.get("discountRate"), "currency": pricing.get("currency")}
+                           for p in breaks]})
+            record = origin_record(requested["manufacturer"], lcsc_mpn(product), batch,
+                sku=product["lcscProductNumber"], scope="catalog", match_status=status)
+            record.update(source_url=source, evidence_status="no_documented_origin_fields")
+            # Photos, export codes, shipping countries and catalog change feeds do
+            # not establish a chip's origin. Keep raw fields for later review.
+            origins.append(record)
+    return offers, statuses, origins
+
+
 def normalize_digikey(batch, provider):
     response = batch["response"]
     if provider == "digikey-quote":
@@ -361,18 +477,24 @@ def import_digikey_details(envelope):
 
 def collect(provider, parts, *, quantity=1, country="US", currency="USD",
             batch_size=None, match_limit=1, all_sellers=False, enrich=False,
-            quote_id=None, tracing_id=None, offset=0, limit=50):
+            quote_id=None, tracing_id=None, offset=0, limit=50, sku=None):
     report = {"schema": SCHEMA, "provider": provider, "requested_quantity": quantity,
               "currency": currency, "requested_parts": parts, "batches": [],
               "offers": [], "matches": [], "origin_records": [], "errors": [], "complete": True}
-    max_size = 100 if provider == "nexar" else 10
+    max_size = 100 if provider == "nexar" else 1 if provider == "lcsc" else 10
     size = batch_size or max_size
     if size < 1 or size > max_size or not 1 <= match_limit <= 100:
         raise SourcingError("Invalid batch size or match limit")
-    if provider in {"nexar", "mouser"} and not parts:
+    if provider in {"nexar", "mouser", "lcsc"} and not parts:
         raise SourcingError("No parts to query")
     if provider == "mouser" and any(not 3 <= len(p["mpn"]) <= 40 or "|" in p["mpn"] for p in parts):
         raise SourcingError("Mouser part numbers must be 3-40 characters without a pipe")
+    if provider == "lcsc":
+        if offset < 0 or not 1 <= limit <= 500 or currency not in {"USD", "EUR", "CNY", "HKD"}:
+            raise SourcingError("LCSC requires a nonnegative offset, limit 1-500, and supported currency")
+        if sku is not None and (len(parts) != 1 or not re.fullmatch(r"C\d{1,12}", sku) or offset):
+            raise SourcingError("LCSC --sku requires one exact manufacturer/MPN pair and no offset")
+        report["scope"] = "one_catalog_item" if sku else "one_search_page_per_part"
     groups = [parts[i:i + size] for i in range(0, len(parts), size)] or [[]]
     headers = {}
     if provider == "nexar":
@@ -385,6 +507,8 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
         headers["Authorization"] = "Bearer " + token
     elif provider == "mouser":
         api_key = env("MOUSER_SEARCH_API_KEY")
+    elif provider == "lcsc":
+        api_key, api_secret = env("LCSC_API_KEY"), env("LCSC_API_SECRET")
     elif provider in {"digikey-quote", "digikey-trace"}:
         headers = {"Authorization": "Bearer " + env("DIGIKEY_USER_ACCESS_TOKEN"),
                    "X-DIGIKEY-Client-Id": env("DIGIKEY_CLIENT_ID")}
@@ -396,7 +520,7 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
         raise SourcingError("Unsupported provider")
     for index, group in enumerate(groups):
         if index:
-            time.sleep(2.1 if provider == "mouser" else 0.25)
+            time.sleep(2.1 if provider == "mouser" else 1.1 if provider == "lcsc" else 0.25)
         try:
             body = None
             if provider == "nexar":
@@ -408,6 +532,13 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
                 url = MOUSER + "?" + urlencode({"apiKey": api_key})
                 body = {"SearchByPartRequest": {"mouserPartNumber": "|".join(dict.fromkeys(p["mpn"] for p in group)),
                                                 "partSearchOptions": "Exact"}}
+            elif provider == "lcsc":
+                operation = "productdetails" if sku else "keywordsearch"
+                params = {"lcscProductNumber": sku} if sku else {
+                    "keyword": group[0]["mpn"], "offset": offset, "limit": limit, "language": "EN"}
+                params.update(returnInformation="All", currency=currency)
+                source = url = LCSC + "/" + operation + "?" + urlencode(params)
+                headers = lcsc_headers(params, api_key, api_secret)
             elif provider == "digikey-quote":
                 if integer(quote_id, 1) is None or offset < 0 or not 1 <= limit <= 50:
                     raise SourcingError("Quote requires a positive ID, nonnegative offset, and limit 1-50")
@@ -426,6 +557,9 @@ def collect(provider, parts, *, quantity=1, country="US", currency="USD",
                 offers, matches, origins = normalize_nexar(batch)
             elif provider == "mouser":
                 offers, matches, origins = normalize_mouser(batch)
+            elif provider == "lcsc":
+                batch.update(operation=operation, request=params)
+                offers, matches, origins = normalize_lcsc(batch)
             else:
                 if provider == "digikey-quote":
                     batch.update(quote_id=quote_id, offset=offset, limit=limit)
@@ -464,6 +598,8 @@ def evaluate_offer(offer, quantity, currency):
         warnings.append("exceeds_sales_maximum")
     if offer.get("restriction"):
         warnings.append("supplier_restriction")
+    if offer.get("inventory_conflict"):
+        warnings.append("conflicting_inventory_fields")
     if offer.get("surcharge_messages"):
         warnings.append("additional_surcharges")
     if money(offer.get("reeling_fee"), currency) is not None:
@@ -599,7 +735,7 @@ def write_output(content, path):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("nexar", "mouser"):
+    for name in ("nexar", "mouser", "lcsc"):
         p = sub.add_parser(name)
         inputs = p.add_mutually_exclusive_group(required=True)
         inputs.add_argument("--input", help="CSV or JSON candidate file")
@@ -613,6 +749,10 @@ def main(argv=None):
             p.add_argument("--match-limit", type=positive, default=1)
             p.add_argument("--all-sellers", action="store_true")
             p.add_argument("--enrich", action="store_true")
+        if name == "lcsc":
+            p.add_argument("--sku", help="Verified LCSC C-number for one manufacturer/MPN pair")
+            p.add_argument("--offset", type=int, default=0, help="Search offset; no automatic paging")
+            p.add_argument("--limit", type=positive, default=50, help="Search page size, at most 500")
         p.add_argument("--output")
     p = sub.add_parser("digikey-quote")
     p.add_argument("--quote-id", type=positive, required=True)
@@ -645,7 +785,7 @@ def main(argv=None):
             options = vars(args).copy()
             for field in ("command", "output", "input", "part", "manufacturer"):
                 options.pop(field, None)
-            parts = read_parts(args) if args.command in {"nexar", "mouser"} else []
+            parts = read_parts(args) if args.command in {"nexar", "mouser", "lcsc"} else []
             data = collect(args.command, parts, **options)
             if parts:
                 data["comparison"] = compare([data], args.quantity, args.currency)

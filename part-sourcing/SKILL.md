@@ -1,6 +1,6 @@
 ---
 name: part-sourcing
-description: Compare exact electronic parts across distributors using Nexar/Octopart, Mouser, and DigiKey, with quantity pricing, stock, and separate country-of-origin and manufacturing-stage evidence. Use for candidate lists, BOM sourcing, and procurement constraints after technical requirements are established.
+description: Compare exact electronic parts using Nexar/Octopart, Mouser, DigiKey, and LCSC, with JLCPCB API access guidance, quantity pricing, stock, and separate origin evidence. Use for candidate lists, BOM sourcing, and procurement constraints after technical requirements are established.
 ---
 
 # Part sourcing
@@ -18,7 +18,11 @@ current task.
 - For broad availability screening, use Nexar's batch API. Read
   [provider access](references/providers.md) before calling a provider.
 - For final stock and prices, use the existing `digikey-part-selection` client or
-  the Mouser helper here. Refresh exact distributor SKUs and packaging choices.
+  the Mouser or LCSC helper here. Refresh exact distributor SKUs and packaging choices.
+- For LCSC or JLCPCB, read [LCSC and JLCPCB access](references/lcsc-jlcpcb.md).
+  Both have official partner APIs. The LCSC client implements the current
+  documented contract; JLCPCB component schemas and access still need provisioning.
+  Keep JLCPCB assembly-library inventory distinct from LCSC purchasable stock.
 - For COO or fabrication/assembly/test restrictions, read
   [origin evidence](references/origin.md). Use `st-origin-lookup` for ST's website
   service when that installed skill is available. An absent integration is not
@@ -68,6 +72,8 @@ evidence: a mismatch is not silently accepted.
 ```text
 python scripts/part_sourcing.py nexar --input candidates.csv --quantity 1000
 python scripts/part_sourcing.py mouser --part STM32H523CCU6 --manufacturer STMicroelectronics --quantity 1000 --output mouser.json
+python scripts/part_sourcing.py lcsc --part STM32G491RET6 --manufacturer STMicroelectronics --quantity 1000 --output lcsc.json
+python scripts/part_sourcing.py lcsc --part STM32G491RET6 --manufacturer STMicroelectronics --sku C3231005 --quantity 1000 --output lcsc-detail.json
 python scripts/part_sourcing.py compare --input mouser.json --quantity 1000 --currency USD --format csv
 python scripts/part_sourcing.py compare --input mouser.json --input digikey-details.json --quantity 1000
 python scripts/part_sourcing.py digikey-quote --quote-id 12345 --offset 0 --limit 50 --output quote-page.json

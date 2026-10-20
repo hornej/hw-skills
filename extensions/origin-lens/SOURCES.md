@@ -92,6 +92,15 @@ independently validated in this integration and are not used by the extension.
 | Nexperia / NXP | No direct exact-part manufacturer COO transport verified in this investigation. | Exact-code source; general factory locations and sustainability declarations are insufficient. |
 | Farnell / Newark, RS, TME | Potential additional distributor sources; no authenticated/structured origin endpoint validated here. | Exact manufacturer/MPN mapping, documented field meaning, access requirements and a live result. |
 | Nexar / Octopart | Existing sourcing integration is useful for identifying parts/offers; no usable COO field verified here. | Confirm origin field and entitlement before adding requests or using quota. |
+| LCSC partner API | Official API Access & Usage Guide v3.4 reviewed 2026-10-20; stock, prices, exact identity and reference-photo URLs are documented. No named manufacturing-country fields found. | Approved API credentials and live response; existing photo evidence remains sample-only. |
+| JLCPCB Components API | Official portal confirms public-library details by C-number and private inventory. Public component response schema was not available in the inspected docs. | Approved Components access, field definitions and an exact-part response before adding origin requests. |
+
+The maintained [LCSC/JLCPCB investigation](../../part-sourcing/references/lcsc-jlcpcb.md)
+links the official application and documentation routes. LCSC's
+`ProductChangeNotifications` API is a catalog/price update feed, not a source of
+manufacturer process-change notices. Destination countries, warehouse stock and
+PCB assembly attributes are not chip-origin evidence. No new runtime origin
+adapter or host permissions were added on the basis of API availability alone.
 
 ## Adding an adapter
 

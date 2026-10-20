@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('nexar', 'mouser')][string]$Provider,
+    [Parameter(Mandatory = $true)][ValidateSet('nexar', 'mouser', 'lcsc')][string]$Provider,
     [string]$Python = 'python',
     [string]$SecretsFile = (Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'hw-skills\part-sourcing-bitwarden.json'),
     [string]$BitwardenHelper = '',
@@ -8,7 +8,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$requiredNames = if ($Provider -eq 'nexar') { @('NEXAR_CLIENT_ID', 'NEXAR_CLIENT_SECRET') } else { @('MOUSER_SEARCH_API_KEY') }
+$requiredNames = switch ($Provider) {
+    'nexar' { @('NEXAR_CLIENT_ID', 'NEXAR_CLIENT_SECRET') }
+    'mouser' { @('MOUSER_SEARCH_API_KEY') }
+    'lcsc' { @('LCSC_API_KEY', 'LCSC_API_SECRET') }
+}
 $helpOnly = $SourcingArgs -contains '--help' -or $SourcingArgs -contains '-h'
 $environmentReady = @($requiredNames | Where-Object {
     [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_, 'Process'))
@@ -28,7 +32,7 @@ if ($useBitwarden) {
     $null = Get-Command bws -ErrorAction Stop
 }
 $null = Get-Command $Python -ErrorAction Stop
-$envNames = @('BWS_ACCESS_TOKEN', 'NEXAR_CLIENT_ID', 'NEXAR_CLIENT_SECRET', 'MOUSER_SEARCH_API_KEY')
+$envNames = @('BWS_ACCESS_TOKEN', 'NEXAR_CLIENT_ID', 'NEXAR_CLIENT_SECRET', 'MOUSER_SEARCH_API_KEY', 'LCSC_API_KEY', 'LCSC_API_SECRET')
 $priorEnv = @{}
 foreach ($name in $envNames) { $priorEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 $sourcingExit = 1

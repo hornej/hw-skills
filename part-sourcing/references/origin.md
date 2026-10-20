@@ -83,3 +83,18 @@ COO still do not prove wafer, assembly, and testing locations.
 If authenticated origin APIs are unavailable, use the ordinary product/quote/list
 UI or supplier documentation within the user's authorized scope. Clearly identify
 an unverified stage rather than turning a login limitation into a sourcing answer.
+
+## LCSC and JLCPCB
+
+The [API investigation](lcsc-jlcpcb.md) on 2026-10-20 found official sourcing
+APIs at both companies, but no verified manufacturing-country or lot-route field.
+LCSC's current v3.4 product schema provides reference photos, generic parameters
+and export codes. Its shipping-country fields are destinations, and its
+`ProductChangeNotifications` feed concerns catalog/price updates, not manufacturer
+process changes. The helper preserves raw responses and leaves origin assertions
+empty. JLCPCB component field-level coverage remains unverified pending access.
+
+Origin Lens's existing LCSC photo/OCR integration can provide sample assembly
+evidence for supported ST markings. Keep this separate from catalog declarations,
+stock and lot evidence. JLCPCB's SMT placement services concern board assembly;
+they do not establish the semiconductor's package-assembly location.

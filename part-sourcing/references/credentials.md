@@ -1,9 +1,12 @@
 # Credential injection
 
-The Python client accepts `NEXAR_CLIENT_ID`, `NEXAR_CLIENT_SECRET`, or
-`MOUSER_SEARCH_API_KEY` through its process environment. Nexar access tokens are
+The Python client accepts `NEXAR_CLIENT_ID`, `NEXAR_CLIENT_SECRET`,
+`MOUSER_SEARCH_API_KEY`, or `LCSC_API_KEY` / `LCSC_API_SECRET` through its process environment. Nexar access tokens are
 obtained automatically. Do not substitute a portal-generated access token for the
 client secret or a Mouser cart/order API key for its Search API key.
+LCSC needs approved production access for its current API contract; see
+[LCSC and JLCPCB](lcsc-jlcpcb.md). JLCPCB's app credentials are not interchangeable
+with LCSC's, and no JLCPCB launcher is implemented.
 
 ## Environment credentials
 
@@ -24,6 +27,7 @@ then restores the caller's environment on exit.
 # With the provider's variables already supplied to this process:
 & .\scripts\run-sourcing.ps1 -Provider nexar -Python 'python' -SourcingArgs @('--part', 'STM32F091CBT6', '--manufacturer', 'STMicroelectronics', '--quantity', '1000')
 & .\scripts\run-sourcing.ps1 -Provider mouser -Python 'python' -SourcingArgs @('--part', 'STM32F091CBT6', '--manufacturer', 'STMicroelectronics', '--quantity', '1000')
+& .\scripts\run-sourcing.ps1 -Provider lcsc -Python 'python' -SourcingArgs @('--part', 'STM32G491RET6', '--manufacturer', 'STMicroelectronics', '--quantity', '1000')
 ```
 
 ## Optional Windows Bitwarden integration
@@ -52,7 +56,9 @@ The default local mapping is
   "secrets": {
     "NEXAR_CLIENT_ID": "SECRET_RECORD_UUID",
     "NEXAR_CLIENT_SECRET": "SECRET_RECORD_UUID",
-    "MOUSER_SEARCH_API_KEY": "SECRET_RECORD_UUID"
+    "MOUSER_SEARCH_API_KEY": "SECRET_RECORD_UUID",
+    "LCSC_API_KEY": "SECRET_RECORD_UUID",
+    "LCSC_API_SECRET": "SECRET_RECORD_UUID"
   }
 }
 ```

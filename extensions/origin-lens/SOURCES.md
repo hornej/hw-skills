@@ -117,6 +117,44 @@ The offline fixture is reconstructed from those rendered rows and the public
 client field mapping, rather than a raw authenticated API response. Installed
 extension validation is recorded separately in the README.
 
+### Product Information API access check
+
+On 2026-10-20, user-provided `TI_API_KEY` and `TI_API_SECRET` were retrieved
+from Bitwarden Secrets Manager for a read-only evaluation. OAuth client-credentials
+authentication at `https://transact.ti.com/v1/oauth/accesstoken` succeeded.
+Credentials and access tokens stayed in process memory and were not added to
+the extension, repository, or diagnostic output.
+
+Both `/v1/products/{ProductIdentifier}` and
+`/v1/products-extended/{ProductIdentifier}` returned HTTP 200 and exact full
+identifiers for `TPS259474ARPWR` and `TLV75801PDRVRG4`. The responses included
+base-product identity, package/carrier details, lifecycle, ECCN/HTS, electrical
+parameters and limited quality/reliability data. Neither response included COO,
+assembly, wafer-fabrication, diffusion or testing locations, or the Import
+details specialized-flow alternate list. `Quality.ProcessTechnology` was
+`Not Available` for both parts; process technology is not a location even when
+populated. `InventoryStatus` explicitly directed callers to the Store Inventory
+and Pricing API.
+
+The published [Product Information schema](https://www.ti.com/content/dam/developer-api/product-information-api.yaml)
+and [Orchestrated schema](https://www.ti.com/content/dam/developer-api/product-information-orchestrated-api.yaml)
+also provided no named origin or manufacturing-location fields. These findings
+describe the reviewed schemas and two live examples, not a guarantee about
+future API coverage.
+
+A separate request to the existing Import details endpoint, using that valid
+API bearer token without browser cookies, returned HTTP 401. Product Information
+API access therefore did not replace the myTI website session in this test.
+Origin Lens continues to use the signed-in website source for TI COO. Product
+Information remains a possible source of package/packing and parametric metadata
+for future variant research; it is not counted as origin evidence.
+
+TI Store API approval was still pending and no Store requests were made. After
+approval, inspect and test its applicable read-only endpoints separately; do not
+assume they offer catalog COO, alternate-flow data, or authentication for Import
+details. See TI's [authentication guide](https://www.ti.com/developer-api/product-information-api-suite/authentication.html)
+and [Product Information guide](https://www.ti.com/developer-api/product-information-api-suite/getting-started.html).
+
 ## Harwin and Samtec verification
 
 Harwin and Samtec were added in 0.11.0 after live network and parser checks on

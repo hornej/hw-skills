@@ -40,6 +40,8 @@ Version 0.12.0 adds TI Import details through the existing myTI browser session,
 with an explicit United States ship-to scope and separately listed specialized-flow alternatives.
 It also fixes strict manufacturer-report cache checks when extension messaging
 or storage reorders object keys, without accepting changed evidence values.
+Version 0.12.1 restricts LCSC photo previews, links and OCR to top-side views
+and documents API-key enrollment and configuration.
 
 ## Install or update
 
@@ -55,7 +57,8 @@ or storage reorders object keys, without accepting changed evidence values.
    Sign-in and network failures do not ask you to create a list.
 
 5. Open Origin Lens → **Data sources & cache**, enter your **Mouser Search API
-   key**, and choose **Save key**. You can instead import a JSON settings file
+   key**, and choose **Save key**. See [Get API keys](#get-api-keys) below for
+   enrollment instructions. You can instead import a JSON settings file
    with `format: "origin-lens-api-settings-v1"` and `mouserSearchApiKey`. Never
    commit that file. The saved key is not displayed when reopening the popup.
    A key used by a separate sourcing tool is not automatically available to the
@@ -72,9 +75,81 @@ Mouser. Without a key, the existing website lookup remains available. The
 panel shows **Setup required** with **Configure Mouser** when that fallback fails,
 instead of sending you to sign in to Mouser. A saved key's status confirms local
 storage only; an API rejection remains visible as **Check API key** in the panel.
-The manufacturer APIs do not require this key. Obtain keys through
-[Mouser's Search API portal](https://www.mouser.com/en/api-search/).
+The manufacturer sources do not require the Mouser key.
 Remove the extension through Chrome to uninstall it and its local data.
+
+## Get API keys
+
+Instructions checked against the providers' documentation on 2026-10-20.
+**Mouser Search is the only API credential currently configured in Origin Lens.**
+
+| Source | What Origin Lens needs |
+| --- | --- |
+| Mouser | A **Search API** key for automatic API lookup on either distributor site |
+| DigiKey | A normal DigiKey browser sign-in; no DigiKey developer API key |
+| Texas Instruments | A normal myTI browser sign-in for Import details; TI API credentials currently do not replace it |
+| ST, Microchip, Infineon, Harwin and Samtec | No personal API key for the implemented sources |
+| LCSC package photos and local OCR | No LCSC, JLCPCB or image-service API key |
+
+### Mouser Search API: obtain and configure a key
+
+1. Open [Mouser's Search API page](https://www.mouser.com/en/api-search/) and
+   sign in to your My Mouser account, or create one.
+2. Choose **Sign Up for Search API** under **Additional Resources**. Complete
+   the Search API Request Form and any email verification requested by Mouser.
+3. Mouser emails the Search API key and setup information. Request **Search API**
+   access specifically; Origin Lens does not use Cart, Order or Order History keys.
+4. Open Origin Lens from the browser toolbar, expand **Data sources & cache**,
+   paste the key into **Mouser Search API key**, and select **Save key**. The
+   popup's **Settings** link opens the same controls in a full tab if preferred.
+5. On a supported DigiKey or Mouser product page, click **Refresh** in the
+   Origin Lens panel. A successful API result links to **Mouser Search API**.
+   Not every part has origin data, even when the key is valid.
+
+The saved-key indicator confirms local storage, not a successful API request.
+If the panel shows **Check API key**, verify that you copied a Search API key
+and that Mouser has enabled it. **Setup required** means no key is configured
+and the website fallback could not supply the result. To replace a key, save
+the new value; **Remove key** removes it from this extension.
+
+Keys in Bitwarden Secrets Manager, environment variables, or the separate
+part-sourcing helper are not automatically copied into Origin Lens. Save or
+import the key in each browser profile where the extension is installed.
+Keep the original in your password/secret manager; never commit a key or an
+API-settings JSON file to GitHub.
+
+### TI API keys: separate access for API research
+
+The current TI origin source uses your myTI browser session. The steps below
+obtain credentials for TI's official APIs; Origin Lens has no TI API-key field.
+Our [live API check](SOURCES.md#product-information-api-access-check) found no
+COO or manufacturing locations in the Product Information responses, and its
+token did not authenticate the Import details website endpoint.
+
+To obtain Product Information access, follow TI's
+[Product Information keys and access guide](https://www.ti.com/developer-api/product-information-api-suite/keys-access.html):
+
+1. Create or join a **myTI company account**. A company account administrator
+   manages API access.
+2. In **myTI dashboard**, open **Company Account → API Keys and Access**.
+3. Find **TI Product Information API Suite**, select **Enable**, and review
+   and accept TI's API terms if you agree to them.
+4. Copy the generated **API key and secret** into your secret manager before
+   closing the dialog. TI limits secret visibility to 30 minutes or closing
+   the viewed dialog, whichever happens first. The key/secret pair can only
+   be regenerated once every 24 hours.
+5. For this project's API evaluations, store them as `TI_API_KEY` and
+   `TI_API_SECRET` in Bitwarden Secrets Manager. These are API credentials,
+   separate from your myTI login password.
+
+**TI Store API suite requires separate approval.** From the same access page,
+request the Store suite and follow TI's
+[Store keys and access guide](https://www.ti.com/developer-api/store-api/keys-access.html).
+TI currently requires an API-eligible company checkout profile using bank
+transfer or a line of credit. Wait for TI's approval; having a working Product
+Information key does not establish Store access. The same key pair can serve
+the enabled suites, so a separate pair is not necessarily required. Store
+support is not yet integrated into Origin Lens.
 
 ## Collapse or hide the panel
 
@@ -250,9 +325,15 @@ as Infineon Technologies or its verified short name, Infineon.
 ### LCSC photo evidence
 
 The LCSC row is additional visual evidence, not another declared-COO vote. It
-does not change the count of sources reporting origin. **View reference photos**
-expands an image preview and links to the full-resolution photos. Photos are
+does not change the count of sources reporting origin. **View top-side photos**
+expands an image preview and links to the full-resolution top-side photos. Photos are
 reference images, not confirmation of the current warehouse lot.
+
+Only LCSC's `front` (angled top) and `blank` (top on a plain background) photo
+variants are accepted. Underside (`back`) and unknown views are excluded from
+previews, full-size photo links and OCR. A listing with no supported top-side
+photo reports that absence. Older saved galleries containing underside images
+are ignored and looked up again, so clearing the cache is unnecessary.
 
 The initial automatic search covers **ST STM32** parts in LCSC's microcontroller
 category. It does not yet search other manufacturers or decode arbitrary images.
@@ -265,7 +346,7 @@ unavailable image loses that annotation; its available photos stay inspectable.
 All matched STM32 listings now also run **local OCR**, including images without
 a bundled review. The reader crops the dark package, upscales it, tries grayscale
 and contrast-enhanced passes, and checks four orientations. It examines up to
-three listing photos and stops when one sample yields usable evidence.
+three top-side listing photos and stops when one sample yields usable evidence.
 Only literal **CHN → China** and **MYS → Malaysia** are interpreted, using ST's
 documented explanation. A country needs both image variants at the same rotation
 to agree with word scores of at least 80/100. Scores are heuristic, not calibrated
@@ -462,6 +543,8 @@ the setup shortcut and keyboard focus, and cancellation/error preservation.
 Photo tests cover exact metadata and image-SKU matching, suffix and ambiguity
 rejection, URL bounds, changed fingerprints, unknown markings, separate photo
 and COO fields, cross-site cache sharing, and the master switch.
+They also cover top-side filtering regardless of gallery order, bottom-only
+listings, rejection of old mixed-view caches and exclusion of underside links.
 OCR tests cover confidence/consensus, unsupported codes, conflicting readings,
 part mismatch, bounded records, forged observations, old-cache refresh, image
 allowlists, cancellation and offscreen lifecycle. Asset hashes check that the

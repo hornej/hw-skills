@@ -308,7 +308,8 @@ test('LCSC photo evidence appears on both sites, stays outside the COO count and
   const dkPart={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND',sourceUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591'};
   const mouserPart={...nexMouser,manufacturer:dkPart.manufacturer,mpn:dkPart.mpn,sku:'511-STM32G491RET6',sourceUrl:'https://www.mouser.com/en/ProductDetail/STMicroelectronics/STM32G491RET6'};
   const url='https://www.lcsc.com/product-detail/C3231005.html',image='https://assets.lcsc.com/images/lcsc/900x900/20230511_STMicroelectronics-STM32G491RET6_C3231005_blank.jpg';
-  const product={'@type':'Product',mpn:dkPart.mpn,sku:'C3231005',brand:{name:'ST'},offers:{url},image:[image]};
+  const front=image.replace('_blank.jpg','_front.jpg'),back=image.replace('_blank.jpg','_back.jpg');
+  const product={'@type':'Product',mpn:dkPart.mpn,sku:'C3231005',brand:{name:'ST'},offers:{url},image:[back,front,image]};
   const report=C.fromLCSC({querySelectorAll:()=>[{textContent:JSON.stringify(product)}]},url,dkPart);
   report.photoEvidence.observation={...C.lcscReview(dkPart,[image])};
   const saved=storage({...savedEntry(originRecord(dkPart,'Taiwan')),...savedEntry(originRecord(mouserPart,'Taiwan')),...savedEntry(report)});
@@ -318,12 +319,48 @@ test('LCSC photo evidence appears on both sites, stays outside the COO count and
     assert.match(pageText(page),/China · sample/);assert.match(pageText(page),/Reviewed marking CHN · assembly country of the photographed sample/);
     assert.match(pageText(page),/2 sources reporting origin · reference photos available/);
     assert.ok(page.nodes().some(n=>n.tagName==='img'&&n.src===image&&n.referrerPolicy==='no-referrer'));
+    assert.ok(page.nodes().some(n=>n.tagName==='a'&&n.href===front));
+    assert.match(pageText(page),/View top-side photo/);
+    assert.ok(!page.nodes().some(n=>n.src===back||n.href===back));
   }
   const before=[dkPage.messages(),mouserPage.messages()];
   await saved.local.set({enabled:false});await settle();
   assert.equal(dkPage.panelCount()+mouserPage.panelCount(),0);
   assert.deepEqual([dkPage.messages(),mouserPage.messages()],before);
   const off=pageHarness(storage({enabled:false}),dkPart,'ics');await settle();assert.equal(off.messages(),0);assert.equal(off.panelCount(),0);
+});
+
+test('old underside galleries stay hidden during refresh and cannot return when no top-side photo is available',async()=>{
+  const dk={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32G491RET6'};
+  const mouser={...nexMouser,manufacturer:dk.manufacturer,mpn:dk.mpn};
+  const url='https://www.lcsc.com/product-detail/C3231005.html';
+  const front='https://assets.lcsc.com/images/lcsc/900x900/20230511_STMicroelectronics-STM32G491RET6_C3231005_front.jpg';
+  const back=front.replace('_front.jpg','_back.jpg');
+  const product={'@type':'Product',mpn:dk.mpn,sku:'C3231005',brand:{name:'ST'},offers:{url},image:[back,front]};
+  const updated=C.fromLCSC({querySelectorAll:()=>[{textContent:JSON.stringify(product)}]},url,dk);
+  const legacy=structuredClone(updated);legacy.photoEvidence.images=[back,front];
+  for(const selected of [dk,mouser])for(const hasTop of [true,false]){
+    const saved=storage(savedEntry(legacy));let calls=0,finish;
+    const page=pageHarness(saved,selected,'ics',undefined,{
+      lookupDigiKey:async()=>originRecord(dk,'Taiwan'),
+      lookupLCSC:async()=>{calls++;return new Promise((resolve,reject)=>{
+        finish=()=>hasTop?resolve(updated):reject(new C.LookupError('image','LCSC has no supported top-side photos for this listing.'));
+      });}
+    });
+    await settle();assert.equal(calls,1);
+    assert.ok(!page.nodes().some(n=>n.tagName==='img'||n.href===back||n.href===front));
+    finish();await settle();
+    assert.ok(!page.nodes().some(n=>n.src===back||n.href===back));
+    if(hasTop){
+      assert.ok(page.nodes().some(n=>n.tagName==='img'&&n.src===front));
+      assert.match(pageText(page),/View top-side photos/);
+      assert.deepEqual(saved.values[C.sourceCacheKey('lcsc',updated.identity)].result.photoEvidence.images,[front]);
+    }else{
+      assert.match(pageText(page),/no supported top-side photos/);
+      assert.ok(!page.nodes().some(n=>n.tagName==='img'));
+    }
+    await saved.local.set({enabled:false});await settle();
+  }
 });
 
 test('automatic markings render on both sites with raw text and stay separate from catalog COO',async()=>{

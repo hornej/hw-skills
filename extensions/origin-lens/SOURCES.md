@@ -66,6 +66,10 @@ Evidence and reference links:
   labels images as reference only. File naming is not used to infer a photo or
   manufacturing date. The adapter verified the live fingerprint at
   `2026-10-20T16:14:57Z` and keeps the original visual review timestamp separately.
+  For version 0.12.1, visual inspection of the three C3231005 photos confirmed
+  `front` is an angled top view, `blank` is the marked top on a plain background,
+  and `back` is the unmarked underside. Only `front` and `blank` variants are
+  accepted for previews, links and OCR; missing top-side photos are not guessed.
 - [ST employee explanation of CHN](https://community.st.com/stm32-mcus-products-25/does-anyone-have-a-cheat-sheet-to-tell-me-what-the-date-code-is-and-what-it-stands-for-34162)
   identifies it as assembly-site country. The LCSC annotation applies this
   interpretation only to the reviewed sample. It assigns no wafer or test

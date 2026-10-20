@@ -354,12 +354,12 @@
     if (evidence.reviewNote) el("p", evidence.reviewNote, row).className = "note";
     el("p", "Reference photograph. Current stock, declared COO, wafer fabrication and testing locations are not established by this image.", row).className = "note";
     const details = el("details", undefined, row);
-    el("summary", observation ? `View photo · ${observation.marking} marking` : "View reference photos", details);
+    el("summary", observation ? `View top-side photo · ${observation.marking} marking` : "View top-side photos", details);
     const imageUrl = observation?.imageUrl || evidence.images.find(url => /_blank\./i.test(url)) || evidence.images[0];
     const figure = el("figure", undefined, details); figure.className = "photo-evidence";
     const photoLink = el("a", undefined, figure); photoLink.href = imageUrl; photoLink.target = "_blank"; photoLink.rel = "noopener noreferrer";
     const image = el("img", undefined, photoLink); image.width = 900; image.height = 900; image.loading = "lazy"; image.decoding = "async";
-    image.referrerPolicy = "no-referrer"; image.alt = `LCSC reference photo of ${result.identity.mpn}${observation ? `; ${evidence.observation ? "reviewed" : "automatically read"} marking ${observation.marking}` : "; no reliable country marking read"}`;
+    image.referrerPolicy = "no-referrer"; image.alt = `LCSC top-side reference photo of ${result.identity.mpn}${observation ? `; ${evidence.observation ? "reviewed" : "automatically read"} marking ${observation.marking}` : "; no reliable country marking read"}`;
     image.src = imageUrl;
     image.addEventListener("error", () => {
       image.hidden = true;

@@ -608,11 +608,14 @@
   function lcscImageUrl(value, sku) {
     try {
       const u = new URL(value);
+      // The supported LCSC galleries use front (angled) and blank (plain
+      // background) for the marked top. Exclude back/unknown views everywhere,
+      // including OCR fetches and validation of previously saved photo records.
       if (!/^C\d{1,12}$/.test(sku) || u.protocol !== "https:" || u.hostname !== "assets.lcsc.com" || u.port || u.username || u.password || u.search || u.hash ||
         !/^\/images\/lcsc\/\d{2,4}x\d{2,4}\/[^/]+$/.test(u.pathname) ||
-        !new RegExp("_" + sku + "_(?:front|back|blank)\\.(?:jpe?g|png|webp)$", "i").test(u.pathname)) throw new Error();
+        !new RegExp("_" + sku + "_(?:front|blank)\\.(?:jpe?g|png|webp)$", "i").test(u.pathname)) throw new Error();
       return u.href;
-    } catch { throw new LookupError("image", "LCSC did not provide a supported photo for this exact catalog item."); }
+    } catch { throw new LookupError("image", "LCSC did not provide a supported top-side photo for this exact catalog item."); }
   }
   function lcscReview(part, images) {
     return LCSC_REVIEWS.find(r => sameManufacturer(r.manufacturer, part.manufacturer) && same(r.mpn, part.mpn) &&
@@ -656,7 +659,7 @@
     const images = [...new Set((Array.isArray(p.image) ? p.image : [p.image]).filter(v => typeof v === "string").flatMap(url => {
       try { return [lcscImageUrl(url, identity.sku)]; } catch { return []; }
     }))].slice(0, 6);
-    if (!images.length) throw new LookupError("image", "LCSC has no supported part-specific photos for this listing.");
+    if (!images.length) throw new LookupError("image", "LCSC has no supported top-side photos for this listing.");
     return record(identity, {}, "LCSC reference photographs", { photoEvidence: { images, observation: null } });
   }
   async function lookupLCSC(part, request, parse = parseHtml, knownUrl = "") {

@@ -5,6 +5,7 @@ const N=require('../network.js');
 const part={provider:'digikey',host:'www.digikey.com',manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND',sourceUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591'};
 const url='https://www.lcsc.com/product-detail/C3231005.html';
 const image='https://assets.lcsc.com/images/lcsc/900x900/20230511_STMicroelectronics-STM32G491RET6_C3231005_blank.jpg';
+const front=image.replace('_blank.jpg','_front.jpg'),back=image.replace('_blank.jpg','_back.jpg');
 const product={'@type':'Product',mpn:part.mpn,sku:'C3231005',brand:{name:'ST'},offers:{url},image:[image]};
 const doc=(data=product)=>({querySelectorAll:()=>[{textContent:JSON.stringify(data)}]});
 const record=()=>C.fromLCSC(doc(),url,part);
@@ -29,6 +30,38 @@ test('search ignores suffix variants, rejects ambiguous candidates and strips tr
  assert.equal(C.lcscCandidate(search([[part.mpn+'TR',url.replace('C3231005','C5270292')],[part.mpn,url+'?track=yes']]),'https://www.lcsc.com',part),url);
  for(const pairs of [[[part.mpn+'TR',url]],[[part.mpn,url],[part.mpn,url.replace('C3231005','C2')]],[[part.mpn,'https://evil.test/product-detail/C3231005.html']]]){
   assert.throws(()=>C.lcscCandidate(search(pairs),'https://www.lcsc.com',part),e=>e.code==='match');
+ }
+});
+
+test('LCSC keeps only top-side views regardless of gallery order and never invents a missing top photo',()=>{
+ for(const images of [[back,front,image],[image,back,front],[back,front,front,image]]){
+  const result=C.fromLCSC(doc({...product,image:images}),url,part);
+  assert.deepEqual(new Set(result.photoEvidence.images),new Set([front,image]));
+  assert.equal(C.validLCSCPhotos(result),true);
+ }
+ for(const images of [[front],[image]]){
+  assert.deepEqual(C.fromLCSC(doc({...product,image:images}),url,part).photoEvidence.images,images);
+ }
+ for(const filename of ['back','side','unknown']){
+  const excluded=image.replace('_blank.jpg',`_${filename}.jpg`);
+  assert.throws(()=>C.lcscImageUrl(excluded,'C3231005'),e=>e.code==='image');
+  assert.throws(()=>C.fromLCSC(doc({...product,image:[excluded]}),url,part),e=>e.code==='image'&&/no supported top-side photos/.test(e.message));
+ }
+});
+
+test('legacy cached galleries containing an underside are rejected on either distributor',()=>{
+ const result=record();result.photoEvidence.observation={...review};
+ const O=require('../ocr.js');
+ result.photoEvidence.ocr={version:O.VERSION,engine:O.ENGINE,processedAt:new Date().toISOString(),status:'unavailable',readings:[],observations:[]};
+ const key=C.sourceCacheKey('lcsc',result.identity),entry={key,result},entries={[key]:entry};
+ const mouser={...part,provider:'mouser',host:'www.mouser.com',sku:'511-STM32G491RET6',sourceUrl:'https://www.mouser.com/en/ProductDetail/STMicroelectronics/STM32G491RET6'};
+ assert.ok(C.savedSource(entries,'lcsc',part));
+ assert.equal(C.sourceFresh(entry,'lcsc',result.identity),true);
+ for(const images of [[back,front,image],[back]]){
+  result.photoEvidence.images=images;
+  assert.equal(C.validLCSCPhotos(result),false);
+  assert.equal(C.sourceFresh(entry,'lcsc',result.identity),false);
+  for(const viewed of [part,mouser])assert.equal(C.savedSource(entries,'lcsc',viewed),null);
  }
 });
 

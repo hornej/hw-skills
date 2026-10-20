@@ -60,6 +60,11 @@ test("LCSC OCR failures preserve photographs and cancellation is never converted
  assert.equal(r.photoEvidence.ocr.status,"detected");assert.equal(r.photoEvidence.observation,null);
  const failed=await C.lookupLCSC(part,async op=>{if(op==="lcsc-ocr")throw Error("offline");return request(op);},()=>doc,url);
  assert.equal(failed.photoEvidence.ocr.status,"unavailable");assert.equal(C.hasSourceEvidence(failed),true);
+ const bottomReport=report([{...reading(),imageUrl:image.replace('_blank.jpg','_back.jpg')}]);
+ const bottom=await C.lookupLCSC(part,async op=>op==="lcsc-ocr"?bottomReport:request(op),()=>doc,url);
+ assert.equal(bottom.photoEvidence.ocr.status,"unavailable");
+ assert.deepEqual(bottom.photoEvidence.images,[image]);
+ assert.deepEqual(bottom.photoEvidence.ocr.observations,[]);
  await assert.rejects(()=>C.lookupLCSC(part,async op=>{if(op==="lcsc-ocr")throw new C.LookupError("disabled","off");return request(op);},()=>doc,url),e=>e.code==="disabled");
 });
 
@@ -67,7 +72,7 @@ test("photo decoding fetches only bounded raster images for the validated LCSC S
  const id=record().identity;
  const bytes=await N.readLCSCImage(image,id,async(u,o)=>{assert.equal(o.credentials,"omit");return new Response("raster",{headers:{"content-type":"image/jpeg"}});});
  assert.equal(bytes.byteLength,6);
- for(const bad of [image.replace("C3231005","C1"),image.replace("assets.lcsc.com","evil.test"),image.replace(".jpg",".svg")]){
+ for(const bad of [image.replace("C3231005","C1"),image.replace("assets.lcsc.com","evil.test"),image.replace(".jpg",".svg"),image.replace("_blank.jpg","_back.jpg")]){
   await assert.rejects(()=>N.readLCSCImage(bad,id,()=>assert.fail("must not fetch")),C.LookupError);
  }
 });

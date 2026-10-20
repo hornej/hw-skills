@@ -7,6 +7,7 @@ presented as direct manufacturer declarations. Missing fields stay unknown.
 
 | Source | Coverage / access | Origin fields |
 | --- | --- | --- |
+| Texas Instruments | Exact full ordering code in signed-in myTI Import details; initial ship-to scope is United States | Destination-specific declared COO; specialized-flow alternate codes and their own origin kept separate; no stage inference |
 | Harwin product pages | Exact product code and canonical page; public, no credentials | Declared COO from `countryOfOrigin`; recognized ISO codes displayed as names |
 | Samtec product pages | Exact manufacturer, full MPN, SKU and canonical page; public, no credentials | **Probable COO** only; a manufacturer estimate, separate from declarations and manufacturing stages |
 | Mouser Search API | Exact manufacturer + full MPN across its catalog; personal Search API key | Declared COO, assembly, diffusion when returned in `TradeCompliance` |
@@ -84,6 +85,38 @@ the photos and detected text without assigning a country.
 The pasted conversation's specific PCN plant mappings were not
 independently validated in this integration and are not used by the extension.
 
+## Texas Instruments verification
+
+The [TI Import details tool](https://www.ti.com/support/import-details.html)
+explicitly defines its origin as specific to the ship-to country. The initial
+adapter uses United States ship-to and U.S. ECCN; both are fixed request fields.
+On 2026-10-20, after the user signed into myTI normally, its live table returned:
+
+| Exact code | Origin, ship to United States | Listed specialized-flow alternative | Alternative origin, same destination |
+| --- | --- | --- | --- |
+| TLV75801PDRVRG4 | United States | TLV75801PDRVRG4.A | United States |
+| TPS259474ARPWR | Taiwan, United States | TPS259474ARPWR.A | United States |
+
+Both rows displayed ECCN EAR99 and HTS 8542390090. These are dated catalog
+observations, not guaranteed shipment routes. TI's [manufacturing terminology](https://www.ti.com/about-ti/worldwide-manufacturing/manufacturing-terminology.html)
+distinguishes COO from ACO (assembly country), CCO (fabrication country) and PDC
+(warehouse). Import details provides no named assembly, fabrication or test
+field in the observed result. The extension leaves those stages unknown.
+
+The public client `@ticom/import-details-components` v1.0.17 identifies the
+read-only POST endpoint `/importdetailsmodel/api/v1/ext/secured/material-import-details?locale=en-US`
+and request fields `searchedPartNumbers`, `shipToCountryCode`, `eccnCountryCode`.
+It maps returned `searchedPartNumber`, `tiPartNumber`, `countryName`, `eccn`,
+`hts` and `apns[].alternatePartNumber/countryName` into the table. The adapter
+requires exact queried and returned full codes, preserving every suffix.
+It does not use the user/profile endpoint, persist authentication data, or
+follow redirects. An unauthenticated request returned HTTP 401 as expected.
+This is an observed website contract, not a published integration API.
+
+The offline fixture is reconstructed from those rendered rows and the public
+client field mapping, rather than a raw authenticated API response. Installed
+extension validation is recorded separately in the README.
+
 ## Harwin and Samtec verification
 
 Harwin and Samtec were added in 0.11.0 after live network and parser checks on
@@ -109,7 +142,8 @@ and [DigiKey Samtec](https://www.digikey.com/en/products/detail/samtec-inc/SQT-1
 
 Additional investigation during this release:
 
-- TI's import tool requires myTI login; it was not added as an automatic source.
+- TI's import tool initially required myTI login; it was subsequently integrated
+  in 0.12.0 after an authorized signed-in lookup, as described above.
 - ADI's current MAX6067 reliability report provides qualification data, but no
   wafer or assembly country was verified. It was not converted into origin evidence.
 - Molex's [COO request form](https://www.molex.com/en-us/country-of-origin)
@@ -119,7 +153,6 @@ Additional investigation during this release:
 
 | Source | Current finding | Next evidence needed |
 | --- | --- | --- |
-| Texas Instruments | [Import details](https://www.ti.com/support/import-details.html) explicitly reports destination-specific COO. Live tool requires myTI login. | Authorized signed-in lookup; exact MPN + destination response and stable read-only transport. |
 | Analog Devices / Maxim | [ADI employee guidance](https://ez.analog.com/voltage-references/f/q-a/594884/how-to-get-the-information-of-the-country-of-wafer-origin) points to product pages for wafer origin. MAX6067 product and Sample & Buy views were inspected; no current structured COO result was verified. | Actual exact-order-code compliance response; family page or manufacturing-site lists alone are insufficient. |
 | onsemi | Customer-information/report pages surfaced, but no usable exact-part response was verified. | Working supported origin report/API, including any required account access. |
 | Nexperia / NXP | No direct exact-part manufacturer COO transport verified in this investigation. | Exact-code source; general factory locations and sustainability declarations are insufficient. |

@@ -136,6 +136,7 @@
   }
 
   function sourceLink(provider, part) {
+    if (provider === "ti") return C.tiUrl();
     if (provider === "lcsc") return C.lcscSearchUrl(part);
     if (provider === part.provider) return part.sourceUrl;
     if (provider === "digikey") return "https://www.digikey.com/";
@@ -262,10 +263,13 @@
     const source = el("p", undefined, row); source.className = "source";
     const url = result?.sourceUrl || sourceLink(provider, part);
     if (url) {
-      const link = el("a", provider === "digikey" ? (state.code === "auth" ? "Sign in to DigiKey" : result ? "DigiKey product page" : "Open DigiKey") : result ? result.sourceKind : "Open source", source);
+      const link = el("a", provider === "digikey" ? (state.code === "auth" ? "Sign in to DigiKey" : result ? "DigiKey product page" : "Open DigiKey") : provider === "ti" && state.code === "auth" ? "Sign in to myTI" : result ? result.sourceKind : "Open source", source);
       link.href = url; link.target = "_blank"; link.rel = "noopener";
     }
     if (!result) return;
+    if (provider === "ti") {
+      el("p", `Ship to: ${result.importDetails.shipToCountry}. TI's import declaration does not identify assembly, wafer fabrication or testing locations.`, row).className = "note";
+    }
     if (provider === "samtec") {
       el("p", "Samtec predicts this origin; it may change before shipment. No manufacturing stages are established by this estimate.", row).className = "note";
       const link = el("a", "Quantity-specific origin at Samtec", row);
@@ -290,6 +294,21 @@
       if (!values.length) value.className = "unknown";
     }
     const note = el("p", `${result.identity.manufacturer} · ${result.identity.mpn} · ${result.returnedSku || result.identity.sku}`, details); note.className = "note";
+    if (provider === "ti") {
+      const info = result.importDetails;
+      el("p", `U.S. ECCN: ${info.eccn.join(" / ") || "Not reported"} · U.S. HTS: ${info.hts.join(" / ") || "Not reported"}`, details).className = "note";
+      if (info.alternatives.length) {
+        const alternatives = el("details", undefined, row);
+        el("summary", `TI specialized-flow alternatives (${info.alternatives.length})`, alternatives);
+        el("p", `Separate ordering codes listed by TI; origin below is for shipping to ${info.shipToCountry}. Check availability and requirements with TI.`, alternatives).className = "note";
+        const list = el("dl", undefined, alternatives);
+        for (const alternative of info.alternatives) {
+          const item = el("div", undefined, list);
+          el("dt", alternative.mpn, item);
+          el("dd", alternative.declaredCoo.values.map(countryName).join(" / ") || "Not reported", item);
+        }
+      }
+    }
     if (provider === "infineon") {
       // Group identical declarations without losing their material or region scope.
       const groups = new Map();
@@ -498,7 +517,7 @@
           const result = provider === "digikey" ? (part.provider === "digikey" ? await C.lookupDigiKey(part, stored.digikeyListId || "", pageFetch) : await request("digikey"))
             : provider === "mouser" ? await C.lookupMouserAuto(part, request, () => part.provider === "mouser" ? C.fromMouser(document, part) : C.lookupMouser(part, request, C.parseHtml, saved?.result.sourceUrl))
             : provider === "lcsc" ? await C.lookupLCSC(part, request, C.parseHtml, saved?.result.sourceUrl)
-            : ["microchip", "infineon"].includes(provider) ? await request(provider)
+            : ["ti", "microchip", "infineon"].includes(provider) ? await request(provider)
             : ["samtec", "harwin"].includes(provider) ? await C.lookupManufacturerPage(provider, part, request, C.parseHtml)
             : await C.lookupST(part, request);
           if (!current()) return;

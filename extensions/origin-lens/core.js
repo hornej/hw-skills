@@ -73,6 +73,17 @@
     const values = raw.filter(value => !missing.test(value));
     return { raw, values, status: values.length > 1 ? "multiple" : values.length ? "reported" : "unknown" };
   }
+  function sameReportData(a, b) {
+    // Extension messaging/storage may reorder object keys. Compare values and
+    // array order, not JSON serialization order, when validating cached evidence.
+    if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) &&
+      a.length === b.length && a.every((value, index) => sameReportData(value, b[index]));
+    if (a && b && typeof a === "object" && typeof b === "object") {
+      const keys = Object.keys(a);
+      return keys.length === Object.keys(b).length && keys.every(key => Object.hasOwn(b, key) && sameReportData(a[key], b[key]));
+    }
+    return a === b;
+  }
   function hasOriginEvidence(result) {
     return ["declaredCoo", "assembly", "diffusion", "testing"].some(key => {
       const values = result?.fields?.[key]?.values;
@@ -81,6 +92,7 @@
   }
   function hasSourceEvidence(result) {
     return result?.identity?.provider === "lcsc" ? validLCSCPhotos(result)
+      : result?.identity?.provider === "ti" ? validTIReport(result) && (hasOriginEvidence(result) || result.importDetails.alternatives.some(a => a.declaredCoo.values.length))
       : ["samtec", "harwin"].includes(result?.identity?.provider) ? validManufacturerPageReport(result)
       : result?.identity?.provider === "infineon" ? validInfineonReport(result) && hasOriginEvidence(result) : hasOriginEvidence(result);
   }
@@ -205,6 +217,7 @@
   }
 
   function manufacturerProvider(part) {
+    if (manufacturerKey(part.manufacturer) === "texas instruments") return "ti";
     if (manufacturerKey(part.manufacturer) === "microchip technology") return "microchip";
     if (manufacturerKey(part.manufacturer) === "infineon technologies") return "infineon";
     if (manufacturerKey(part.manufacturer) === "samtec") return "samtec";
@@ -266,8 +279,7 @@
           eccn_coo: r.declaredCoo.raw[0], eccn_coa: r.assembly.raw[0], eccn_cod: r.diffusion.raw[0] } };
       });
       const derived = fromInfineon({ totalCount: rows.length, results: rows }, result.identity);
-      return JSON.stringify(result.fields) === JSON.stringify(derived.fields) &&
-        JSON.stringify(result.regionalReports) === JSON.stringify(derived.regionalReports);
+      return sameReportData(result.fields, derived.fields) && sameReportData(result.regionalReports, derived.regionalReports);
     } catch { return false; }
   }
 
@@ -306,7 +318,7 @@
       const expected = manufacturerPageRecord(provider, id, raw[0]);
       return result.sourceUrl === expected.sourceUrl && id.sourceUrl === expected.sourceUrl &&
         result.sourceKind === expected.sourceKind && expected.fields[key].values.length === 1 &&
-        JSON.stringify(result.fields) === JSON.stringify(expected.fields);
+        sameReportData(result.fields, expected.fields);
     } catch { return false; }
   }
   function fromManufacturerPage(doc, href, provider, part) {
@@ -356,6 +368,66 @@
     return fromManufacturerPage(parse(page.html), page.url, provider, part);
   }
 
+  const TI_SHIP_TO = "US";
+  const tiUrl = () => "https://www.ti.com/support/import-details.html";
+  const tiCode = value => typeof value === "string" && /^[a-z0-9][a-z0-9._/+()#-]{1,79}$/i.test(value) && !value.includes("..");
+  function tiRequest(part) {
+    if (manufacturerProvider(part) !== "ti" || !tiCode(part.mpn)) {
+      throw new LookupError("identity", "Unsupported TI manufacturer or full ordering code.");
+    }
+    // A fixed, explicit destination for this adapter. Never inherit the store's
+    // shipping preference or silently combine declarations for different countries.
+    return { searchedPartNumbers: [part.mpn], shipToCountryCode: TI_SHIP_TO, eccnCountryCode: "US" };
+  }
+  function tiValues(value) {
+    const raw = value == null ? [] : Array.isArray(value) ? value : [value];
+    if (raw.length > 32 || !raw.every(v => typeof v === "string" && v.length <= 100 && !/[\u0000-\u001f]/.test(v))) {
+      throw new LookupError("schema", "TI returned an unexpected import-details field.");
+    }
+    return field(raw).raw;
+  }
+  function tiCountries(value) {
+    const raw = tiValues(value);
+    const values = [...new Set(raw.flatMap(v => manufacturerCountry(v, "ti").values))];
+    return { raw, values, status: values.length > 1 ? "multiple" : values.length ? "reported" : "unknown" };
+  }
+  function fromTI(data, part) {
+    tiRequest(part);
+    if (!Array.isArray(data) || data.length > 100 || data.some(r => !r || typeof r !== "object" || Array.isArray(r))) {
+      throw new LookupError("schema", "TI returned an unexpected import-details response.");
+    }
+    const matches = data.filter(r => same(r.searchedPartNumber, part.mpn) && same(r.tiPartNumber, part.mpn));
+    if (matches.length !== 1) throw new LookupError("identity", "TI did not return one exact full ordering-code match.");
+    const row = matches[0], apns = row.apns ?? [];
+    if (!Object.hasOwn(row, "countryName") || !Array.isArray(apns) || apns.length > 50 ||
+        apns.some(a => !a || !tiCode(a.alternatePartNumber) || same(a.alternatePartNumber, part.mpn)) ||
+        new Set(apns.map(a => a.alternatePartNumber.toUpperCase())).size !== apns.length) {
+      throw new LookupError("schema", "TI's origin or alternate-part fields were missing or changed.");
+    }
+    const sourceUrl = tiUrl();
+    const result = record({ provider: "ti", host: "www.ti.com", manufacturer: "Texas Instruments",
+      mpn: row.tiPartNumber, sku: row.tiPartNumber, sourceUrl }, { declaredCoo: tiCountries(row.countryName) }, "TI Import details");
+    result.importDetails = {
+      shipToCountryCode: TI_SHIP_TO, shipToCountry: "United States", eccnCountryCode: "US",
+      eccn: tiValues(row.eccn), hts: tiValues(row.hts),
+      alternatives: apns.map(a => ({ mpn: a.alternatePartNumber, declaredCoo: tiCountries(a.countryName) }))
+    };
+    return result;
+  }
+  function validTIReport(result) {
+    try {
+      const id = result.identity, details = result.importDetails;
+      if (id.provider !== "ti" || id.host !== "www.ti.com" || !same(id.sku, id.mpn) ||
+          result.sourceUrl !== tiUrl() || id.sourceUrl !== tiUrl() || result.sourceKind !== "TI Import details" ||
+          details.shipToCountryCode !== TI_SHIP_TO || details.shipToCountry !== "United States" || details.eccnCountryCode !== "US" ||
+          !Array.isArray(details.alternatives) || !Array.isArray(result.fields.declaredCoo.raw)) return false;
+      const expected = fromTI([{ searchedPartNumber: id.mpn, tiPartNumber: id.mpn,
+        countryName: result.fields.declaredCoo.raw, eccn: details.eccn, hts: details.hts,
+        apns: details.alternatives.map(a => ({ alternatePartNumber: a.mpn, countryName: a.declaredCoo.raw })) }], id);
+      return sameReportData(result.fields, expected.fields) && sameReportData(details, expected.importDetails);
+    } catch { return false; }
+  }
+
   async function getJson(path, fetcher = fetch) {
     // All network access is same-origin and read-only. No arbitrary page-supplied URLs.
     if (!path.startsWith("/en/mylists/api/lists/")) throw new LookupError("request", "Unsupported lookup path.");
@@ -388,7 +460,7 @@
     return fromDigiKey(data, identity);
   }
 
-  const PROVIDERS = { digikey: "DigiKey", mouser: "Mouser", st: "STMicroelectronics", microchip: "Microchip", infineon: "Infineon", harwin: "Harwin", samtec: "Samtec", lcsc: "LCSC · package photos" };
+  const PROVIDERS = { digikey: "DigiKey", mouser: "Mouser", st: "STMicroelectronics", ti: "Texas Instruments", microchip: "Microchip", infineon: "Infineon", harwin: "Harwin", samtec: "Samtec", lcsc: "LCSC · package photos" };
   function assertMatch(found, requested) {
     if (!found || !sameManufacturer(found.manufacturer, requested.manufacturer) || !same(found.mpn, requested.mpn)) {
       throw new LookupError("identity", "No verified match for this exact manufacturer and ordering code. No origin assigned.");
@@ -408,6 +480,7 @@
   }
 
   function sourceHost(provider, part) {
+    if (provider === "ti") return "www.ti.com";
     if (provider === "lcsc") return "www.lcsc.com";
     if (provider === "microchip") return "www.microchip.com";
     if (provider === "infineon") return "www.infineon.com";
@@ -451,7 +524,7 @@
       try {
         if (provider === "microchip" && (r.sourceUrl !== microchipUrl(found) || found.sourceUrl !== r.sourceUrl)) continue;
         if (provider === "infineon" && (r.sourceUrl !== infineonUrl() || found.sourceUrl !== r.sourceUrl || !same(found.sku, found.mpn))) continue;
-        if (!["st", "microchip", "infineon", "samtec", "harwin"].includes(provider) && (productUrl(r.sourceUrl, provider) !== productUrl(found.sourceUrl, provider) ||
+        if (!["st", "ti", "microchip", "infineon", "samtec", "harwin"].includes(provider) && (productUrl(r.sourceUrl, provider) !== productUrl(found.sourceUrl, provider) ||
           new URL(r.sourceUrl).hostname !== found.host)) continue;
       } catch { continue; }
       matches.push({ result: r, cached: true, stale: age >= CACHE_TTL });
@@ -661,6 +734,7 @@
   }
 
   const api = { VERSION, CACHE_TTL, CACHE_RETENTION, CACHE_PREFIX, PROVIDERS, COMPONENT_TYPES, PREFERENCE_KEYS, typeKey, componentTypeEnabled, classifyCategories, readComponentType, LookupError, normalize, same, field, parseListId, cacheKey, isFresh, readIdentity, fromDigiKey, fromMouser, getJson, discoverList, lookupDigiKey,
+    TI_SHIP_TO, tiUrl, tiRequest, fromTI,
     hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, infineonUrl, fromInfineon, manufacturerPageUrl, fromManufacturerPage, lookupManufacturerPage, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
     lcscSupported, lcscSearchUrl, lcscImageUrl, lcscReview, validLCSCPhotos, lcscCandidate, fromLCSC, lookupLCSC };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

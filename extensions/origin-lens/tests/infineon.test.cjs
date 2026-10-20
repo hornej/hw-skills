@@ -74,6 +74,9 @@ test('Infineon stage-only records are shared across distributor tabs without los
     sourceUrl:'https://eu.mouser.com/en/ProductDetail/Infineon-Technologies/CYW43439KUBGT'};
   assert.equal(C.savedSource(saved,'infineon',mouser).result,result);
   assert.equal(C.sourceFresh(Object.values(saved)[0],'infineon',result.identity),true);
+  const reordered=JSON.parse(JSON.stringify(result,(_,value)=>value&&typeof value==='object'&&!Array.isArray(value)
+    ?Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))):value));
+  assert.deepEqual(C.savedSource(entry(reordered),'infineon',mouser).result,result);
   assert.equal(C.savedSource(saved,'infineon',{...mouser,mpn:part.mpn+'R'}),null);
   assert.equal(C.savedSource(saved,'microchip',mouser),null);
   for(const edit of [r=>{r.fields.declaredCoo.values=['China'];},r=>{r.sourceUrl='https://evil.test';},

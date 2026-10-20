@@ -36,6 +36,10 @@ Version 0.10.1 keeps Mouser key status and controls inside Data sources & cache
 and reduces row spacing so the collapsed settings fit within Chrome's popup.
 Version 0.11.0 adds exact-part Harwin declared COO and Samtec probable-origin
 estimates from public manufacturer product pages, without account setup.
+Version 0.12.0 adds TI Import details through the existing myTI browser session,
+with an explicit United States ship-to scope and separately listed specialized-flow alternatives.
+It also fixes strict manufacturer-report cache checks when extension messaging
+or storage reorders object keys, without accepting changed evidence values.
 
 ## Install or update
 
@@ -56,6 +60,11 @@ estimates from public manufacturer product pages, without account setup.
    commit that file. The saved key is not displayed when reopening the popup.
    A key used by a separate sourcing tool is not automatically available to the
    browser extension. Reloading the extension does not configure a key.
+
+6. For TI parts, sign in to [myTI through Import details](https://www.ti.com/support/import-details.html)
+   in the same browser, then use **Refresh** in Origin Lens. No TI API key is
+   required. Version 0.12.0 adds the `www.ti.com` host permission; reload the
+   extension and review any site-access prompt once after updating.
 
 No build, npm install, server, or Chrome Web Store account is needed. A Mouser
 Search API key enables automatic API lookup without opening or signing in to
@@ -162,6 +171,7 @@ selections remain in effect; the recovery control can reset them to automatic.
 | DigiKey | Read-only MyLists alternate-part lookup, using the DigiKey SKU on DigiKey or the exact manufacturer part number on Mouser |
 | Mouser | Authenticated Search API on either site when configured; otherwise the existing compliance section / exact product-page lookup |
 | STMicroelectronics | For supported STM32 ordering codes, read the family page's PF identifier, resolve the exact full code to its CP identifier, then read declared origin from attribute 5080 |
+| Texas Instruments | Signed-in Import details; exact full code, declared origin for shipping to the United States, and separate specialized-flow alternate ordering codes |
 | Microchip | Public Product API; require one exact full ordering code and manufacturer, then read declared COO, assembly country and wafer-fab country |
 | Infineon | Public ECCN & HTS Finder; exact OPN match, with all returned regions and material variants retained; declared COO, assembly and diffusion |
 | Harwin | Public product page; exact item identity and its Country of Origin field, with ISO country codes displayed as names |
@@ -173,6 +183,33 @@ assembly, diffusion, and testing fields. Different declarations remain visible
 in their respective source rows. There is no vote, merged country, or assumption
 that another distributor's inventory establishes the origin of the units being
 purchased. Stage locations are never inferred from declared origin.
+
+### TI import details
+
+TI parts automatically use the existing myTI session in the same browser. Only
+the full ordering code is submitted to the fixed read-only Import details
+endpoint. An expired or unavailable session displays **Sign in to myTI**; the
+extension does not extract, store or ask for a password or session token.
+
+This version requests **United States** as both the ship-to destination and
+ECCN jurisdiction. The destination is always shown with the result and checked
+when reusing cached data. It is not inferred from a distributor's locale or
+silently changed to match TI's website preferences. Other destinations are not
+yet configurable. TI describes the field as destination-specific origin for
+tariff analysis, not a manufacturing-stage report. Assembly, wafer fabrication
+and testing therefore remain **Not reported**.
+
+All returned origins for the exact code remain visible. **TI specialized-flow
+alternatives** lists TI's separate alternate ordering codes and their own
+origins under the same destination. They never overwrite the selected code's
+origin, increase the source count, or establish a China-free route. No country
+is inferred from `.A`, `.B` or any other suffix. Availability, pricing and
+shipment-specific manufacturing routes still require confirmation from TI.
+
+The website endpoint is observed rather than a supported integration API. Calls
+have a 25-second timeout, bounded response size and no automatic retries or
+redirect following. Sign-in, service or schema failures retain a dated valid
+cached result when available.
 
 ### Harwin and Samtec product pages
 
@@ -299,6 +336,7 @@ not read the API-key store. Host permissions cover exactly:
 - `https://www.mouser.com/*`
 - `https://eu.mouser.com/*`
 - `https://api.mouser.com/*`
+- `https://www.ti.com/*`
 - `https://www.microchip.com/*`
 - `https://www.harwin.com/*`
 - `https://www.samtec.com/*`
@@ -318,6 +356,11 @@ Automatic lookup sends the product MPN to DigiKey and Mouser and, for supported
 STM32 parts, requests the relevant ST family and ordering-code data. Microchip
 parts also request Microchip's public catalog. DigiKey and Mouser website requests
 use existing browser sessions; ST and Microchip requests omit credentials.
+TI parts POST one full code, United States ship-to and U.S. ECCN selection to
+`https://www.ti.com/importdetailsmodel/api/v1/ext/secured/material-import-details?locale=en-US`.
+Only that exact TI endpoint receives existing browser credentials, with redirects
+disabled. No account/profile endpoint is read. Reports retain only part identity,
+origin, destination, ECCN/HTS and separately identified alternate codes.
 Infineon parts request the public search token from `www.infineon.com` and send
 the full ordering code to its dedicated Coveo host. Both omit cookies and disable
 redirects. No account information, search history, or analytics identifiers are sent.
@@ -337,7 +380,7 @@ with redirects disabled. API auth/quota errors do not trigger website fallback.
 The extension never extracts passwords or cookies. Browser cookie settings and
 site verification can still prevent cross-site session use.
 
-Mouser and Infineon use read-only catalog search POSTs; the other requests use GET. No lists, alternates, carts, quotes, or
+Mouser, TI and Infineon use read-only catalog search POSTs; the other requests use GET. No lists, alternates, carts, quotes, or
 accounts are changed. DigiKey discovery reads one list metadata response, uses
 its ID, and discards unrelated metadata. It does not request list contents. HTML
 is parsed in a disconnected inert template; source scripts and page resources
@@ -396,6 +439,14 @@ Harwin and Samtec tests parse minimal live-derived HTML fixtures with LinkeDOM
 canonical checks, duplicate/changed schemas, missing countries, fixed requests,
 type cancellation, cross-site cache reuse, stale/invalid records, and preserving
 the Samtec estimate qualifier in rendering and source counts.
+TI tests cover exact full-code matching including suffix variants, multiple
+origins, alternate-code separation, unknown country fields, destination-aware
+cache validation, normal sign-in recovery, fixed endpoint/credential scope,
+bounded failures, cancellation and rendering on both distributor sites.
+TI, Infineon, Harwin and Samtec cache tests also replay reports with reordered
+object keys, as can happen across browser message/storage boundaries.
+The TI fixture reconstructs the signed-in table's observed values using the
+public client's field mapping; it is not represented as a raw API capture.
 Sharing tests cover all three supported sources on both distributor views,
 updates between open pages, failed refreshes retaining dated reports, late
 responses, cache-read races, legacy records, source/region/SKU isolation, stale
@@ -464,6 +515,17 @@ preview. The preview displayed Samtec's `Malaysia · probable` separately from
 declared-origin counts and Harwin's `United Kingdom` as a declaration.
 Installed-extension behavior with the two added host permissions still requires
 an extension reload and product-page refresh.
+
+For 0.12.0, the user signed into myTI and reloaded the unpacked extension in the
+in-app browser. The live DigiKey TPS259474ARPWR page then displayed TI Import
+details → Taiwan / United States, with ship-to United States and the separate
+TPS259474ARPWR.A → United States alternative. After closing the TI tab, the
+Mouser page also fetched that report successfully. Both sites kept DigiKey and
+Mouser's separate China declarations visible. No TI page needs to remain open
+for the background lookup once the browser is signed in.
+After applying the cache-validation fix and reloading the extension, both
+distributor pages reused the same saved TI report and checked timestamp without
+another lookup. The TI-only change passed all 113 tests in an isolated worktree.
 
 ## Known limits and references
 

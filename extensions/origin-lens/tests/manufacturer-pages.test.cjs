@@ -143,6 +143,9 @@ test('manufacturer cache shares dated reports across sites and rejects relabeled
     const result = read(provider, mpn), saved = entry(result), target = partFor(provider, mpn, 'mouser');
     assert.equal(C.savedSource(saved, provider, target).result, result);
     assert.equal(C.sourceFresh(Object.values(saved)[0], provider, result.identity), true);
+    const reordered = JSON.parse(JSON.stringify(result, (_, value) => value && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))) : value));
+    assert.deepEqual(C.savedSource(entry(reordered), provider, target).result, result);
     assert.equal(C.savedSource(saved, provider, { ...target, mpn: mpn + '-R' }), null);
     const originalTime = result.checkedAt;
     const old = C.savedSource(saved, provider, target, Date.parse(originalTime) + C.CACHE_TTL + 1);

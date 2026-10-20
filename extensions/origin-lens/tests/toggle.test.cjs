@@ -157,6 +157,34 @@ test('manufacturer rows load on either distributor and keep Samtec estimates lab
   }
 });
 
+test('TI rows on both distributors preserve destination and keep specialized-flow origins separate',async()=>{
+  const responses=require('./fixtures/ti-import-us.json');
+  for(const site of ['digikey','mouser']){
+    const selected={provider:site,host:`www.${site}.com`,manufacturer:'Texas Instruments',mpn:'TPS259474ARPWR',sku:'example',
+      sourceUrl:site==='digikey'?'https://www.digikey.com/en/products/detail/texas-instruments/TPS259474ARPWR/1':'https://www.mouser.com/en/ProductDetail/Texas-Instruments/TPS259474ARPWR'};
+    const saved=storage(),calls=[];
+    const page=pageHarness(saved,selected,'ics',message=>{
+      calls.push(message.operation);
+      return message.operation==='ti'?{ok:true,data:C.fromTI(responses,selected)}:{ok:false,code:'auth',message:'Test source unavailable'};
+    });
+    await settle();await settle();
+    assert.equal(calls.filter(x=>x==='ti').length,1);
+    assert.match(pageText(page),/Taiwan \/ United States/);
+    assert.match(pageText(page),/Ship to: United States/);
+    assert.match(pageText(page),/TI specialized-flow alternatives \(1\)/);
+    assert.match(pageText(page),/TPS259474ARPWR\.A/);
+    assert.match(pageText(page),/does not identify assembly, wafer fabrication or testing/);
+    assert.match(pageText(page),/1 source reporting origin/);
+    const cached=C.savedSource(saved.values,'ti',selected);assert.ok(cached);
+    const again=pageHarness(saved,selected,'ics');await settle();await settle();
+    assert.match(pageText(again),/Saved · checked/);assert.match(pageText(again),/Ship to: United States/);
+    const failed=pageHarness(storage(),selected,'ics',()=>({ok:false,code:'auth',message:'Sign in to myTI in this browser, then click Refresh.'}));
+    await settle();await settle();
+    const link=failed.nodes().find(n=>n.tagName==='a'&&n.textContent==='Sign in to myTI');
+    assert.equal(link.href,C.tiUrl());
+  }
+});
+
 test('collapse retains reports without new lookups; expand and hide remain independent',async()=>{
   const saved=storage({...savedEntry(originRecord(nexDk,'China')),...savedEntry(originRecord(nexMouser,'Philippines'))});
   const page=pageHarness(saved,nexDk,'discretes');

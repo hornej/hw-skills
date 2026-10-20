@@ -1,0 +1,20 @@
+[
+  {
+    "searchedPartNumber": "TLV75801PDRVRG4",
+    "tiPartNumber": "TLV75801PDRVRG4",
+    "genericPartNumber": "TLV758P",
+    "countryName": ["United States"],
+    "eccn": ["EAR99"],
+    "hts": ["8542390090"],
+    "apns": [{ "alternatePartNumber": "TLV75801PDRVRG4.A", "countryName": ["United States"] }]
+  },
+  {
+    "searchedPartNumber": "TPS259474ARPWR",
+    "tiPartNumber": "TPS259474ARPWR",
+    "genericPartNumber": "TPS25947",
+    "countryName": ["Taiwan", "United States"],
+    "eccn": ["EAR99"],
+    "hts": ["8542390090"],
+    "apns": [{ "alternatePartNumber": "TPS259474ARPWR.A", "countryName": ["United States"] }]
+  }
+]

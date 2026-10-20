@@ -5,7 +5,8 @@
   const MAX_BYTES = 4 * 1024 * 1024;
   const infineonOrg = "infineontechnologiesproduction6kx2o63f";
   const infineonSearch = `https://${infineonOrg}.org.coveo.com/rest/search/v2`;
-  const allowedHosts = ["www.digikey.com", "www.mouser.com", "eu.mouser.com", "api.mouser.com", "www.microchip.com", "www.st.com", "ksmk.st.com", "www.lcsc.com", "assets.lcsc.com", "www.infineon.com", `${infineonOrg}.org.coveo.com`, "www.harwin.com", "www.samtec.com"];
+  const tiSearch = "https://www.ti.com/importdetailsmodel/api/v1/ext/secured/material-import-details?locale=en-US";
+  const allowedHosts = ["www.digikey.com", "www.mouser.com", "eu.mouser.com", "api.mouser.com", "www.microchip.com", "www.st.com", "ksmk.st.com", "www.lcsc.com", "assets.lcsc.com", "www.infineon.com", `${infineonOrg}.org.coveo.com`, "www.harwin.com", "www.samtec.com", "www.ti.com"];
 
   function validatePart(part) {
     if (!part || !["digikey", "mouser"].includes(part.provider) || ![part.manufacturer, part.mpn, part.sku].every(v => typeof v === "string" && v.trim() && v.length <= 180 && !/[\x00-\x1f]/.test(v))) {
@@ -28,26 +29,29 @@
     if (token && u.href !== infineonSearch) throw new C.LookupError("request", "Unsupported search-token destination.");
     const maxBytes = kind === "text" ? 16384 : MAX_BYTES;
     const isApi = u.hostname === "api.mouser.com";
+    const tiImport = u.href === tiSearch;
     const mouserWebsite = ["www.mouser.com", "eu.mouser.com"].includes(u.hostname);
-    const name = isApi ? "Mouser API" : mouserWebsite ? "Mouser" : u.hostname.endsWith(".lcsc.com") ? "LCSC" : u.hostname === "www.microchip.com" ? "Microchip" : u.hostname === "www.infineon.com" || u.href === infineonSearch ? "Infineon" : u.hostname === "www.harwin.com" ? "Harwin" : u.hostname === "www.samtec.com" ? "Samtec" : "ST";
+    const name = tiImport ? "TI" : isApi ? "Mouser API" : mouserWebsite ? "Mouser" : u.hostname.endsWith(".lcsc.com") ? "LCSC" : u.hostname === "www.microchip.com" ? "Microchip" : u.hostname === "www.infineon.com" || u.href === infineonSearch ? "Infineon" : u.hostname === "www.harwin.com" ? "Harwin" : u.hostname === "www.samtec.com" ? "Samtec" : "ST";
     let r;
     try {
-      r = await fetcher(u.href, { method: postBody ? "POST" : "GET", credentials: mouserWebsite ? "include" : "omit", cache: "no-store",
-        redirect: mouserWebsite ? "follow" : "error", signal: AbortSignal.timeout(12000), headers: { Accept: kind === "image" ? "image/jpeg,image/png,image/webp" : kind === "json" ? "application/json" : kind === "text" ? "text/plain" : "text/html", ...(postBody ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) }, ...(postBody ? { body: JSON.stringify(postBody) } : {}) });
+      r = await fetcher(u.href, { method: postBody ? "POST" : "GET", credentials: mouserWebsite || tiImport ? "include" : "omit", cache: "no-store",
+        redirect: mouserWebsite ? "follow" : "error", signal: AbortSignal.timeout(tiImport ? 25000 : 12000), headers: { Accept: kind === "image" ? "image/jpeg,image/png,image/webp" : kind === "json" ? "application/json" : kind === "text" ? "text/plain" : "text/html", ...(postBody ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) }, ...(postBody ? { body: JSON.stringify(postBody) } : {}) });
     } catch (error) {
       if (error instanceof C.LookupError) throw error;
       throw new C.LookupError("network", `${name} could not be reached. Retry later.`);
     }
     if (isApi && (r.status === 401 || r.status === 403)) throw new C.LookupError("api-auth", "Check the Mouser Search API key in Origin Lens settings.");
+    if (tiImport && (r.status === 401 || r.status === 403)) throw new C.LookupError("auth", "Sign in to myTI in this browser, then click Refresh.");
     if (r.status === 401 || r.status === 403) throw new C.LookupError("auth", `${name} requires sign-in or site verification. Open it normally, then retry.`);
     if (r.status === 429) throw new C.LookupError("rate", `${name} is limiting requests. Wait before retrying.`);
     if (!r.ok) throw new C.LookupError("http", `${name} lookup failed (HTTP ${r.status}).`);
     const final = new URL(r.url || url);
     if (final.protocol !== "https:" || final.username || final.password || final.port ||
-      (mouserWebsite ? !["www.mouser.com", "eu.mouser.com"].includes(final.hostname) : final.origin !== u.origin)) {
+      (tiImport ? final.href !== tiSearch : mouserWebsite ? !["www.mouser.com", "eu.mouser.com"].includes(final.hostname) : final.origin !== u.origin)) {
       throw new C.LookupError("redirect", `${name} redirected outside the supported source.`);
     }
     const contentType = r.headers.get("content-type") || "";
+    if (tiImport && contentType.includes("html")) throw new C.LookupError("auth", "TI returned a sign-in page. Sign in to myTI in this browser, then click Refresh.");
     if (kind === "image" ? !/^image\/(?:jpeg|png|webp)(?:;|$)/i.test(contentType) : !contentType.includes(kind === "json" ? "json" : kind === "text" ? "text/plain" : "html")) throw new C.LookupError("schema", `${name} returned an unexpected response format.`);
     if (Number(r.headers.get("content-length")) > maxBytes) throw new C.LookupError("size", `${name}'s response was too large.`);
     // Stream with a bound so a changed/error page cannot consume unbounded memory.
@@ -86,6 +90,10 @@
   async function run(message, listSetting = "", fetcher = fetch, credentials = {}) {
     const { part, operation } = message;
     validatePart(part);
+    if (operation === "ti") {
+      const body = C.tiRequest(part);
+      return C.fromTI(await read(tiSearch, "json", fetcher, body), part);
+    }
     if (typeof operation === "string" && operation.startsWith("lcsc-")) {
       if (!C.lcscSupported(part)) throw new C.LookupError("unsupported", "Automatic LCSC photo lookup currently supports ST STM32 parts.");
       if (operation === "lcsc-search") return read(C.lcscSearchUrl(part), "html", fetcher);

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Origin Lens settings</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="ocr.js" defer></script>
+  <script src="core.js" defer></script>
+  <script src="popup.js" defer></script>
+  <script src="credentials.js" defer></script>
+  <script src="popup-api.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><h1>Origin Lens</h1><span>Settings</span></header>
+    <label class="enable-control" for="enabled">
+      <span>Enable Origin Lens</span>
+      <strong id="enabled-state">Loading…</strong>
+      <input id="enabled" type="checkbox" role="switch" aria-label="Enable Origin Lens" aria-describedby="enabled-hint" disabled>
+    </label>
+    <p id="enabled-hint" class="hint">Checking your saved setting…</p>
+    <div class="api-overview">
+      <p id="api-overview-state" class="hint" role="status" aria-live="polite">Checking Mouser API…</p>
+      <button id="api-settings" type="button" aria-controls="source-settings" aria-expanded="false">Mouser API settings</button>
+    </div>
+    <fieldset id="component-types" disabled aria-describedby="types-hint">
+      <legend>Component types</legend>
+      <p id="types-hint" class="hint">Unchecked types skip panels and lookups.</p>
+      <div id="type-options"></div>
+    </fieldset>
+    <p id="status" role="status" aria-live="polite"></p>
+    <details id="source-settings" class="advanced">
+      <summary>Data sources &amp; cache</summary>
+      <dl class="source-settings">
+        <dt>Distributors</dt><dd>DigiKey, Mouser (US/EU)</dd>
+        <dt>Manufacturers</dt><dd>STMicroelectronics (STM32), Microchip</dd>
+        <dt>Package photos</dt><dd>LCSC images for ST STM32 parts. Markings are read automatically on this device; no additional API key. CHN and MYS describe assembly of the photographed sample.</dd>
+        <dt>Cache</dt><dd>Reuse for 1 hour; retain dated reports for up to 7 days when a source is unavailable.</dd>
+      </dl>
+      <form id="api-form" method="post">
+        <label for="mouser-key">Mouser Search API key</label>
+        <p id="api-state" class="hint" role="status" aria-live="polite">Checking API configuration…</p>
+        <input id="mouser-key" type="password" maxlength="128" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="api-help api-feedback">
+        <p id="api-help" class="hint">Enables lookup on either site without a Mouser browser sign-in. Keys used by other tools must also be saved here. Stored in this extension; sent only to api.mouser.com.</p>
+        <div class="api-actions">
+          <button id="api-save" type="submit">Save key</button>
+          <button id="api-remove" type="button">Remove key</button>
+        </div>
+        <label for="api-import" class="import-label">Import API settings (.json)</label>
+        <input id="api-import" type="file" accept=".json,application/json" aria-describedby="api-feedback">
+        <p id="api-feedback" class="hint" role="status" aria-live="polite"></p>
+      </form>
+      <button id="clear" type="button">Clear cached results</button>
+      <p class="hint">Lookups send the part number to these sources. Verified reports are shared across product pages; each retains its source and check time.</p>
+      <p class="hint">No analytics, external server, or account changes. Settings apply to open pages.</p>
+    </details>
+  </main>
+</body>
+</html>

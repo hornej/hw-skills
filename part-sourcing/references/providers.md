@@ -76,10 +76,12 @@ For environment variables and optional Windows launchers, see
   Localized/ambiguous price strings remain unpriced and available in raw evidence.
   It does not silently guess decimal separators or exchange rates.
 - V1/V2 schemas expose generic `ProductAttributes`, `ProductCompliance`, and
-  `TradeCompliance` name/value arrays. A reliable COO label/value in authenticated
-  API responses has **not** been confirmed. Preserve actual fields and use the
-  [origin workflow](origin.md) when missing. Do not claim COO is always available
-  or impossible through this API.
+  `TradeCompliance` name/value arrays. Authenticated V1 acceptance testing on
+  2026-10-19 confirmed `TradeCompliance` entries named `Country of Origin`,
+  `Assembly Country of Origin`, and `Country of Diffusion` for STM32G491RET6 and
+  PSMN040-100MSEX using exact manufacturer/MPN matches. Some stage values were
+  `Not available`; this confirms the route, not universal part/account coverage.
+  Preserve actual fields and use the [origin workflow](origin.md) when missing.
 
 ## DigiKey
 

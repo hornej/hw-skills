@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 16 16">
+  <title>Origin Lens</title>
+  <rect width="16" height="16" fill="#181818"/>
+  <g fill="#f4f4f0">
+    <path d="M7 2h2v2H7z M7 12h2v2H7z M2 7h2v2H2z M12 7h2v2h-2z"/>
+    <circle cx="8" cy="8" r="1"/>
+  </g>
+  <circle cx="8" cy="8" r="4" fill="none" stroke="#f4f4f0" stroke-width="2"/>
+</svg>

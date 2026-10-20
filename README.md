@@ -7,6 +7,12 @@ Each skill includes instructions and focused reference material. The bundled
 Python helpers make repeatable file analysis and catalog queries available
 without requiring UI automation for every step.
 
+The [Origin Lens Chrome prototype](extensions/origin-lens/README.md) compares
+DigiKey, Mouser, ST STM32, and Microchip origin reports on distributor product pages,
+with separate LCSC package-photo evidence and local marking recognition.
+Its DigiKey lookup reads an existing MyLists context without adding products;
+each source retains its own exact-part match, declaration, and timestamp.
+
 ## Skills
 
 | Skill | Use it for |

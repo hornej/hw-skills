@@ -1,5 +1,8 @@
 # Origin Lens prototype
 
+[Install](#install-or-update) · [Update](#update-an-unpacked-installation) ·
+[API keys](#get-api-keys) · [Share and publish](#sharing-and-automatic-updates)
+
 A Chrome Manifest V3 extension that compares country-of-origin
 reports on DigiKey and Mouser product pages. Version 0.2 adds automatic cross-source
 lookup and an initial STMicroelectronics manufacturer adapter. Version 0.3.0 adds
@@ -45,38 +48,146 @@ and documents API-key enrollment and configuration.
 
 ## Install or update
 
-1. Open `chrome://extensions` in Chrome and enable Developer mode.
-2. Choose **Load unpacked** and select this `extensions/origin-lens` directory
-   (the directory containing `manifest.json`). If already installed, click **Reload**
-   on the Origin Lens card. Review any new site-access prompt from Chrome.
-3. Reload open product pages. Optionally pin Origin Lens to the toolbar.
-4. For DigiKey results on either site, sign in to DigiKey normally. Origin Lens
+Origin Lens currently installs from source as an **unpacked extension** in
+desktop Chrome 120 or newer. There is no published Chrome Web Store listing yet.
+No build, npm install, server, or Web Store developer account is needed to use it.
+
+### Download and install
+
+1. [Download the current prototype ZIP](https://github.com/hornej/hw-skills/archive/refs/heads/josh-coo-extension-prototype.zip).
+   Alternatively, open the
+   [prototype branch](https://github.com/hornej/hw-skills/tree/josh-coo-extension-prototype)
+   on GitHub and choose **Code → Download ZIP**.
+2. Extract the ZIP completely into a permanent folder. On Windows, right-click
+   the ZIP and select **Extract All**. Keep the extracted files after installation;
+   Chrome runs the extension from that folder. Do not load it from inside the ZIP
+   or move the folder after installing.
+3. Open `chrome://extensions` in Chrome and enable **Developer mode**.
+4. Choose **Load unpacked**. Inside the extracted repository, select
+   **`extensions/origin-lens`**, the folder containing `manifest.json`.
+   Do not select the repository root or just the `extensions` folder. Keep its
+   bundled `vendor` and `icons` folders intact.
+5. Confirm **Origin Lens — DigiKey & Mouser** appears and is enabled. Use Chrome's
+   Extensions puzzle-piece menu to pin Origin Lens if desired.
+6. Open or reload a supported DigiKey or Mouser product page. For a first check,
+   use [STM32G491RET6 on DigiKey](https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591).
+   The **Country of origin** panel should appear. Passives are hidden by default;
+   the popup's **Component types** controls determine which pages show a panel.
+
+These steps follow Chrome's
+[load-unpacked instructions](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked).
+If **Load unpacked** is unavailable on a managed work computer, its browser
+administrator may need to allow development extensions.
+
+**Git alternative:** clone the prototype branch, then follow steps 3–6 using
+the clone's `extensions/origin-lens` folder:
+
+```sh
+git clone --branch josh-coo-extension-prototype --single-branch https://github.com/hornej/hw-skills.git
+```
+
+### Configure data sources
+
+1. For DigiKey results on either site, sign in to DigiKey normally. Origin Lens
    automatically uses your latest existing list. If DigiKey reports no lists,
    its result row explains how to create one empty list or select an existing
    shared list. The part being viewed does **not** need to be in that list.
    Sign-in and network failures do not ask you to create a list.
-
-5. Open Origin Lens → **Data sources & cache**, enter your **Mouser Search API
+2. Open Origin Lens → **Data sources & cache**, enter your **Mouser Search API
    key**, and choose **Save key**. See [Get API keys](#get-api-keys) below for
    enrollment instructions. You can instead import a JSON settings file
    with `format: "origin-lens-api-settings-v1"` and `mouserSearchApiKey`. Never
    commit that file. The saved key is not displayed when reopening the popup.
    A key used by a separate sourcing tool is not automatically available to the
    browser extension. Reloading the extension does not configure a key.
-
-6. For TI parts, sign in to [myTI through Import details](https://www.ti.com/support/import-details.html)
+3. For TI parts, sign in to [myTI through Import details](https://www.ti.com/support/import-details.html)
    in the same browser, then use **Refresh** in Origin Lens. No TI API key is
-   required. Version 0.12.0 adds the `www.ti.com` host permission; reload the
-   extension and review any site-access prompt once after updating.
+   required.
 
-No build, npm install, server, or Chrome Web Store account is needed. A Mouser
-Search API key enables automatic API lookup without opening or signing in to
-Mouser. Without a key, the existing website lookup remains available. The
+A Mouser Search API key enables automatic API lookup without opening or signing
+in to Mouser. Without a key, the existing website lookup remains available. The
 panel shows **Setup required** with **Configure Mouser** when that fallback fails,
 instead of sending you to sign in to Mouser. A saved key's status confirms local
 storage only; an API rejection remains visible as **Check API key** in the panel.
 The manufacturer sources do not require the Mouser key.
 Remove the extension through Chrome to uninstall it and its local data.
+
+### Update an unpacked installation
+
+Unpacked extensions do **not** download changes from GitHub automatically.
+
+1. Update the files using the same method you used to install:
+   - **ZIP:** download the latest prototype ZIP, extract it, then replace the
+     contents of your installed `extensions/origin-lens` folder with the new
+     folder's contents, including `vendor`. Keep the installed folder at the
+     **same path**.
+   - **Git:** from your `hw-skills` clone on `josh-coo-extension-prototype`, run
+     `git pull --ff-only`. If Git reports local edits or a diverged branch,
+     resolve them before continuing; do not discard your changes.
+2. Open `chrome://extensions` and click the circular **Reload** arrow on the
+   Origin Lens card. Check that its version matches the downloaded
+   `manifest.json`. Review any new site-access prompt Chrome presents.
+3. Reload open DigiKey and Mouser product pages so they use the new code.
+
+Reloading the same installation preserves its saved settings, cache and Mouser
+key. Do not remove and reinstall it for routine updates. Chrome's **Update**
+button does not fetch a new GitHub ZIP or pull your Git clone.
+
+## Sharing and automatic updates
+
+For a few prototype testers, share this README and the source download above.
+Each person installs their own copy, configures their own accounts/key, and
+follows the manual update steps. Share extension files without credentials,
+browser-profile data or API-settings JSON files.
+
+For ongoing use by coworkers, the recommended route is an **unlisted Chrome Web
+Store listing**. Users install from its link and Chrome automatically receives
+published updates. They no longer need Developer mode or local source folders.
+See Chrome's [distribution overview](https://developer.chrome.com/docs/extensions/how-to/distribute).
+
+| Distribution | Installation and updates | Who can install |
+| --- | --- | --- |
+| GitHub ZIP or Git clone | Load unpacked; replace/pull files, reload extension and product pages for every update | People with the source files |
+| Chrome Web Store: **Unlisted** | Install once from the store link; automatic updates | Anyone with the link; hidden from normal store discovery |
+| Chrome Web Store: **Private** | Install from the store with an allowed Google account; automatic updates | Specified testers or configured groups |
+| Chrome Web Store: **Public** | Search or follow the link; automatic updates | Everyone in the selected distribution regions |
+
+Unlisted is convenient for link sharing, but it does not restrict access to a
+team. Choose Private if that restriction matters. All three store visibility
+options go through Google's review. See the official
+[visibility settings](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution).
+
+Existing unpacked users will need to install the store edition once when it is
+available. Plan to re-enter settings and the Mouser key; the store edition can
+have a different extension ID and does not automatically inherit local data.
+Remove or disable the unpacked copy to avoid duplicate panels.
+
+### Publish to the Chrome Web Store
+
+The submission process is straightforward, but the prototype still needs store
+assets, privacy documentation and release verification. The draft
+[store listing and readiness record](CHROMEWEBSTORE.md) tracks those items.
+
+1. [Register a developer account](https://developer.chrome.com/docs/webstore/register)
+   and pay Google's one-time registration fee. Set a publisher name and verified
+   contact email, and enable the required
+   [2-Step Verification](https://developer.chrome.com/docs/webstore/program-policies/two-step-verification).
+2. Test the release in desktop Chrome. Package only the extension's runtime
+   files and bundled assets, with **`manifest.json` at the ZIP root**. Do not
+   upload the entire `hw-skills` repository archive. See
+   [Prepare your extension](https://developer.chrome.com/docs/webstore/prepare).
+3. Complete the listing, screenshots, small promotional image, privacy-policy
+   URL, data-use disclosures, permission explanations and reviewer instructions.
+   The existing icon can be reused. The readiness record lists missing assets
+   and the current data flows.
+4. Choose **Unlisted** (or another desired visibility), submit for review, then
+   share the approved store link. Approval and review time are not guaranteed.
+   See Google's [publishing guide](https://developer.chrome.com/docs/webstore/publish).
+5. For later releases, increase the manifest version and upload the new ZIP to
+   the **same store item**, then submit the update for review. After publication,
+   Chrome distributes it automatically; it is not instantaneous, and changes to
+   permissions can require user action. Pushing to GitHub alone does not publish
+   a store update. See [Update your item](https://developer.chrome.com/docs/webstore/update).
 
 ## Get API keys
 

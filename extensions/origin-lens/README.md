@@ -29,21 +29,34 @@ These steps follow [Chrome's installation guide](https://developer.chrome.com/do
 Downloading the full repository instead? Select its `extensions/origin-lens`
 folder in step 3. The release ZIP above contains just the extension.
 
-## Get API keys
+## Setup for maximum coverage
 
-Only Mouser uses a personal API key in this release. Other source requirements
-are listed below; one unavailable source does not block the others.
+**Version 0.12.4 uses one user-supplied API key: Mouser Search API.**
+To enable every currently implemented source, complete these three steps in
+the **same browser profile** where Origin Lens is installed:
 
-| Source | Setup |
-| --- | --- |
-| Mouser | For automatic lookup from either site, [get a Search API key](SETUP.md#mouser-search-api) and save it under **Data sources & cache**. Without a key, website lookup is attempted but may be blocked. |
-| DigiKey | Sign in normally in the same browser. Follow any setup prompt in its result row. |
-| Texas Instruments | Sign in to [myTI Import details](https://www.ti.com/support/import-details.html) in the same browser. No TI API key is used. |
-| ST, Microchip, Infineon, Harwin, Samtec | No personal key or sign-in for the implemented sources. Coverage varies by part. |
-| LCSC package photos | No key or sign-in. Currently supports ST STM32 parts, with marking recognition performed locally. |
+1. **Mouser:** [get a Search API key](SETUP.md#mouser-search-api), then save it
+   under **Origin Lens → Data sources & cache**. This enables lookup from either
+   distributor page without opening or signing in to Mouser.
+2. **DigiKey:** sign in and have at least one saved list; an empty list is enough.
+   If a list is missing, the panel provides setup instructions. You do **not**
+   need to add each part to the list. No DigiKey API key is used.
+3. **Texas Instruments:** sign in through
+   [myTI Import details](https://www.ti.com/support/import-details.html).
+   The TI tab can then be closed. No TI API key is used; sign in again if the
+   browser session expires.
 
-Each person configures their own accounts and optional Mouser key.
-See [source setup and troubleshooting](SETUP.md) for the steps.
+**Automatic, no credentials:** ST (supported STM32 parts), Microchip, Infineon,
+Harwin, Samtec, and LCSC STM32 package photos with local marking recognition.
+These sources work independently of the Mouser key.
+
+**Not used by this extension:** TI Product Information/Store API keys, LCSC or
+JLCPCB API keys, Nexar credentials, or an AI/OCR service key. Credentials saved
+in Bitwarden or used by other hw-skills tools are not imported automatically.
+
+Keep **Enable Origin Lens** on, select the component types you want, then click
+**Refresh** on a product page. Coverage still depends on the exact part and
+available source data. See [setup and troubleshooting](SETUP.md).
 
 ## Use
 

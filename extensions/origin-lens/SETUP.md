@@ -2,12 +2,26 @@
 
 [Back to installation](README.md#install-or-update)
 
-Public manufacturer sources and LCSC photos work without a personal API key.
-Configure the sources below for additional coverage. Each person uses their
-own key and browser sign-ins; credentials are not included in the download.
+## Maximum-coverage checklist (0.12.4)
+
+- [ ] Save your **Mouser Search API key** in Origin Lens. This is the only
+  user-supplied API key the extension currently uses.
+- [ ] Sign in to **DigiKey** and have at least one saved list. It can be empty;
+  parts do not need to be added to it.
+- [ ] Sign in to **myTI Import details** for TI manufacturer reports.
+- [ ] Use the **same browser profile** for those sign-ins and the extension.
+  Enable the component types you want, then refresh the product-page panel.
+
+ST (supported STM32 parts), Microchip, Infineon, Harwin, Samtec, and LCSC STM32
+photos/OCR need no personal API key or sign-in. They run automatically for
+supported parts, even without Mouser configured. Each person uses their own
+Mouser key and browser sign-ins; credentials are not included in the download.
+
+TI Product Information/Store, LCSC, JLCPCB, Nexar, and AI-service API keys are
+**not used by Origin Lens**. Some are used by separate sourcing helpers or API
+research; obtaining them does not add coverage to this extension version.
 
 ## Mouser Search API
-
 
 1. Open [Mouser's Search API page](https://www.mouser.com/en/api-search/) and
    sign in to your My Mouser account, or create one.
@@ -51,6 +65,20 @@ The report uses **United States** as the ship-to destination and labels that
 scope. Origin Lens has no TI API-key field: Product Information API credentials
 do not replace this website sign-in. Separate API enrollment and research are
 in the [developer guide](DEVELOPMENT.md#ti-api-keys-separate-access-for-api-research).
+
+## Confirm the setup
+
+On a supported product page, click **Refresh** and check the source rows:
+
+| Source | What to look for |
+| --- | --- |
+| Mouser | A result linked to **Mouser Search API**. “Key saved” alone only confirms storage. No Mouser browser sign-in is needed for this API path. |
+| DigiKey | A dated result without a sign-in or list-setup prompt. |
+| Texas Instruments | On a TI part, a **TI Import details** result with the United States ship-to scope, without a sign-in prompt. |
+
+A valid setup does not guarantee origin or every manufacturing-stage field for
+every part. An exact match may have missing data, and supplier protection or
+service failures may temporarily block a source. Other source rows still work.
 
 ## Troubleshooting
 

@@ -1,7 +1,7 @@
 # Origin Lens store assets
 
-Prepared October 20, 2026 for Basement Labs. Public support/privacy contact:
-**info@basementlabs.net**. No item has been submitted to the Chrome Web Store.
+Prepared October 20, 2026; settings and promotional captures refreshed October 21.
+No item has been submitted to the Chrome Web Store.
 
 | Upload field | File | Dimensions |
 | --- | --- | --- |
@@ -25,15 +25,16 @@ The source view was refreshed before capture and includes separate DigiKey,
 Mouser API and ST evidence. The photo view shows the LCSC sample, its CHN reading
 and the sample-specific qualification. Values and availability are dated
 observations, not claims about all inventory. No credentials or account details
-are visible. Version 0.12.4 retains these report interfaces and changes API-cache
-handling and privacy links.
+are visible. Versions 0.12.4 and 0.12.5 retain these report interfaces, with
+changes to API-cache handling and privacy/support links.
 
 The settings image renders the actual `popup.html`, CSS and JavaScript with
 default preferences in an isolated local preview, alongside explanatory copy.
 Its mock Chrome storage starts empty; no installed extension preferences or
 API keys are read. The promotional image is rendered from the existing vector
 mark and the SVG source above. Both are browser captures, not generated product
-results.
+results. The settings and promotional captures were refreshed from their source
+files for 0.12.5 using only Origin Lens branding.
 
 To reproduce the settings and promo capture surfaces:
 

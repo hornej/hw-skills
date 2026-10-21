@@ -1,10 +1,11 @@
 # Origin Lens privacy policy
 
-Effective date: October 20, 2026
+Effective date: October 21, 2026
 
-Publisher: **Basement Labs**
+Maintainer: **[hornej](https://github.com/hornej)**
 
-Support and privacy contact: **[info@basementlabs.net](mailto:info@basementlabs.net)**
+Support and privacy questions: **[GitHub issue tracker](https://github.com/hornej/hw-skills/issues)**.
+Issues are public; do not post credentials or confidential information.
 
 Origin Lens compares origin and manufacturing information for electronic
 components on supported DigiKey and Mouser product pages. This policy explains
@@ -70,7 +71,7 @@ requests that image from LCSC without a referrer.
 
 Settings and eligible source reports use local extension storage. The optional
 Mouser key uses the extension's IndexedDB database. These records are not stored
-in Chrome's synchronized settings or sent to Basement Labs.
+in Chrome's synchronized settings or sent to the project maintainer.
 
 Mouser Search API results are displayed on the current page and are **not saved
 to the report cache** or reused from it on another page. Earlier cached API
@@ -97,20 +98,18 @@ and supplier websites may maintain their own caches and account data separately.
 - Uninstall Origin Lens to remove its local extension data. This does not delete
   information held by supplier accounts or revoke a key at its issuer.
 
-## Basement Labs and support
+## Project support
 
 Origin Lens has no publisher-operated data collection server, analytics,
-advertising trackers or crash-reporting service. Basement Labs does not receive
-your part lookups, browsing records, credentials or source reports through the
+advertising trackers or crash-reporting service. The project maintainer does not
+receive your part lookups, browsing records, credentials or source reports through the
 extension. We do not sell this information, use it for advertising, or use it
 for creditworthiness or lending decisions.
 
-If you voluntarily email us for support, we receive the address and information
-you provide and use it to respond and resolve the request. We retain support
-correspondence only as needed for those purposes and applicable obligations.
-You can contact **info@basementlabs.net** with privacy questions or a request
-concerning support information you supplied. Do not include API keys, passwords
-or confidential project data in a support message or public issue.
+Use the [GitHub issue tracker](https://github.com/hornej/hw-skills/issues) for
+support or privacy questions. The maintainer can read the account name and
+information you choose to post and use it to respond to your request. Do not
+include API keys, passwords or confidential project data in a public issue.
 
 The project documentation and public issue tracker are hosted on GitHub. Opening
 those links is subject to GitHub's own policies; information you post in a public

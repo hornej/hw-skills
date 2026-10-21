@@ -2,7 +2,7 @@
 
 [Back to installation](README.md#install-or-update)
 
-## Maximum-coverage checklist (0.12.4)
+## Maximum-coverage checklist
 
 - [ ] Save your **Mouser Search API key** in Origin Lens. This is the only
   user-supplied API key the extension currently uses.

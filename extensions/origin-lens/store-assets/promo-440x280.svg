@@ -2,14 +2,13 @@
   <title>Origin Lens — component origin reports</title>
   <rect width="440" height="280" fill="#181818"/>
   <g fill="#f4f4f0" font-family="Consolas, 'Liberation Mono', monospace">
-    <text x="24" y="38" font-size="11" letter-spacing="1">BASEMENT LABS</text>
     <text x="24" y="112" font-size="34" font-weight="700">Origin Lens</text>
     <text x="24" y="151" font-size="13">Country-of-origin reports</text>
     <text x="24" y="172" font-size="13">Exact part matching</text>
     <text x="24" y="252" font-size="11" letter-spacing=".6">DIGIKEY / MOUSER</text>
     <text x="416" y="252" text-anchor="end" font-size="11">OL</text>
   </g>
-  <path d="M24 57H416 M24 227H416" stroke="#696966" stroke-width="1"/>
+  <path d="M24 227H416" stroke="#696966" stroke-width="1"/>
   <g transform="translate(344 80) scale(4.5)" fill="#f4f4f0">
     <path d="M7 2h2v2H7z M7 12h2v2H7z M2 7h2v2H2z M12 7h2v2h-2z"/>
     <circle cx="8" cy="8" r="1"/>

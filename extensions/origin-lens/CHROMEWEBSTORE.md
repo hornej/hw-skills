@@ -2,14 +2,14 @@
 
 Last updated: 2026-10-21
 
-**Release candidate 0.12.4 prepared; not submitted.** Publisher: Basement Labs.
+**Release candidate 0.12.5 prepared; not submitted.** Publisher identity pending.
 This record contains the submission copy and remaining dashboard/manual checks.
 Installation and release steps are in the [README](README.md#install-or-update).
 
 Developer registration is complete. Organization verification and the public
 publisher profile remain pending; the requested verification documents are
 prepared privately but have not been submitted. No Chrome Web Store item has
-been created. Coworker testing will use the GitHub 0.12.4 prerelease while
+been created. Coworker testing will use the GitHub 0.12.5 prerelease while
 publisher verification is deferred.
 
 ## Store listing
@@ -74,6 +74,8 @@ electronic component ordering codes on DigiKey and Mouser product pages.
 Capture details and the editable tile are in [store-assets](store-assets/README.md).
 The [README](README.md) also displays these three screenshots for installation
 and usage context.
+The settings screenshot and promotional tile were refreshed on October 21 to
+use only Origin Lens branding.
 Images exclude account details and credentials. They use the existing plain
 visual style; no slogans or implied supplier endorsement. See Google's
 [image requirements](https://developer.chrome.com/docs/webstore/images).
@@ -172,10 +174,11 @@ confirm them in the dashboard for the actual submitted release:
 **Public privacy-policy URL:**
 [Origin Lens privacy policy](https://github.com/hornej/hw-skills/blob/main/extensions/origin-lens/PRIVACY.md).
 
-The [policy source](PRIVACY.md) identifies Basement Labs and
-info@basementlabs.net, with direct supplier requests, credentials, retention,
-deletion and support handling. Verify the public URL without authentication
-before submitting. The policy does not replace the dashboard disclosures.
+The [policy source](PRIVACY.md) identifies the repository maintainer and GitHub
+support channel, with direct supplier requests, credentials, retention, deletion
+and support handling. Finalize the publisher identity and verified contact email
+before submission, then align the policy with the dashboard. Verify the public
+URL without authentication. The policy does not replace the dashboard disclosures.
 
 ## Distribution
 
@@ -192,9 +195,9 @@ Unlisted and Private submissions still require review.
 
 ## Developer information
 
-- **Publisher name:** Basement Labs.
-- **Contact email:** info@basementlabs.net; complete Google's email verification.
-- **Support:** [Email Basement Labs](mailto:info@basementlabs.net) or [public issue tracker](https://github.com/hornej/hw-skills/issues). Do not post credentials or confidential data in issues.
+- **Publisher name:** Pending final selection before submission.
+- **Contact email:** Pending selection and Google's email verification.
+- **Support:** [Public issue tracker](https://github.com/hornej/hw-skills/issues). Do not post credentials or confidential data in issues.
 - **Homepage:** [Origin Lens README](https://github.com/hornej/hw-skills/tree/main/extensions/origin-lens).
 - **Store item ID and installation URL:** Not created.
 
@@ -210,6 +213,7 @@ the first item; increase it for subsequent uploads to that same item.
 | Version | Date | Changes | Status |
 | --- | --- | --- | --- |
 | 0.12.4 | 2026-10-20 | Initial store candidate; live-only Mouser API results, privacy policy and store assets; includes current OCR and ST document-evidence updates | Prepared; not submitted |
+| 0.12.5 | 2026-10-21 | Origin Lens branding only; GitHub support links; refreshed settings screenshot and promotional tile | Prepared; not submitted |
 
 ## Review notes and remaining work
 
@@ -217,7 +221,7 @@ the first item; increase it for subsequent uploads to that same item.
 - [ ] Complete the trader/non-trader declaration and any required verification.
 - [ ] Set the public publisher profile, verify the contact email and confirm
   2-Step Verification.
-- [x] Set the release version to 0.12.4 on the release branch.
+- [x] Set the release version to 0.12.5 on the release branch.
 - [x] Prepare store screenshots and the small promotional tile.
 - [x] Prepare the privacy policy, dashboard data inventory and listing copy.
 - [x] Recheck permission scope: two extension permissions and fourteen named hosts.
@@ -233,7 +237,7 @@ the first item; increase it for subsequent uploads to that same item.
 ### Release build and reviewer instructions
 
 Run `python extensions/origin-lens/scripts/package-release.py` from the release
-checkout. Upload `extensions/origin-lens/dist/origin-lens-0.12.4.zip`, not the
+checkout. Upload `extensions/origin-lens/dist/origin-lens-0.12.5.zip`, not the
 repository archive. The adjacent `.sha256` and `-inventory.json` identify the
 exact contents. Development scripts, tests, store assets and credentials are
 excluded. The ZIP includes the extension license and bundled OCR notices.
@@ -284,6 +288,15 @@ privacy disclosures; it has not been built. See [shared credentials](DEVELOPMENT
 - The existing installed interface was exercised on DigiKey for source refresh,
   collapse/expand and the photo disclosure. The release ZIP itself still needs
   the final manual load-unpacked check before store submission.
+
+### Validation record — October 21, 2026
+
+- All 124 offline tests passed for 0.12.5.
+- The settings screenshot and promotional tile were regenerated from their
+  source files and visually checked. The local popup preview's GitHub support
+  and privacy links were verified, with no browser script errors.
+- The change is limited to branding, support links, documentation and release
+  metadata. The exact packaged-extension installation check remains pending.
 
 ### Known limits to disclose
 

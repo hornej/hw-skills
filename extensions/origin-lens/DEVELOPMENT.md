@@ -47,8 +47,9 @@ Remove or disable the unpacked copy to avoid duplicate panels.
 The [store listing and readiness record](CHROMEWEBSTORE.md) contains the listing
 copy, permission explanations, privacy disclosures and reviewer steps. The
 [store assets](store-assets/README.md) contain three screenshots, the small
-promotional tile and capture details. The publisher is **Basement Labs**, with
-**info@basementlabs.net** as the public support/privacy contact. See the
+promotional tile and capture details. Publisher identity and a verified contact
+email must be finalized before store submission. Current support uses the
+[GitHub issue tracker](https://github.com/hornej/hw-skills/issues). See the
 [privacy policy](PRIVACY.md).
 
 Build the runtime-only release with Python 3 from the repository root:

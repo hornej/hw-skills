@@ -49,3 +49,5 @@ catalog's declared COO and the notice's assembly locations labeled separately.
 Version 0.12.4 prepares an unlisted store release with a privacy policy, store
 graphics and reproducible packaging. Mouser API reports are now live-only, and
 previously cached API reports are removed automatically.
+Version 0.12.5 uses only Origin Lens branding in the documentation, settings
+preview and promotional tile, and directs popup support links to GitHub.

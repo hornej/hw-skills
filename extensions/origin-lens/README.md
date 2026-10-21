@@ -4,7 +4,7 @@ Compare country-of-origin and manufacturing reports while browsing DigiKey or
 Mouser. See each source separately, with links to its evidence, package-photo
 markings, and supported STM32 ordering options.
 
-**[Download 0.12.4](https://github.com/hornej/hw-skills/releases/download/origin-lens-v0.12.4/origin-lens-0.12.4.zip)** ·
+**[Download 0.12.5](https://github.com/hornej/hw-skills/releases/download/origin-lens-v0.12.5/origin-lens-0.12.5.zip)** ·
 [Source setup](SETUP.md) · [Report an issue](https://github.com/hornej/hw-skills/issues)
 
 [![Origin Lens on DigiKey, comparing DigiKey, Mouser, and ST origin reports with separate manufacturing evidence](store-assets/01-source-reports.jpg)](store-assets/01-source-reports.jpg)
@@ -35,7 +35,7 @@ folder in step 3. The release ZIP above contains just the extension.
 
 ## Setup for maximum coverage
 
-**Version 0.12.4 uses one user-supplied API key: Mouser Search API.**
+**Version 0.12.5 uses one user-supplied API key: Mouser Search API.**
 To enable every currently implemented source, complete these three steps in
 the **same browser profile** where Origin Lens is installed:
 
@@ -110,5 +110,3 @@ used. See the [privacy policy](PRIVACY.md).
 
 [Source coverage](SOURCES.md) · [Evidence and behavior](DETAILS.md) ·
 [Development and publishing](DEVELOPMENT.md) · [Change history](CHANGELOG.md)
-
-Built by **Basement Labs**. Support: **info@basementlabs.net**.

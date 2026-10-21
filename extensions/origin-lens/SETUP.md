@@ -20,6 +20,9 @@ Mouser key and browser sign-ins; credentials are not included in the download.
 TI Product Information/Store, LCSC, JLCPCB, Nexar, and AI-service API keys are
 **not used by Origin Lens**. Some are used by separate sourcing helpers or API
 research; obtaining them does not add coverage to this extension version.
+JLCPCB Parts access has been tested successfully in the separate sourcing
+helper, but its tested responses contain no manufacturing-country data. See
+the [JLCPCB validation record](../../part-sourcing/references/lcsc-jlcpcb.md#live-acceptance--2026-10-21-utc).
 
 ## Mouser Search API
 

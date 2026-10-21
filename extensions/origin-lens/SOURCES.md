@@ -242,7 +242,7 @@ Additional investigation during this release:
 | Farnell / Newark, RS, TME | Potential additional distributor sources; no authenticated/structured origin endpoint validated here. | Exact manufacturer/MPN mapping, documented field meaning, access requirements and a live result. |
 | Nexar / Octopart | Existing sourcing integration is useful for identifying parts/offers; no usable COO field verified here. | Confirm origin field and entitlement before adding requests or using quota. |
 | LCSC partner API | Official API Access & Usage Guide v3.4 reviewed 2026-10-20; stock, prices, exact identity and reference-photo URLs are documented. No named manufacturing-country fields found. | Approved API credentials and live response; existing photo evidence remains sample-only. |
-| JLCPCB Components API | Official portal confirms public-library details by C-number and private inventory. Public component response schema was not available in the inspected docs. | Approved Components access, field definitions and an exact-part response before adding origin requests. |
+| JLCPCB Components API | SDK 1.0.6 and two successful exact-part detail requests reviewed on 2026-10-21 UTC. The part-sourcing helper can retrieve stock, price tiers and technical parameters; no manufacturing-country fields were returned. | An explicit, defined COO/manufacturing-stage or lot-route field before adding an Origin Lens adapter. API approval alone adds no origin evidence. |
 
 The maintained [LCSC/JLCPCB investigation](../../part-sourcing/references/lcsc-jlcpcb.md)
 links the official application and documentation routes. LCSC's

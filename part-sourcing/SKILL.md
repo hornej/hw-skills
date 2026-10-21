@@ -21,7 +21,7 @@ current task.
   the Mouser or LCSC helper here. Refresh exact distributor SKUs and packaging choices.
 - For LCSC or JLCPCB, read [LCSC and JLCPCB access](references/lcsc-jlcpcb.md).
   Both have official partner APIs. LCSC supports search/details; JLCPCB supports
-  one C-number detail lookup from its official SDK, pending live acceptance.
+  one C-number detail lookup from its official SDK, with live access validated.
   Keep JLCPCB assembly-library inventory distinct from LCSC purchasable stock.
 - For COO or fabrication/assembly/test restrictions, read
   [origin evidence](references/origin.md). Use `st-origin-lookup` for ST's website

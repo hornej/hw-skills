@@ -6,6 +6,12 @@ Last updated: 2026-10-20
 This record contains the submission copy and remaining dashboard/manual checks.
 Installation and release steps are in the [README](README.md#install-or-update).
 
+Developer registration is complete. Organization verification and the public
+publisher profile remain pending; the requested verification documents are
+prepared privately but have not been submitted. No Chrome Web Store item has
+been created. Coworker testing will use the GitHub 0.12.4 prerelease while
+publisher verification is deferred.
+
 ## Store listing
 
 **Extension name:** Origin Lens — DigiKey & Mouser
@@ -162,7 +168,7 @@ confirm them in the dashboard for the actual submitted release:
 ## Privacy policy
 
 **Public privacy-policy URL:**
-[Origin Lens privacy policy](https://github.com/hornej/hw-skills/blob/josh-origin-lens-store-release/extensions/origin-lens/PRIVACY.md).
+[Origin Lens privacy policy](https://github.com/hornej/hw-skills/blob/main/extensions/origin-lens/PRIVACY.md).
 
 The [policy source](PRIVACY.md) identifies Basement Labs and
 info@basementlabs.net, with direct supplier requests, credentials, retention,
@@ -187,7 +193,7 @@ Unlisted and Private submissions still require review.
 - **Publisher name:** Basement Labs.
 - **Contact email:** info@basementlabs.net; complete Google's email verification.
 - **Support:** [Email Basement Labs](mailto:info@basementlabs.net) or [public issue tracker](https://github.com/hornej/hw-skills/issues). Do not post credentials or confidential data in issues.
-- **Homepage:** [Origin Lens README](https://github.com/hornej/hw-skills/tree/josh-origin-lens-store-release/extensions/origin-lens).
+- **Homepage:** [Origin Lens README](https://github.com/hornej/hw-skills/tree/main/extensions/origin-lens).
 - **Store item ID and installation URL:** Not created.
 
 Do not place personal credentials, reviewer account passwords or API keys in
@@ -205,7 +211,9 @@ the first item; increase it for subsequent uploads to that same item.
 
 ## Review notes and remaining work
 
-- [ ] Select the publisher account; complete registration, verified email and
+- [x] Select the publisher account and complete developer registration.
+- [ ] Complete the trader/non-trader declaration and any required verification.
+- [ ] Set the public publisher profile, verify the contact email and confirm
   2-Step Verification.
 - [x] Set the release version to 0.12.4 on the release branch.
 - [x] Prepare store screenshots and the small promotional tile.
@@ -260,7 +268,7 @@ Unlisted and Private control discovery/installation, not credential secrecy.
 Neither protects a key embedded in the package or shares a signed-in session.
 This candidate uses each user's own optional Mouser key and browser sessions.
 A future authenticated team backend needs provider-approved use and revised
-privacy disclosures; it has not been built. See [shared credentials](README.md#shared-credentials).
+privacy disclosures; it has not been built. See [shared credentials](DEVELOPMENT.md#shared-credentials).
 
 ### Validation record — October 20, 2026
 

@@ -7,6 +7,10 @@ markings, and supported STM32 ordering options.
 **[Download 0.12.4](https://github.com/hornej/hw-skills/releases/download/origin-lens-v0.12.4/origin-lens-0.12.4.zip)** ·
 [Source setup](SETUP.md) · [Report an issue](https://github.com/hornej/hw-skills/issues)
 
+[![Origin Lens on DigiKey, comparing DigiKey, Mouser, and ST origin reports with separate manufacturing evidence](store-assets/01-source-reports.jpg)](store-assets/01-source-reports.jpg)
+
+Example source reports for STM32G491RET6. Coverage varies by part.
+
 ## Install or update
 
 Requires desktop Chrome 120 or newer. This is a beta distributed through GitHub;
@@ -68,6 +72,13 @@ available source data. See [setup and troubleshooting](SETUP.md).
   manufacturing stages, dates, and part matching.
 - On supported STM32 parts, **Ordering options** compares package, packing,
   temperature, and declared origin across the base part's ordering codes.
+
+| Component controls | Package-photo evidence |
+| --- | --- |
+| [![Origin Lens settings with passives disabled and other component types enabled](store-assets/02-component-controls.jpg)](store-assets/02-component-controls.jpg) | [![LCSC package photo with a CHN marking identified as the photographed sample's assembly country](store-assets/03-package-photo.jpg)](store-assets/03-package-photo.jpg) |
+| Choose which component types trigger lookups. | Inspect the photo, recognized markings, and sample limitations. |
+
+Select any screenshot to enlarge it.
 
 ## Update an unpacked installation
 

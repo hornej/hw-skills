@@ -1,6 +1,6 @@
 # Chrome Web Store listing — Origin Lens
 
-Last updated: 2026-10-20
+Last updated: 2026-10-21
 
 **Release candidate 0.12.4 prepared; not submitted.** Publisher: Basement Labs.
 This record contains the submission copy and remaining dashboard/manual checks.
@@ -72,6 +72,8 @@ electronic component ordering codes on DigiKey and Mouser product pages.
 | Marquee image | 1400 × 560 | Optional; not prepared | — |
 
 Capture details and the editable tile are in [store-assets](store-assets/README.md).
+The [README](README.md) also displays these three screenshots for installation
+and usage context.
 Images exclude account details and credentials. They use the existing plain
 visual style; no slogans or implied supplier endorsement. See Google's
 [image requirements](https://developer.chrome.com/docs/webstore/images).

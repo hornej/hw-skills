@@ -1,0 +1,159 @@
+{
+  "version": 2,
+  "engine": "Tesseract.js 7.0.0",
+  "processedAt": "2026-10-20T21:53:27.394Z",
+  "readings": [
+    {
+      "imageUrl": "/sample.jpg",
+      "sha256": "a6808c506f44ee34b98b2daef03e70250cfd8c57fa6537f9c83bd414a173c8b1",
+      "passes": [
+        {
+          "rotation": 0,
+          "variant": "gray",
+          "text": "GYILREIL\n\nAA 152 9R\nTWN 248 Z\nR S72\n",
+          "words": [
+            {
+              "text": "GYILREIL",
+              "confidence": 35
+            },
+            {
+              "text": "AA",
+              "confidence": 94
+            },
+            {
+              "text": "152",
+              "confidence": 92
+            },
+            {
+              "text": "9R",
+              "confidence": 77
+            },
+            {
+              "text": "TWN",
+              "confidence": 55
+            },
+            {
+              "text": "248",
+              "confidence": 93
+            },
+            {
+              "text": "Z",
+              "confidence": 83
+            },
+            {
+              "text": "R",
+              "confidence": 0
+            },
+            {
+              "text": "S72",
+              "confidence": 36
+            }
+          ]
+        },
+        {
+          "rotation": 0,
+          "variant": "contrast",
+          "text": "GYILREIL\n\nAA 152 9R\nTWN 248 Z\nS72 TIN\n",
+          "words": [
+            {
+              "text": "GYILREIL",
+              "confidence": 19
+            },
+            {
+              "text": "AA",
+              "confidence": 94
+            },
+            {
+              "text": "152",
+              "confidence": 92
+            },
+            {
+              "text": "9R",
+              "confidence": 79
+            },
+            {
+              "text": "TWN",
+              "confidence": 91
+            },
+            {
+              "text": "248",
+              "confidence": 93
+            },
+            {
+              "text": "Z",
+              "confidence": 83
+            },
+            {
+              "text": "S72",
+              "confidence": 0
+            },
+            {
+              "text": "TIN",
+              "confidence": 0
+            }
+          ]
+        },
+        {
+          "rotation": 0,
+          "variant": "red",
+          "text": "GYILREIL\n\nAA 152 SR\nTWN 248 Z\n&Vs5 € ny\n",
+          "words": [
+            {
+              "text": "GYILREIL",
+              "confidence": 28
+            },
+            {
+              "text": "AA",
+              "confidence": 95
+            },
+            {
+              "text": "152",
+              "confidence": 84
+            },
+            {
+              "text": "SR",
+              "confidence": 56
+            },
+            {
+              "text": "TWN",
+              "confidence": 88
+            },
+            {
+              "text": "248",
+              "confidence": 88
+            },
+            {
+              "text": "Z",
+              "confidence": 87
+            },
+            {
+              "text": "&Vs5",
+              "confidence": 0
+            },
+            {
+              "text": "€",
+              "confidence": 87
+            },
+            {
+              "text": "ny",
+              "confidence": 42
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "status": "detected",
+  "observations": [
+    {
+      "marking": "TWN",
+      "country": "Taiwan",
+      "stage": "assembly",
+      "method": "local OCR",
+      "imageUrl": "/sample.jpg",
+      "sha256": "a6808c506f44ee34b98b2daef03e70250cfd8c57fa6537f9c83bd414a173c8b1",
+      "confidence": 88,
+      "interpretationUrl": "https://www.anglia.com/registration/pcn_ptn/docs/pcn/4452.pdf#page=7"
+    }
+  ]
+}

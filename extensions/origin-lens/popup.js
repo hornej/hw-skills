@@ -2,12 +2,15 @@
 const C = globalThis.OriginLens;
 const status = document.getElementById("status");
 const toggle = document.getElementById("enabled");
+const listToggle = document.getElementById("list-view");
 const types = document.getElementById("component-types");
 const preferences = {}, changedPreferences = new Set(), typeInputs = new Map();
 let ready = false;
 function showPreferences() {
   const enabled = preferences.enabled !== false;
   toggle.checked = enabled;
+  listToggle.checked = preferences.listViewEnabled === true;
+  document.getElementById("list-view-state").textContent = listToggle.checked ? "On" : "Off";
   document.getElementById("enabled-state").textContent = enabled ? "On" : "Off";
   document.getElementById("enabled-hint").textContent = enabled
     ? "Applies to selected component types."
@@ -56,13 +59,18 @@ chrome.storage.onChanged.addListener((changes, area) => {
   try {
     const saved = await chrome.storage.local.get(C.PREFERENCE_KEYS);
     for (const key of C.PREFERENCE_KEYS) if (!changedPreferences.has(key)) preferences[key] = saved[key];
-    ready = true; showPreferences(); toggle.disabled = false; types.disabled = false;
+    ready = true; showPreferences(); toggle.disabled = false; listToggle.disabled = false; types.disabled = false;
   } catch { status.textContent = "Settings could not be read. Close and reopen this popup to retry."; }
 })();
 toggle.addEventListener("change", async () => {
   if (!ready) return;
   await savePreference("enabled", toggle.checked, toggle,
-    toggle.checked ? "On. Selected component types are shown on open product pages." : "Off. All origin panels are hidden and lookups are stopped.");
+    toggle.checked ? "On. Saved view and component-type choices apply to open pages." : "Off. All origin panels are hidden and lookups are stopped.");
+});
+listToggle.addEventListener("change", async () => {
+  if (!ready) return;
+  await savePreference("listViewEnabled", listToggle.checked, listToggle,
+    listToggle.checked ? "List view on when Origin Lens is enabled." : "List view off. Product-page panels are unchanged.");
 });
 document.getElementById("clear").addEventListener("click", async () => {
   try {

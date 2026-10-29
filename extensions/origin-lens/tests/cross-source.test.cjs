@@ -63,6 +63,26 @@ test('ST verifies page field, parent, exact code and CP attributes before assign
   assert.equal(C.stFamily({...dk,mpn:'STM32MP157AAA3'}),null);
 });
 
+test('reviewed ST assembly documents match exact codes without changing declared COO or asserting lot origin',()=>{
+  for(const mpn of ['STM32G491RET6','STM32G491RET6TR']){
+    const docs=C.stAssemblyDocuments({...dk,mpn});
+    assert.equal(docs.length,1);assert.equal(docs[0].id,'MDG/24/14363');
+    assert.deepEqual(docs[0].sites.map(site=>site.country),['Taiwan','China']);
+    assert.equal(docs[0].scope,'assembly-routes-in-pcn');assert.equal(docs[0].lotVerified,false);
+    assert.equal(docs[0].publishedOn,'2024-04-12');assert.equal(docs[0].reviewedOn,'2026-10-20');
+    assert.match(docs[0].sourceUrl,/\/MDG-24-14363\.pdf$/);assert.match(docs[0].documentSha256,/^[a-f0-9]{64}$/);
+  }
+  for(const other of [undefined,{...dk,mpn:'STM32G491REI6'},{...dk,mpn:'STM32G491RET6TRX'},{...dk,manufacturer:'Other'}]){
+    assert.deepEqual(C.stAssemblyDocuments(other),[]);
+  }
+  const catalog=C.fromST(attributes,product,dk);
+  assert.deepEqual(catalog.fields.declaredCoo.values,['TAIWAN']);
+  for(const field of ['assembly','diffusion','testing'])assert.deepEqual(catalog.fields[field].values,[]);
+  assert.deepEqual(C.fromST([...attributes,{...attributes[0],attribute_value:'CHINA'}],product,dk).fields.declaredCoo.values,['TAIWAN','CHINA']);
+  const edited=C.stAssemblyDocuments(dk);edited[0].sites[0].country='Other';
+  assert.equal(C.stAssemblyDocuments(dk)[0].sites[0].country,'Taiwan');
+});
+
 test('source cache isolates site, exact code, source and SKU; disagreement ignores case only',()=>{
   const r=C.crossDigiKey(dkData,mouser);const key=C.sourceCacheKey('digikey',mouser);const entry={key,result:r};
   assert.equal(C.sourceFresh(entry,'digikey',mouser),true);

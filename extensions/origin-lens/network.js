@@ -20,7 +20,7 @@
   }
   function allowedSender(sender, extensionId) {
     if (sender?.id !== extensionId || sender.frameId !== 0 || !sender.tab) return false;
-    try { return !!C.productUrl(sender.url, new URL(sender.url).hostname === "www.digikey.com" ? "digikey" : "mouser"); } catch { return false; }
+    try { return C.isDigiKeyResultsUrl(sender.url) || !!C.productUrl(sender.url, new URL(sender.url).hostname === "www.digikey.com" ? "digikey" : "mouser"); } catch { return false; }
   }
 
   async function read(url, kind, fetcher = fetch, postBody, token) {

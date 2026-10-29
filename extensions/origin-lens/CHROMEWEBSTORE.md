@@ -1,6 +1,6 @@
 # Chrome Web Store listing — Origin Lens
 
-Last updated: 2026-10-20
+Last updated: 2026-10-29
 
 **Draft only.** No store item has been submitted or published. This record
 describes the implemented extension and identifies work still needed before
@@ -20,6 +20,11 @@ Compare component origin reports on DigiKey and Mouser, with local OCR of LCSC p
 Compare country-of-origin reports for electronic components while viewing
 DigiKey and Mouser product pages.
 
+Opt in to DigiKey list view to see country summaries and filter the loaded
+results by declared origin or manufacturing stage. Saved reports appear
+immediately; choose Check this page to look up the listed parts. Unknown parts
+stay visible unless you choose to hide them. List view starts off.
+
 See separate reports from distributors and supported manufacturers, with source
 links, check times and exact ordering-code matches. Supported manufacturer
 sources include STMicroelectronics, Texas Instruments, Microchip, Infineon,
@@ -29,6 +34,10 @@ For supported STM32 parts, compare package, packing and temperature options
 reported by ST. View LCSC reference photos and automatically read supported
 package markings on your device. Photo observations and probable-origin
 estimates are labeled separately from declared country of origin.
+Reviewed ST assembly notices are also shown for selected exact ordering codes,
+separately from catalog declarations and shipment-lot evidence. Supported photo
+country markings include CHN, MYS, TWN and PHL; interpretation limits are shown
+beside the evidence.
 
 Select the component types you want to see, collapse the panel, or turn the
 extension off. Passives are hidden by default. Previously checked reports are
@@ -51,7 +60,8 @@ entire supply chain or establish that alternative parts are interchangeable.
 **Category:** Shopping (proposed; confirm the dashboard category at submission)
 
 **Single purpose:** Compare origin and manufacturing evidence for exact
-electronic component ordering codes on DigiKey and Mouser product pages.
+electronic component ordering codes on DigiKey and Mouser product pages and
+opt-in DigiKey result tables.
 
 **Primary language:** English
 
@@ -60,9 +70,10 @@ electronic component ordering codes on DigiKey and Mouser product pages.
 | Asset | Dimensions | Status | File / planned content |
 | --- | --- | --- | --- |
 | Store icon | 128 × 128 PNG | Existing; dimensions verified | `icons/icon-128.png` |
-| Screenshot 1 | 1280 × 800 | Needed | Product page with multiple source reports and check times |
-| Screenshot 2 | 1280 × 800 | Recommended; needed | Settings, component-type controls and source setup |
+| Screenshot 1 | 1280 × 800 | Needed; refresh for 0.13.2 | Product page with visible origin classifications, manufacturing countries and check times |
+| Screenshot 2 | 1280 × 800 | Recommended; needed | Settings, default-off list-view switch, component-type controls and source setup |
 | Screenshot 3 | 1280 × 800 | Optional | STM32 ordering options and qualified photo evidence |
+| Screenshot 4 | 1280 × 800 | Recommended; needed | DigiKey result-table summaries and country filtering, with unknown rows retained |
 | Small promotional tile | 440 × 280 | Required; needed | Origin Lens icon and restrained product presentation |
 | Marquee image | 1400 × 560 | Optional; not prepared | — |
 
@@ -74,14 +85,15 @@ endorsement. See Google's [image requirements](https://developer.chrome.com/docs
 
 The release currently requests two extension permissions and fourteen named
 HTTPS hosts. Content scripts run only on the supported DigiKey and Mouser
-product-page paths in `manifest.json`. Host access also allows cross-source
-requests while the user is viewing either distributor.
+product-page paths and DigiKey English filter/result paths in `manifest.json`.
+Result-table UI and lookups require the saved list-view opt-in. Host access also
+allows cross-source requests while the user is viewing either distributor.
 
 | Permission | Type | User-facing reason |
 | --- | --- | --- |
-| `storage` | permissions | Save on/off and component-type preferences, source settings, request limits and dated part reports in this browser. |
+| `storage` | permissions | Save on/off, list-view and component-type preferences, source settings, request limits and dated part reports in this browser. |
 | `offscreen` | permissions | Read package markings locally from supplier photos and parse source responses without opening an extra visible tab. |
-| `https://www.digikey.com/*` | host_permissions | Identify the viewed component, show the comparison panel, and retrieve exact-part origin using the existing DigiKey session. List discovery reads metadata, not list contents, and does not add parts. |
+| `https://www.digikey.com/*` | host_permissions | Identify viewed components, show the comparison panel or opt-in result-table summaries and filters, and retrieve exact-part origin using the existing DigiKey session. List discovery reads metadata, not list contents, and does not add parts. |
 | `https://www.mouser.com/*` | host_permissions | Identify the viewed component, show the panel and retrieve exact-part compliance information from Mouser's main website. |
 | `https://eu.mouser.com/*` | host_permissions | Support Mouser's European product pages and their source-specific compliance reports. |
 | `https://api.mouser.com/*` | host_permissions | Retrieve exact-part origin using the user's Mouser Search API key, including while viewing DigiKey. |
@@ -105,8 +117,9 @@ vendor licenses and all runtime assets in the release archive.
 
 ### Data handling inventory
 
-**Does the extension handle user data? Yes.** It reads the current supported
-product identity, sends lookup requests to suppliers and stores user-selected
+**Does the extension handle user data? Yes.** It reads supported product-page
+identities and, when list view is enabled, result-row identities, sends lookup
+requests to suppliers and stores user-selected
 settings and a user-supplied credential. No data is sent to a publisher-operated
 backend. Do not describe this as an extension in which all data stays on-device.
 
@@ -122,8 +135,8 @@ published privacy policy. Confirm the final selections against Google's
 | Authentication information | Yes | The optional Mouser key is saved locally and sent only to `api.mouser.com`. The browser can attach existing cookies to DigiKey, Mouser website and TI requests; the extension does not extract passwords or cookie values. |
 | Personal communications | No | Not used. |
 | Location | No device-location collection | TI queries specify United States as the report destination, not an inferred user location. Contacted servers receive normal network metadata, including an IP address. |
-| Web history | Limited to supported product context | Current product URL, manufacturer, part number and supplier SKU are read and retained with reports. Relevant identifiers are sent to lookup sources. There is no browser-history API access or general browsing-history collection. |
-| User activity | Local controls only | On/off, component selection and explicit source/cache actions affect local settings and requests. No clickstream, keystroke or usage analytics is recorded. |
+| Web history | Limited to supported product and result-table context | Product URLs, manufacturers, part numbers and supplier SKUs are read and retained with reports. Result-table lookups require an explicit page scan; relevant identifiers are sent to lookup sources. There is no browser-history API access or general browsing-history collection. |
+| User activity | Local controls only | On/off, list-view opt-in, component selection, table filters and explicit source/cache actions affect local settings and requests. Table filter choices are temporary; no clickstream, keystroke or usage analytics is recorded. |
 | Website content | Yes | Part identifiers, origin/manufacturing fields, source links, ordering options, photos and extracted markings support the comparison. Photo bytes are processed locally; extracted evidence is cached. No photos are uploaded to a recognition service. |
 
 **Recipients:** DigiKey, Mouser, TI, Microchip, Harwin, Samtec, ST, LCSC and
@@ -135,7 +148,7 @@ controls its own server-side request logging and retention.
 **Local storage and deletion:** Preferences and source reports use local
 extension storage; the Mouser key uses a separate extension IndexedDB database.
 There is no Chrome sync of these records. The credential store is not an
-encrypted vault. Origin/photo reports are limited to 100 cached records, with a
+encrypted vault. Origin/photo reports are limited to 500 cached records, with a
 one-hour freshness period and dated fallback for up to seven days. ST family
 comparisons are limited to 30 records. Expiry is enforced on use/save; idle
 records may remain on disk until a later save or deletion. **Clear cached
@@ -143,6 +156,9 @@ results** removes reports but retains the key. **Remove key** removes the saved
 key. Uninstalling removes the extension's local data.
 
 **Controls:** Disabling Origin Lens or a component type stops its lookups.
+Disabling list view stops results-page lookups and restores hidden rows while
+leaving product-page preferences in effect. Result-table checks start only on
+request; the Stop checking button discards late responses and stops queued parts.
 Collapsing or hiding a panel does not disable its source updates. Each browser
 profile has its own settings and credential.
 
@@ -194,6 +210,7 @@ the first item; increase it for subsequent uploads to that same item.
 
 | Version | Date | Changes | Status |
 | --- | --- | --- | --- |
+| 0.13.2 | 2026-10-29 | Reviewed development snapshot: opt-in DigiKey table filtering, visible manufacturing stages, reviewed ST assembly routes, expanded local OCR, 500-report cache, and protection against late lookups overwriting newer or cleared table reports | Development; not submitted |
 | To be selected at packaging | — | Initial store release | Draft; not submitted |
 
 ## Review notes and remaining work

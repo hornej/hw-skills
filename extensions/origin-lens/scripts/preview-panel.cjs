@@ -5,6 +5,7 @@ const path = require('node:path');
 const files = new Set(['core.js', 'ocr.js', 'st-options.js', 'content.js']);
 const fixture = process.argv.includes('--infineon') ? require('../tests/fixtures/infineon-irlml6344.json') : null;
 const stFixture = process.argv.includes('--st-options') ? require('../tests/fixtures/stm32g491re-options.json') : null;
+const mouserFixture = process.argv.includes('--mouser-stages') ? require('../tests/fixtures/mouser-tcpp03-m20.json') : null;
 const mock = `
 const C={...OriginLens}, listeners=[], values={};window.OriginLens=C;
 const part={provider:'digikey',host:'www.digikey.com',manufacturer:'Nexperia USA Inc.',
@@ -12,8 +13,10 @@ mpn:'PSMN040-100MSEX',sku:'1727-1086-2-ND',
 sourceUrl:'https://www.digikey.com/en/products/detail/nexperia-usa-inc/PSMN040-100MSEX/4004849'};
 const fixture=${JSON.stringify(fixture)};
 const stFixture=${JSON.stringify(stFixture)};
+const mouserFixture=${JSON.stringify(mouserFixture)};
 if(fixture){Object.assign(part,{manufacturer:'Infineon Technologies',mpn:'IRLML6344TRPBF',sku:'IRLML6344TRPBFTR-ND',sourceUrl:'https://www.digikey.com/en/products/detail/infineon-technologies/IRLML6344TRPBF/2538152'});document.querySelector('h1').textContent=part.mpn;}
 if(stFixture){Object.assign(part,{manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND',sourceUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591'});document.querySelector('h1').textContent=part.mpn;}
+if(mouserFixture){Object.assign(part,{manufacturer:'STMicroelectronics',mpn:'TCPP03-M20',sku:'497-TCPP03-M20TR-ND',sourceUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/TCPP03-M20/1'});document.querySelector('h1').textContent=part.mpn;}
 C.readIdentity=()=>part;C.readComponentType=()=>'discretes';
 C.lookupDigiKey=async()=>C.fromDigiKey({manufacturer:part.manufacturer,
 manufacturerPartNumber:part.mpn,digiKeyPartNumber:part.sku,countryOfOrigin:stFixture?'Taiwan':'China'},part);
@@ -30,7 +33,7 @@ window.chrome={storage:{onChanged:{addListener:f=>listeners.push(f)},local:{
 get:async keys=>keys===null?{...values}:Object.fromEntries(keys.map(k=>[k,values[k]])),
 set:async next=>{Object.assign(values,next);listeners.forEach(f=>f(Object.fromEntries(Object.entries(next).map(([k,v])=>[k,{newValue:v}])),'local'));},
 remove:async keys=>keys.forEach(k=>delete values[k])}},
-runtime:{sendMessage:async message=>stReply(message)||(fixture&&message.operation==='infineon'?{ok:true,data:C.fromInfineon(fixture,part)}:{ok:false,code:'network',message:'Synthetic preview: no network request.'})}};
+runtime:{sendMessage:async message=>(mouserFixture&&message.operation==='mouser-api'?{ok:true,data:C.fromMouserApi(mouserFixture,part)}:null)||stReply(message)||(fixture&&message.operation==='infineon'?{ok:true,data:C.fromInfineon(fixture,part)}:{ok:false,code:'network',message:'Synthetic preview: no network request.'})}};
 document.querySelector('#width').addEventListener('change',e=>document.querySelector('main').style.maxWidth=e.target.value+'px');
 `;
 http.createServer((req,res)=>{

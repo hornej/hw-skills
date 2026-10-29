@@ -18,13 +18,82 @@ test("OCR requires a literal supported country in two high-scoring variants at t
  assert.equal(report().observations[0].country,"China");
  for(const passes of [[pass()],[pass(),pass("CHN",79,"contrast")],[pass(),pass()],[pass(),pass("CHN",95,"gray",90)],
    [pass("C H N"),pass("C H N",90,"contrast")],[pass("CHN123"),pass("CHN123",90,"contrast")],
-   [pass("GQ"),pass("GQ",95,"contrast")],[pass("TWN"),pass("TWN",95,"contrast")]]){
+   [pass("GQ"),pass("GQ",95,"contrast")],[pass("TWM"),pass("TWM",95,"contrast")]]){
   assert.equal(report([reading(passes)]).status,"unreadable");
  }
  const malaysia=report([reading([pass("MYS"),pass("MYS",90,"contrast")])]);
  assert.equal(malaysia.observations[0].country,"Malaysia");
  const rotated=report([reading([pass("CHN",85,"gray",90),pass("CHN",87,"contrast",90)])]);
  assert.equal(rotated.status,"detected");
+});
+
+test("TWN and PHL are literal country markings with a traceable ST code reference",()=>{
+ for(const [marking,country] of [["TWN","Taiwan"],["PHL","Philippines"]]){
+  const r=report([reading([pass(marking,91),pass(marking,88,"contrast")])]);
+  assert.equal(r.status,"detected");assert.equal(r.observations[0].country,country);
+  assert.equal(r.observations[0].interpretationUrl,O.COUNTRY_CODE_URL);
+  assert.equal(O.valid(r,[image],part),true);
+  for(const text of [marking+"248","X"+marking,marking.split("").join(" ")]){
+   assert.equal(report([reading([pass(text),pass(text,90,"red")])]).status,"unreadable");
+  }
+ }
+});
+
+test("real C3228560 browser capture reads Taiwan after suppressing the blue watermark",()=>{
+ const captured=require('./fixtures/ocr-stm32g491rei6.json'),identity={mpn:'STM32G491REI6'};
+ assert.equal(O.valid(captured,['/sample.jpg'],identity),true);
+ assert.equal(captured.readings[0].sha256,'a6808c506f44ee34b98b2daef03e70250cfd8c57fa6537f9c83bd414a173c8b1');
+ assert.equal(O.summarize(captured.readings,identity).observations[0].country,'Taiwan');
+ assert.equal(O.summarize(captured.readings,identity).observations[0].confidence,88);
+ const oldPasses=captured.readings.map(r=>({...r,passes:r.passes.filter(p=>p.variant!=='red')}));
+ assert.equal(O.summarize(oldPasses,identity).status,'unreadable');
+});
+
+test("watermark fallback still needs two distinct high-scoring variants in the same image and orientation",()=>{
+ const tw=(confidence,variant,rotation=0)=>pass("TWN",confidence,variant,rotation);
+ const r=report([reading([tw(55,"gray"),tw(91,"contrast"),tw(88,"red")])]);
+ assert.equal(r.status,"detected");assert.equal(r.observations[0].confidence,88);
+ assert.equal(O.valid(r,[image],part),true);
+ for(const passes of [[tw(55,"gray"),tw(91,"contrast")],[tw(91,"red"),tw(88,"red")],
+   [tw(91,"contrast"),tw(79,"red")],[tw(91,"contrast"),tw(88,"red",90)]]){
+  assert.equal(report([reading(passes)]).status,"unreadable");
+ }
+ assert.equal(report([reading([tw(91,"contrast")]),reading([tw(88,"red")])]).status,"unreadable");
+ assert.equal(report([reading([tw(91,"contrast"),tw(88,"red"),pass("CHN",90)])]).status,"conflict");
+ assert.equal(report([reading([tw(91,"contrast"),tw(88,"red"),pass("PHL",90)])]).status,"conflict");
+ const mismatch=reading([tw(91,"contrast"),tw(88,"red")]);mismatch.passes[0].text="STM32F103 TWN";
+ assert.equal(report([mismatch]).status,"part-mismatch");
+});
+
+test("red-channel preprocessing suppresses blue watermarks without changing neutral lettering",()=>{
+ const pixels=new Uint8ClampedArray([40,40,40,255,40,80,180,255,180,180,180,255]);
+ const enhanced=O.grayscale(pixels.slice(),true,true);
+ assert.deepEqual([...enhanced.slice(0,4)],[255,255,255,255]);
+ assert.deepEqual([...enhanced.slice(4,8)],[255,255,255,255]);
+ assert.deepEqual([...enhanced.slice(8,12)],[0,0,0,255]);
+ assert.notEqual(O.grayscale(pixels.slice(),true)[4],255);
+ const flat=O.grayscale(new Uint8ClampedArray(64).fill(90),true,true);
+ assert.ok([...flat].every(Number.isFinite));
+});
+
+test("the reader uses the fallback only when necessary and validates its bounded reports",async()=>{
+ for(const fallback of [false,true]){
+  let calls=0,closed=0,terminated=0;
+  const canvas=()=>({width:0,height:0,getContext:()=>({drawImage(){},translate(){},rotate(){},
+   getImageData:()=>({data:new Uint8ClampedArray(16).fill(255)}),putImageData(){}})});
+  const worker={setParameters:async()=>{},terminate:async()=>{terminated++;},recognize:async()=>{
+   const confidence=fallback&&calls===0?55:90;calls++;
+   return {data:{text:'TWN',blocks:[{paragraphs:[{lines:[{words:[{text:'TWN',confidence}]}]}]}]}};
+  }};
+  const context={OriginLensOCR:O,Tesseract:{createWorker:async()=>worker},Blob,crypto:require('node:crypto').webcrypto,
+   createImageBitmap:async()=>({width:2,height:2,close(){closed++;}}),document:{createElement:canvas},Uint8Array};
+  vm.runInNewContext(script('ocr-engine.js'),context);
+  const r=await context.OriginLensOCREngine.scan({part,images:[image],getImage:async()=>new Uint8Array([1,2,3]),assetUrl:p=>p,signal:new AbortController().signal});
+  assert.equal(calls,fallback?3:2);assert.equal(closed,1);assert.equal(terminated,1);
+  assert.equal(r.status,'detected');assert.equal(r.observations[0].country,'Taiwan');
+  assert.equal(O.valid(r,[image],part),true);
+  assert.equal(r.readings[0].passes.at(-1).variant,fallback?'red':'contrast');
+ }
 });
 
 test("conflicting countries or a clearly different STM32 family cannot become a country claim",()=>{
@@ -49,8 +118,13 @@ test("OCR cached evidence is derived from bounded readings and tied to the exact
   v=>v.readings[0].passes[0].words[0].confidence=10,
   v=>v.readings[0].passes[0].text="x".repeat(1501),
   v=>v.readings[0].passes[1].variant="gray",
-  v=>v.version=0
+  v=>v.readings[0].passes[1].variant="unknown",
+  v=>v.observations[0].interpretationUrl="https://evil.test/",
+  v=>v.version=1
  ]){const v=report();mutation(v);assert.equal(O.valid(v,[image],part),false);}
+ const legacy=record();legacy.photoEvidence.ocr={...report(),version:1};
+ assert.equal(C.sourceFresh({key,result:legacy},"lcsc",part),false);
+ assert.equal(C.savedSource({[key]:{key,result:legacy}},"lcsc",part),null);
 });
 
 test("LCSC OCR failures preserve photographs and cancellation is never converted to evidence",async()=>{

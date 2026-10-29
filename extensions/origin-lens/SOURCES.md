@@ -13,16 +13,26 @@ presented as direct manufacturer declarations. Missing fields stay unknown.
 | Mouser Search API | Exact manufacturer + full MPN across its catalog; personal Search API key | Declared COO, assembly, diffusion when returned in `TradeCompliance` |
 | Mouser website | Current US/EU product page or cross-site page fetch; fallback when no API key is configured | Same named compliance fields, subject to page availability |
 | DigiKey | Signed-in, read-only catalog lookup using an existing empty or populated list | Declared COO |
-| STMicroelectronics | Supported STM32 full ordering codes; public family/ordering-code services | Declared COO; multiple values kept |
+| STMicroelectronics | Supported STM32 full ordering codes; public family/ordering-code services; reviewed PCN coverage for STM32G491RET6 and STM32G491RET6TR | Declared COO plus separately labeled assembly routes from reviewed manufacturer notices; multiple values kept |
 | Microchip | Exact full ordering code in public Product API; Microchip Technology / Microchip Technology Inc. naming | Declared COO, assembly, wafer fabrication |
 | Infineon | Public ECCN & HTS Finder search; exact full OPN and verified Infineon manufacturer name; no personal key/login | Declared COO, assembly, diffusion; all returned regions and material variants retained |
-| LCSC reference photos | Exact ST STM32 catalog match; no key/login; automatic search and local OCR | Photo markings, automatic CHN/MYS assembly interpretation, and separately reviewed evidence; never current-stock COO |
+| LCSC reference photos | Exact ST STM32 catalog match; no key/login; automatic search and local OCR | Photo markings, automatic CHN/MYS/TWN/PHL country interpretation, and separately reviewed evidence; never current-stock COO |
 
 Mouser's API supplies distributor reports for many manufacturers without building
 a separate website adapter for every brand. That does not imply every catalog
 part has COO or all manufacturing stages populated.
 
 Evidence and reference links:
+
+- [ST PCN MDG/24/14363](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/6161/MDG-24-14363.pdf),
+  published 2024-04-12, reviewed 2026-10-20. PDF page 1 identifies current
+  JSCC (China) and ASE Kaohsiung (Taiwan) wire-bonding flows. The exact codes
+  STM32G491RET6 and STM32G491RET6TR occur in the affected/public product lists.
+  SHA-256: `3765a7830d577652c783aaa8ad6c221fce3f6c6d33d8f4373a10c327d2f0966b`.
+  This is historical manufacturer assembly-route evidence, not declared COO,
+  current stock, or proof of the lot a supplier will ship. Only those two
+  ordering codes are enabled in the initial reviewed-document lookup. The
+  catalog and source-count logic retain their original declared-COO meaning.
 
 - [Mouser API](https://www.mouser.com/en/api-search/) and
   [V1 schema](https://api.mouser.com/api/docs/V1). Authenticated tests returned
@@ -78,8 +88,10 @@ Evidence and reference links:
 
 LCSC scope is currently ST STM32 photographs, with one bundled reviewed image.
 Version 0.7.0 reads other images automatically with bundled Tesseract.js 7.0.0.
-Only CHN and MYS are mapped to assembly countries, after two agreeing image
-variants with word scores of at least 80. The browser reader independently
+CHN and MYS are mapped to assembly countries, after two agreeing image
+variants with word scores of at least 80. Version 0.12.2 adds TWN and PHL using
+the ST reference below, and a red-channel fallback for blue-watermarked photos.
+The browser reader independently
 recognized CHN (91/100 minimum agreeing score) on C3231005 and MYS (86/100) on
 [STM32F103C8T6 / C8734](https://www.lcsc.com/product-detail/C8734.html).
 These are OCR scores, not accuracy probabilities. Whole-part lettering can be
@@ -88,6 +100,35 @@ or current-stock inference is performed. Unclear/unsupported markings retain
 the photos and detected text without assigning a country.
 The pasted conversation's specific PCN plant mappings were not
 independently validated in this integration and are not used by the extension.
+
+### TWN / PHL country markings — 2026-10-20
+
+[ST PCN MMS-MMY/09/4452, page 7](https://www.anglia.com/registration/pcn_ptn/docs/pcn/4452.pdf#page=7)
+explicitly defines the device country marks TWN as Taiwan and PHL as Philippines.
+This is an ST-authored EPROM assembly-transfer notice hosted by Anglia, not an
+STM32G491 manufacturing declaration. Applying the literal country codes as
+STM32 sample assembly evidence is an interpretation, disclosed next to that
+reference in the panel. No plant, wafer or testing-code decoding was added.
+
+The exact [STM32G491REI6 / C3228560 listing](https://www.lcsc.com/product-detail/C3228560.html)
+and [top-side photo](https://assets.lcsc.com/images/lcsc/900x900/20230711_STMicroelectronics-STM32G491REI6_C3228560_blank.jpg)
+were checked. The original JPEG's SHA-256 is
+`a6808c506f44ee34b98b2daef03e70250cfd8c57fa6537f9c83bd414a173c8b1`.
+The real bundled browser engine read literal TWN at scores 55 (gray), 91
+(contrast), and 88 (red-channel contrast), producing Taiwan with a minimum
+agreeing score of 88 at `2026-10-20T21:53:27.394Z`. The unchanged 80-point,
+two-variant rule rejects the first two passes alone. The captured report in
+`tests/fixtures/ocr-stm32g491rei6.json` retains the local preview's `/sample.jpg`
+route; the source URL above and byte hash identify its original photograph.
+The user's PNG attachment produced the same text and scores, with its own hash
+`e0268d00c58b395cd2f8dfbb9ffd0f9c1175eed1665968d04c5056fc74dbc097`.
+
+After the user reloaded the unpacked extension, the actual DigiKey page showed
+**Taiwan · auto-read** with **TWN**, **88/100**, and processing time
+`2026-10-20T21:54:27Z`. Its three declared-origin source rows remained separate.
+This exercised the installed worker/offscreen path and automatic replacement of
+the earlier unreadable photo cache. PHL is covered by parser tests and the ST
+reference; a real PHL photograph has not been verified.
 
 ## Texas Instruments verification
 

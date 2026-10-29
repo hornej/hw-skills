@@ -26,7 +26,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
   for (const [key, entry] of inFlight) {
     const preferenceKey = OriginLens.typeKey(entry.componentType);
-    if (changes.mouserApiRevision || changes.enabled?.newValue === false || (changes[preferenceKey] &&
+    if (changes.mouserApiRevision || changes.enabled?.newValue === false || (entry.resultsPage && changes.listViewEnabled && changes.listViewEnabled.newValue !== true) || (changes[preferenceKey] &&
       !OriginLens.componentTypeEnabled(entry.componentType, { [preferenceKey]: changes[preferenceKey].newValue }))) {
       entry.controller.abort(); inFlight.delete(key);
     }
@@ -48,20 +48,28 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   (async () => {
     try {
       OriginLensNetwork.validatePart(message.part);
-      if (OriginLens.productUrl(sender.url, message.part.provider) !== OriginLens.productUrl(message.part.sourceUrl, message.part.provider)) {
+      const resultsPage = OriginLens.isDigiKeyResultsUrl(sender.url);
+      if (resultsPage && (message.part.provider !== "digikey" || !["digikey", "mouser-api", "st-family", "st-origin", "ti", "microchip", "infineon", "samtec", "harwin"].includes(message.operation))) {
+        throw new OriginLens.LookupError("request", "Unsupported results-page lookup.");
+      }
+      if (!resultsPage && OriginLens.productUrl(sender.url, message.part.provider) !== OriginLens.productUrl(message.part.sourceUrl, message.part.provider)) {
         throw new OriginLens.LookupError("request", "The lookup no longer matches the open product page.");
       }
       const componentType = message.part.componentType || "other";
       const typeKey = OriginLens.typeKey(componentType);
       const revision = settingRevisions.get("enabled"), typeRevision = settingRevisions.get(typeKey), apiRevision = settingRevisions.get("mouserApiRevision");
+      const listRevision = settingRevisions.get("listViewEnabled");
       const saved = await chrome.storage.local.get(["digikeyListId", ...OriginLens.PREFERENCE_KEYS]);
       const mouserApiKey = message.operation === "mouser-api" ? await OriginLensCredentials.get() : undefined;
       const { digikeyListId = "", enabled } = saved;
+      if (resultsPage && (saved.listViewEnabled !== true || listRevision !== settingRevisions.get("listViewEnabled"))) {
+        throw new OriginLens.LookupError("disabled", "DigiKey list view is off or its setting changed. Check the extension popup to resume.");
+      }
       if (enabled === false || !OriginLens.componentTypeEnabled(componentType, saved) ||
         revision !== settingRevisions.get("enabled") || typeRevision !== settingRevisions.get(typeKey) || apiRevision !== settingRevisions.get("mouserApiRevision")) {
         throw new OriginLens.LookupError("disabled", "Origin Lens is off for this component type or its setting changed. Check the extension popup to resume.");
       }
-      const key = JSON.stringify([message.operation, message.part, message.url, message.parentId, digikeyListId]);
+      const key = JSON.stringify([resultsPage, message.operation, message.part, message.url, message.parentId, digikeyListId]);
       if (!inFlight.has(key)) {
         const controller = new AbortController();
         const guardedFetch = async (url, options = {}) => {
@@ -69,7 +77,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
           controller.signal.throwIfAborted();
           return fetch(url, { ...options, signal: AbortSignal.any([controller.signal, options.signal].filter(Boolean)) });
         };
-        const entry = { controller, componentType };
+        const entry = { controller, componentType, resultsPage };
         entry.pending = (message.operation === "lcsc-ocr"
           ? OriginLensOCRBridge.run(message, controller.signal)
           : OriginLensNetwork.run(message, digikeyListId, guardedFetch, { mouserApiKey, signal: controller.signal })).finally(() => {

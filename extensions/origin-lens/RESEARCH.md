@@ -615,3 +615,213 @@ scrolling at 360px. Preview command:
 `node extensions/origin-lens/scripts/preview-panel.cjs --st-options`.
 It uses captured ST data and simulated browser-extension messaging, not the
 installed extension. Reload Origin Lens and the product page to load this version.
+
+## 2026-10-20 — TWN and blue-watermarked photos (0.12.2)
+
+The user supplied a clear TWN-marked STM32G491REI6 photo. Two separate causes
+prevented a result: the literal mapping allowed only CHN/MYS, and the existing
+grayscale pass scored TWN at 55 despite the contrast pass reading it at 91.
+Adding only the code mapping would still leave this sample unreadable.
+
+Added TWN/Taiwan and PHL/Philippines using the explicit device country-code
+definitions in ST PCN MMS-MMY/09/4452, page 7 (Anglia's copy; see `SOURCES.md`).
+That document covers EPROMs; the UI discloses that applying its code mapping to
+an STM32 sample is an interpretation. No plant or wafer-code mapping was added.
+
+A third preprocessing variant takes the red channel before contrast inversion.
+Blue catalog watermarks become dark while neutral laser lettering remains
+bright. The existing grayscale and luminance-contrast passes run first; a
+successful pair skips the fallback. Any two distinct variants must agree at
+the same rotation, in the same image, with each word score at least 80.
+Duplicate variants, separated letters, embedded codes, conflicting countries,
+and different STM32 families remain rejected. The cap is now 12 passes per
+image; the existing three-image and 60-second job bounds are unchanged.
+
+Actual browser verification with bundled Tesseract.js, WASM and English data:
+
+| Photo | Mark | Minimum agreeing score | Passes |
+| --- | --- | --- | --- |
+| User's PNG attachment | TWN / Taiwan | 88 | gray 55, contrast 91, red 88 |
+| Original C3228560 JPEG | TWN / Taiwan | 88 | gray 55, contrast 91, red 88 |
+| C3231005 JPEG regression | CHN / China | 91 | gray + contrast |
+| C8734 JPEG regression | MYS / Malaysia | 86 | gray + contrast |
+
+The original C3228560 output is saved as an offline regression fixture. Image
+hashes, source links and timestamps are recorded in `SOURCES.md`; photographs
+and full browser reports remain in the existing local evidence directory.
+
+OCR schema version 2 forces previously unreadable version-1 cached photos to
+be scanned again without discarding other origin sources. After the user
+reloaded Origin Lens, the installed extension on their exact DigiKey product
+page displayed **Taiwan · auto-read**, **TWN**, **88/100**, and a processing time
+of 2026-10-20 15:54:27 America/Denver. The three declared-origin reports remained
+separate. This validates the installed service-worker/offscreen path in addition
+to the local browser smoke check. The automated browser cannot open internal
+Chrome extension-management URLs, so the user performed the reload.
+
+All 121 extension tests, JavaScript syntax checks and the whitespace check passed.
+
+## 2026-10-20 — ST catalog COO and documented assembly routes (0.12.3)
+
+The ST catalog currently declares Taiwan for `STM32G491RET6`, but ST PCN
+MDG/24/14363, published 2024-04-12, documents existing assembly flows at ASE
+Kaohsiung (Taiwan) and JSCC (China). The reviewed public product list includes
+the exact `STM32G491RET6` and `STM32G491RET6TR` codes. The source URL and document
+SHA-256 are recorded in `SOURCES.md` and in the reviewed evidence record.
+
+The ST source row now shows **Taiwan / China** with separate, visible labels
+for **Declared COO · ST catalog** and **Assembly locations · ST PCN**. The
+document link, publication/review dates and site names stay visible. The notice
+establishes documented assembly routes, not the origin of a shipment lot.
+Shipment assembly, wafer fabrication and test remain unverified when the live
+catalog does not report them. The ordering-options summary now explicitly
+describes its countries as ST catalog declarations.
+
+This is a small reviewed-document registry for those two exact codes, not an
+automatic PCN crawler or a family-wide inference. It renders independently of
+cached catalog records and failed live requests, without changing their stored
+declared COO. Refresh does not advance the document's review date. LCSC photo
+evidence remains a separate source.
+
+All 123 extension tests and JavaScript syntax/whitespace checks passed. Tests
+cover cached records, a failed catalog request, both distributor pages, exact
+identity limits, multiple catalog COO values and unchanged manufacturing fields.
+The synthetic browser preview showed both countries and their labels at 360px
+and 760px without horizontal overflow. A screenshot is retained with the local
+2026-10-20 STM32G491RET6 evidence. This verifies rendering, not the installed
+extension. Browser policy blocks `chrome://extensions`; the user must reload
+Origin Lens there and refresh the product page to activate version 0.12.3.
+
+## 2026-10-21 — All reported countries visible (0.12.4)
+
+The user's TCPP03-M20 screenshots showed Mouser declaring Italy as country of
+origin and China as assembly country, with diffusion unavailable. Both values
+were already present in the extension's report, but the source headline only
+displayed declared COO and assembly was inside closed details.
+
+Each source headline now lists the distinct countries reported for declared
+origin, assembly, diffusion and testing. Visible labeled fields retain those
+meanings; only unreported fields and matching metadata stay inside the details.
+This uses the existing reports, including cached reports, without changing
+their stored evidence. ST PCN routes remain explicitly labeled as document
+evidence, Samtec estimates retain their qualifier, and reference photo results
+remain separate.
+
+`tests/fixtures/mouser-tcpp03-m20.json` is a synthetic API envelope using the
+identity and country fields in the supplied screenshots, not a live API capture.
+The regression tests check both distributor pages, fresh and cached results,
+closed details, all four location fields, repeated countries, and missing COO.
+All 125 tests, JavaScript syntax checks and the whitespace check passed.
+
+The isolated browser preview (`node scripts/preview-panel.cjs --mouser-stages`)
+showed Italy / China with Declared origin: Italy and Assembly: China visible
+while details stayed closed, at 760px and 360px. No narrow-layout horizontal
+overflow or browser console warnings/errors were observed. Screenshots are in
+the local `origin-lens-evidence/2026-10-21` directory. This verifies the updated
+rendering; the installed extension still needs its user-performed reload.
+
+## 2026-10-21 — Classification and country rows (0.12.5)
+
+Following the user's layout feedback, known country values now appear on the
+right of separate rows, with their origin classification on the left. The
+combined country headline is removed when these rows are present. Each source
+retains its own evidence and labels, including probable-origin qualifiers and
+documented ST assembly routes. Values sharing a classification remain together.
+
+The TCPP03-M20 synthetic preview showed Declared origin / Italy and Assembly /
+China as separate rows with aligned right edges and closed details at 760px and
+360px; no horizontal overflow occurred. The focused screenshot is retained as
+`origin-lens-evidence/2026-10-21/classification-rows-wide.png`. All 125 tests and
+JavaScript syntax/whitespace checks passed. Reloading Origin Lens and the product
+page is still required to load the new content script in the installed extension.
+
+## 2026-10-21 — Remove redundant success messages (0.12.6)
+
+Routine source success messages, including the exact-part-match boilerplate,
+are no longer rendered. Country classification rows supply that context; loading,
+stale-cache and failed-check messages still appear when relevant. All 125 tests
+and syntax/whitespace checks passed. The synthetic TCPP03-M20 browser preview
+confirmed both reported country rows without the redundant lines; the screenshot
+is `origin-lens-evidence/2026-10-21/classification-rows-clean.png`.
+
+## 2026-10-21 — DigiKey result-table country filtering (0.13.0)
+
+The user's live USB connector results exposed a semantic table with
+`data-table-product-number` and `data-table-mfr-link` links plus comparison-control
+attributes carrying the DigiKey SKU, manufacturer, MPN and product ID. The parser
+requires those fields to agree with the canonical product URL. The captured
+`digikey-results-rows.json` fixture contains 35 public result-row identities and
+category breadcrumbs, with no origin declarations or session information.
+
+Results pages now have a toolbar for include/exclude country filtering and
+compact classification/country rows under each part. Any reported stage from any
+source matches by default, as requested by the user. Unknown/unchecked rows are
+kept unless explicitly hidden. Cached evidence appears immediately; a manual
+page scan paces requests with a 2.2-second interval between parts. Source-level
+authentication, quota and configuration failures suppress repeated attempts for
+the rest of that scan. Manufacturer estimates and photo observations are not
+used for filtering; reviewed assembly PCNs remain explicitly labeled.
+
+The worker now accepts only a bounded set of existing lookup operations from
+top-level DigiKey result/filter URLs. It still validates full part identities;
+product-page requests still require their exact sender URL. No new hosts or
+extension permissions are introduced. Cache capacity is now 500 source reports
+to accommodate table results while preserving the existing age limits.
+
+All 134 tests and JavaScript syntax/whitespace checks passed. New coverage includes
+all captured rows, mismatched identities, stage-specific filtering, conflicting
+sources, unknown handling, cache updates, row replacement, late responses after
+identity/navigation changes, Off/clear-cache restoration, paced scans and worker
+sender/operation restrictions. The isolated browser preview verified China
+exclusion based on assembly, declared-origin-only filtering, restoring rows and
+a 480px toolbar without horizontal overflow. Its country data are synthetic.
+After the user reloaded the installed extension, the live DigiKey USB connector
+table displayed all 35 row summaries and completed checks for all 35 parts.
+With classification set to Any reported stage, With country / China showed 27
+rows; Without country / China showed eight (six reporting Taiwan and two India).
+Returning to All restored all 35 rows with no hidden-row attributes remaining.
+The live first result displayed separate Origin / China and Assembly / China
+rows. The screenshot is `origin-lens-evidence/2026-10-21/results-table-live.png`.
+
+## 2026-10-21 — Independent DigiKey list-view setting (0.13.1)
+
+Added a persistent, default-On DigiKey list-view switch to the settings popup.
+It removes result-table UI and restores hidden rows immediately, stops queued
+scans, discards late responses and aborts in-flight list requests. Worker request
+deduplication separates list and product contexts so turning lists off cannot
+abort a product-page lookup of the same part. The main switch and component-type
+preferences continue to apply independently. Re-enabling shows cached reports
+without automatically scanning.
+
+All 137 tests passed, including persistence, failed-save rollback, disabled
+startup, hide/restore behavior, late responses and separate worker cancellation.
+The isolated settings preview verified mouse and Space-key operation while the
+main switch stayed On, and the compact popup remained under 600px tall with its
+save feedback visible. Screenshot: `origin-lens-evidence/2026-10-21/list-view-setting.png`.
+Installed verification requires reloading the updated extension and results tab.
+
+## 2026-10-21 — List view defaults Off (0.13.2)
+
+The popup, results content script and worker now require an explicit saved On
+choice for list view. Missing preferences default to Off; existing On/Off choices
+remain intact. Existing tests cover the missing-preference state and explicit
+opt-in, alongside persistence and independent product-page behavior. All 137
+tests and whitespace checks passed.
+
+## 2026-10-29 — Pre-commit review and cache-race fixes
+
+Review reproduced two results-page races: a failed lookup could erase a newer
+report received from another tab, or restore a report removed by Clear cache.
+Pending lookups now use the current source state when they settle and cannot
+overwrite a newer report. Regression tests cover failed, empty and older replies,
+filtering after a cross-tab update, and clearing stale data during a lookup.
+The store draft and README now describe results-page access and the 500-report
+cache consistently with the manifest and runtime.
+
+All 139 extension tests, 65 sourcing tests, changed-JavaScript syntax checks and
+whitespace checks passed. Synthetic browser previews verified any-stage versus
+declared-origin filtering, unknown-row handling, restoring all rows and completing
+a manual scan. The toolbar at 480px and product panel at 360px retained readable
+country classifications with no observed console warnings or errors. These are
+local rendering checks; installed-extension reload and live supplier lookups
+were not repeated during this review.

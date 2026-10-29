@@ -45,6 +45,24 @@ It also fixes strict manufacturer-report cache checks when extension messaging
 or storage reorders object keys, without accepting changed evidence values.
 Version 0.12.1 restricts LCSC photo previews, links and OCR to top-side views
 and documents API-key enrollment and configuration.
+Version 0.12.2 recognizes TWN (Taiwan) and PHL (Philippines), adds a red-channel
+fallback for blue-watermarked photos, and refreshes earlier OCR results automatically.
+Version 0.12.3 adds reviewed ST assembly notices to the manufacturer row. For
+STM32G491RET6 and STM32G491RET6TR, Taiwan and China are both visible, with the
+catalog's declared COO and the notice's assembly locations labeled separately.
+Version 0.12.4 shows every reported country in each source headline, with declared
+origin, assembly, wafer fabrication / diffusion, and testing labeled below it.
+Known stage locations are visible without expanding details, including saved reports.
+Version 0.12.5 places each origin classification on the left and its countries on
+the right in separate rows, replacing the combined country headline.
+Version 0.12.6 removes routine success and exact-match status lines. Loading,
+outdated-result, and lookup-failure messages still appear when relevant.
+Version 0.13.0 adds country summaries and local country filtering to DigiKey
+result tables, using all reported manufacturing stages by default.
+Version 0.13.1 adds a saved DigiKey list-view switch in settings, independently
+controlling result-table summaries and filtering while leaving product panels enabled.
+Version 0.13.2 defaults DigiKey list view to Off when no choice has been saved.
+Explicit On and Off choices are preserved.
 
 ## Install or update
 
@@ -350,6 +368,47 @@ sources & cache** in the popup. List controls appear only in a DigiKey result
 that reports a missing list/part or invalid list setting. Existing saved list
 selections remain in effect; the recovery control can reset them to automatic.
 
+## DigiKey result tables
+
+Origin Lens also appears on DigiKey's English category/filter and search-result
+tables. A compact country summary sits beneath each supported part row, with an
+**Origin Lens · reported countries** toolbar above the table.
+
+The settings popup has a separate **DigiKey list view** switch, initially Off.
+Turning it Off removes the toolbar and country summaries, restores hidden rows,
+and stops list lookups immediately on open results pages. Product-page panels
+keep their existing settings. Turning it On restores cached summaries without
+starting a scan. The choice persists across browser restarts, including while
+the main Origin Lens switch is Off.
+
+- Saved reports appear immediately. **Check this page** looks up the currently
+  loaded rows using DigiKey, the configured Mouser Search API, and supported
+  manufacturer sources. No product tabs are opened. Requests are paced and can
+  be stopped; fresh cached reports are reused.
+- Choose **With country** or **Without country**, then a country. The default
+  **Any reported stage** matches declared origin, assembly, wafer fabrication /
+  diffusion, and testing from any source. For example, Italy origin plus China
+  assembly matches China. A classification selector can narrow the filter.
+- **Keep unknown / unchecked** starts checked. Turn it off to hide parts with
+  no reported country in the selected classification. Missing stages are not
+  evidence that a country is absent; this filter only matches reports found.
+- **Sources** retains each source's classifications, link, check time, and any
+  lookup error. Reviewed ST PCN assembly routes are labeled and included;
+  probable-origin estimates and photo markings are excluded from filtering.
+- Filtering affects only the loaded page, not DigiKey's catalog counts or
+  server-side search. Pagination or changing DigiKey filters resets the local
+  filter and stops the scan. **All** or the extension's Off switch restores rows.
+
+Rows require agreeing visible MPN/manufacturer links and DigiKey SKU/product-ID
+attributes. Changed or incomplete rows are left untouched. The master and
+component-type preferences apply to table pages too. Table scans use the Mouser
+API rather than fetching a Mouser webpage for every part; configure the API key
+in the existing settings if needed. DigiKey still requires its normal signed-in
+session and a MyLists selection, as on product pages.
+
+No additional host permissions are needed. Reload the extension and refresh
+existing result tabs after updating to activate this content script.
+
 ## What it checks
 
 | Source | Lookup on either distributor's page |
@@ -364,9 +423,11 @@ selections remain in effect; the recovery control can reset them to automatic.
 | Samtec | Public product page; exact manufacturer, full ordering code and SKU; **probable COO**, stored and displayed as an estimate separately from declared COO |
 | LCSC reference photos | ST STM32 microcontroller catalog search, exact manufacturer/MPN/SKU metadata, and part-specific image URLs; reviewed markings describe only the photographed sample |
 
-Each source has a separate result, source link, observation time, and expandable
-assembly, diffusion, and testing fields. Different declarations remain visible
-in their respective source rows. There is no vote, merged country, or assumption
+Each source has a separate result, source link, and observation time. Each visible
+row pairs an origin classification on the left with its countries on the right,
+preserving the distinction between declared origin, assembly, diffusion, and testing.
+Unreported fields and matching metadata remain in the expandable details. Different declarations remain
+visible in their respective source rows. There is no vote, merged country, or assumption
 that another distributor's inventory establishes the origin of the units being
 purchased. Stage locations are never inferred from declared origin.
 
@@ -454,17 +515,23 @@ using an ST employee's explanation. The review is bundled with its original
 review time, exact image URL and SHA-256 fingerprint. The worker checks the
 current image bytes before displaying **China · sample**. A changed or
 unavailable image loses that annotation; its available photos stay inspectable.
-All matched STM32 listings now also run **local OCR**, including images without
+All matched STM32 listings also run **local OCR**, including images without
 a bundled review. The reader crops the dark package, upscales it, tries grayscale
-and contrast-enhanced passes, and checks four orientations. It examines up to
-three top-side listing photos and stops when one sample yields usable evidence.
-Only literal **CHN → China** and **MYS → Malaysia** are interpreted, using ST's
-documented explanation. A country needs both image variants at the same rotation
-to agree with word scores of at least 80/100. Scores are heuristic, not calibrated
-probabilities. Other markings, including plant/lot codes, remain uninterpreted.
+and contrast-enhanced passes, and checks four orientations. If those passes do
+not agree, a red-channel contrast pass suppresses blue catalog watermarks while
+retaining neutral package lettering. It examines up to three top-side listing
+photos, at most 12 passes per photo, and stops when one sample yields usable evidence.
+Literal **CHN → China**, **MYS → Malaysia**, **TWN → Taiwan** and
+**PHL → Philippines** are interpreted. CHN/MYS follow ST's STM32 explanation;
+TWN/PHL use ST's explicit country-code definitions in PCN 4452. That PCN covers
+EPROMs, so the photo details disclose the interpretation being applied to STM32.
+A country still needs two distinct image variants at the same rotation to agree
+with word scores of at least 80/100. The grayscale/contrast fast path remains.
+Scores are heuristic, not calibrated probabilities. Other markings, including
+plant/lot codes, remain uninterpreted.
 Conflicts and a clearly different STM32 family suppress automatic country claims.
 
-An automatic result appears as **China · auto-read** (or **Malaysia · auto-read**).
+An automatic result appears as **Taiwan · auto-read**, for example.
 Expand the photo details for detected text, source photos and processing time.
 Weak/unreadable results retain the photos without assigning a country. Photo
 identity is established from exact catalog metadata; OCR does not reliably read
@@ -472,6 +539,9 @@ the entire part number. It cannot establish that a listing photo depicts the
 current stock or independently authenticate the part.
 The existing fingerprint-checked manual review remains labeled **China · sample**;
 the new automatic reading is shown separately in its details.
+OCR evidence version 2 invalidates earlier saved readings, including unreadable
+ones, so reloading the extension and product page triggers a fresh scan without
+clearing other sources' cached reports.
 
 Tesseract.js 7.0.0 and its English model run in a temporary offscreen document
 and dedicated worker. Jobs are serialized, bounded to 60 seconds, cancellable by
@@ -513,7 +583,7 @@ English product pages on `www.digikey.com`, `www.mouser.com`, and `eu.mouser.com
 are supported. Mouser API reports are reusable across US/EU pages for the same
 exact SKU; website reports retain their regional boundary. Website searches
 use Mouser's US site. Other direct manufacturer adapters,
-non-STM32 ST products, search-grid overlays, other locales, password-protected
+non-STM32 ST products, Mouser result-table overlays, other locales, password-protected
 shared lists, and shipment certificates are outside this version's coverage.
 The STM32 family URL is only a candidate; no origin is used without an observed
 PF identifier and a unique exact-order-code mapping in ST's response.
@@ -541,7 +611,8 @@ not read the API-key store. Host permissions cover exactly:
 
 Chrome host permissions apply to the whole host. A background service worker needs
 them to fetch the other sources while viewing a distributor page. Content scripts
-remain limited to supported product-page paths. No cookie API, history access,
+remain limited to supported product-page paths and DigiKey English filter/result
+paths; result-table UI and lookups require the list-view opt-in. No cookie API, history access,
 analytics, remote code, or external application server is used.
 
 Automatic lookup sends the product MPN to DigiKey and Mouser and, for supported
@@ -578,8 +649,10 @@ its ID, and discards unrelated metadata. It does not request list contents. HTML
 is parsed in a disconnected inert template; source scripts and page resources
 are never executed or inserted into the current page. Rendering uses text nodes
 and validated LCSC image URLs.
-The worker accepts only supported top-frame product-page senders and fixed source
-operations, with constrained product URLs, bounded HTML/JSON/image reads, and timeouts.
+The worker accepts only supported top-frame product-page or DigiKey result-page
+senders and fixed source operations, with constrained product URLs, bounded
+HTML/JSON/image reads, and timeouts. Results pages allow only the bounded catalog
+operations used by a manual scan, with list view explicitly enabled.
 
 Product identity, origin evidence, source, timestamp, your on/off and type
 preferences, request timestamps, and an explicitly chosen list ID are stored locally.
@@ -596,11 +669,29 @@ are keyed by reporting source, source host, exact manufacturer/MPN and source SK
 The newest matching report is reusable across sites, while same-site views retain
 SKU matching and US/EU Mouser website reports stay separate. Each source keeps its original
 check time. Configured Mouser API lookup takes priority on either website.
-Up to 100 records are retained. Reports younger than one hour are reused; older
+Up to 500 source records are retained, including reports shared with result
+tables. Reports younger than one hour are reused; older
 reports are refreshed and can serve as labeled fallbacks for up to seven days.
 Expired and old-version records are pruned on save. Idle records may remain on
 disk until the next save, **Clear cached results**, or uninstall. Failed or empty
 responses do not overwrite a saved positive report or advance its check time.
+
+## Reviewed ST assembly notices
+
+The ST source combines its live catalog declaration with separately dated,
+reviewed manufacturer documents. For `STM32G491RET6` and `STM32G491RET6TR`,
+PCN **MDG/24/14363** documents ASE Kaohsiung (Taiwan) and JSCC (China).
+The row shows **Taiwan / China**, an explicit **Declared COO · ST catalog**
+field, and **Assembly locations · ST PCN**, with a link and publication/review
+dates. These are routes documented in a notice, not a verified shipment lot.
+
+The reviewed evidence is bundled and matched by exact manufacturer/ordering
+code. It appears with existing cached declarations and when a catalog request
+fails; refreshing the catalog does not advance the document's review date.
+This is not an automatic PDF/PCN crawler. Other codes have no reviewed PCN
+coverage yet; their assembly remains unverified. Adding evidence requires
+reviewing the exact code, sites, source document and scope. LCSC photographs
+remain in their own sample-evidence row and do not change ST's declaration.
 
 ## Validation
 
@@ -658,8 +749,12 @@ They also cover top-side filtering regardless of gallery order, bottom-only
 listings, rejection of old mixed-view caches and exclusion of underside links.
 OCR tests cover confidence/consensus, unsupported codes, conflicting readings,
 part mismatch, bounded records, forged observations, old-cache refresh, image
-allowlists, cancellation and offscreen lifecycle. Asset hashes check that the
-bundled engine and model match the pinned build.
+allowlists, cancellation and offscreen lifecycle. The C3228560 fixture contains
+real browser OCR output from the original LCSC photograph (provenance in
+`SOURCES.md`); it reproduces the weak grayscale reading and successful fallback.
+Tests also cover literal TWN/PHL codes, blue-watermark suppression, preserving
+the two-pass fast path, and country-specific reference links on both distributors.
+Asset hashes check that the bundled engine and model match the pinned build.
 
 To rebuild OCR assets after an intentional dependency update, run `pnpm install
 --ignore-scripts` and `pnpm run build:ocr` in this directory. Normal unpacked

@@ -58,6 +58,10 @@
       dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:10px 0}
       dt{font-size:11px;color:var(--muted)}dd{margin:2px 0 0;font-size:13px;font-weight:700;overflow-wrap:anywhere}
       dd.unknown{font-weight:400;color:var(--muted)}
+      .origin-facts{grid-template-columns:minmax(0,1fr);gap:8px}
+      .origin-facts>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:baseline}
+      .origin-facts dt{font-size:12px;overflow-wrap:anywhere}
+      .origin-facts .country{margin:0;text-align:end}
       .note{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
       .photo-evidence{margin:12px 0 0;max-width:280px}.photo-evidence img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;border:1px solid var(--rule);background:#fff}
       .photo-evidence img[hidden]{display:none}
@@ -181,7 +185,7 @@
     el("p", summaries.length ? `Alternatives: ${summaries.join(" · ")}.` : "No confirmed package, packing or temperature alternatives in this listing.", section).className = "note";
     const origins = options.map(r => r.origin.values.map(v => v.toLowerCase()).sort().join(" / "));
     if (origins[0] && origins.every(v => v === origins[0])) {
-      el("p", `Reported origin: ${options[0].origin.values.map(countryName).join(" / ")} across all ${options.length} codes.`, section).className = "note";
+      el("p", `Declared COO in ST catalog: ${options[0].origin.values.map(countryName).join(" / ")} across all ${options.length} codes. Assembly locations can differ.`, section).className = "note";
     } else {
       const different = options.filter(r => !r.current && r.changes.origin === "different").length;
       el("p", `${options.filter(r => r.origin.values.length).length} of ${options.length} codes report origin${different ? ` · ${different} with a different reported origin` : ""}.`, section).className = "note";
@@ -237,13 +241,50 @@
     el("h3", (provider === "st" && !C.stFamily(part) ? "Manufacturer" : C.PROVIDERS[provider]) + (provider === part.provider ? " · this site" : ""), header);
     if (provider === "lcsc") { showPhotoRow(row, header, state, part); return; }
     const result = state.result;
+    const assemblyDocuments = provider === "st" ? C.stAssemblyDocuments(part) : [];
+    const declaredCountries = result?.fields.declaredCoo.values.map(countryName) || [];
+    const assemblyCountries = [...new Set(assemblyDocuments.flatMap(doc => doc.sites.map(site => countryName(site.country))))];
+    const stageLabels = { assembly: assemblyDocuments.length ? "Assembly of shipment lot" : "Assembly", diffusion: "Wafer fabrication / diffusion", testing: "Testing" };
+    const stageCountries = Object.keys(stageLabels).flatMap(key => result?.fields[key]?.values.map(countryName) || []);
     const probable = provider === "samtec" && result?.fields.probableCoo?.values.length;
     const apiSetup = provider === "mouser" && ["api-unconfigured", "api-auth"].includes(state.code);
-    const country = el("span", (probable ? result.fields.probableCoo.values.map(countryName).join(" / ") + " · probable" : result?.fields.declaredCoo.values.map(countryName).join(" / ")) || (state.pending ? "…" : state.code === "unsupported" ? "Not supported" : apiSetup ? (state.code === "api-auth" ? "Check API key" : "Setup required") : state.error ? "Unavailable" : "Not reported"), header); country.className = "country";
-    const message = result ? (state.error ? "Latest check unavailable. Showing the saved report." : state.pending ? "Saved report · checking for an update…" : state.stale ? "Saved report · may be outdated" : probable ? "Manufacturer estimate · exact part matched" : result.fields.declaredCoo.values.length ? "Declared origin · exact part matched" : "Exact part matched; declared origin is not available.")
-      : state.pending ? "Checking this source…" : state.error || "Exact part matched; declared origin is not available.";
-    const status = el("p", message, row);
-    status.className = "status" + (state.error && state.code !== "unsupported" ? " error" : "");
+    if (!declaredCountries.length && !stageCountries.length && !assemblyCountries.length && !probable) {
+      el("span", state.pending ? "…" : state.code === "unsupported" ? "Not supported" : apiSetup ? (state.code === "api-auth" ? "Check API key" : "Setup required") : state.error ? "Unavailable" : "Not reported", header).className = "country";
+    }
+    const message = result ? (state.error ? "Latest check unavailable. Showing the saved report." : state.pending ? "Saved report · checking for an update…" : state.stale ? "Saved report · may be outdated" : "")
+      : state.pending ? "Checking this source…" : state.error || "Origin is not available.";
+    if (message) {
+      const status = el("p", message, row);
+      status.className = "status" + (state.error && state.code !== "unsupported" ? " error" : "");
+    }
+    // All reported countries and their meanings are visible without opening the
+    // source details. Keep document evidence separate from catalog stage fields.
+    const factLabels = { declaredCoo: assemblyDocuments.length ? "Declared COO · ST catalog" : "Declared origin", ...(probable ? { probableCoo: "Probable origin" } : {}), ...stageLabels };
+    const visibleFacts = Object.entries(factLabels).flatMap(([key, label]) => {
+      const values = result?.fields[key]?.values || [];
+      return values.length ? [[label, values.map(countryName).join(" / ") + (key === "probableCoo" ? " · probable" : "")]] : [];
+    });
+    if (assemblyDocuments.length) {
+      if (!declaredCountries.length) visibleFacts.unshift([factLabels.declaredCoo, state.pending ? "Checking…" : "Not reported"]);
+      visibleFacts.push(["Assembly locations · ST PCN", assemblyCountries.join(" / ")]);
+    }
+    if (visibleFacts.length) {
+      const facts = el("dl", undefined, row); facts.className = "origin-facts";
+      for (const [label, value] of visibleFacts) {
+        const item = el("div", undefined, facts);
+        el("dt", label, item); el("dd", value, item).className = "country";
+      }
+    }
+    if (assemblyDocuments.length) {
+      for (const doc of assemblyDocuments) {
+        const citation = el("p", undefined, row); citation.className = "source";
+        const link = el("a", `ST PCN ${doc.id}`, citation);
+        link.href = doc.sourceUrl; link.target = "_blank"; link.rel = "noopener noreferrer";
+        el("span", `Published ${doc.publishedOn} · reviewed ${doc.reviewedOn}`, citation);
+        el("p", doc.sites.map(site => `${site.name} (${countryName(site.country)})`).join(" · "), row).className = "note";
+      }
+      el("p", "Assembly routes documented in the notice. The assembly location of the shipment lot is not verified.", row).className = "note";
+    }
     if (provider === "digikey" && !result && ["no-list", "missing", "settings"].includes(state.code)) {
       showListRecovery(row, state.code); return;
     }
@@ -284,14 +325,13 @@
     if (state.error) el("p", state.error, row).className = "note";
     const details = el("details", undefined, row);
     el("summary", "Manufacturing & match details", details);
-    const fields = el("dl", undefined, details);
-    const labels = { ...(provider === "samtec" ? { declaredCoo: "Declared origin" } : {}), assembly: "Assembly", diffusion: "Wafer fabrication / diffusion", testing: "Testing" };
-    for (const [key, label] of Object.entries(labels)) {
+    const labels = { declaredCoo: "Declared origin", ...stageLabels };
+    const unreportedFields = Object.entries(labels).filter(([key]) => !result.fields[key]?.values.length);
+    const fields = unreportedFields.length ? el("dl", undefined, details) : null;
+    for (const [key, label] of unreportedFields) {
       const box = el("div", undefined, fields);
       el("dt", label, box);
-      const values = result.fields[key]?.values || [];
-      const value = el("dd", values.length ? values.map(countryName).join(" / ") : "Not reported", box);
-      if (!values.length) value.className = "unknown";
+      el("dd", key === "assembly" && assemblyDocuments.length ? "Not verified" : "Not reported", box).className = "unknown";
     }
     const note = el("p", `${result.identity.manufacturer} · ${result.identity.mpn} · ${result.returnedSku || result.identity.sku}`, details); note.className = "note";
     if (provider === "ti") {
@@ -341,7 +381,7 @@
       "part-mismatch": "A different STM32 family was read in the photo. No assembly country assigned by OCR." };
     el("span", observation ? `${countryName(observation.country)} · ${evidence.observation ? "sample" : "auto-read"}` : state.pending ? "…" : evidence ? "Photos available" : "Unavailable", header).className = "country";
     const message = evidence ? observation
-      ? `${evidence.observation ? "Reviewed" : "Automatically read"} marking ${observation.marking} · assembly country of the photographed sample`
+      ? `${evidence.observation ? "Reviewed" : "Automatically read"} marking ${observation.marking} · interpreted assembly country of the photographed sample`
       : status[ocr?.status] || "Exact listing matched · markings not reviewed"
       : state.pending ? "Finding LCSC photos and reading markings locally…" : state.error || "No part-specific photographs found.";
     el("p", message, row).className = "status" + (!evidence && state.error ? " error" : "");
@@ -388,8 +428,10 @@
       }
     }
     if (observation) {
-      const a = el("a", "ST explanation of CHN / MYS assembly markings", details);
-      a.href = evidence.observation?.interpretationUrl || OriginLensOCR.INTERPRETATION_URL; a.target = "_blank"; a.rel = "noopener noreferrer";
+      const countryCode = ["TWN", "PHL"].includes(observation.marking);
+      const a = el("a", countryCode ? "ST country-code reference · TWN / PHL" : "ST explanation of CHN / MYS assembly markings", details);
+      a.href = observation.interpretationUrl || OriginLensOCR.INTERPRETATION_URL; a.target = "_blank"; a.rel = "noopener noreferrer";
+      if (countryCode) el("p", "ST defines TWN as Taiwan and PHL as Philippines in an EPROM marking reference. Applied here to the STM32 sample's country marking; this is not a part-specific manufacturing declaration.", details).className = "note";
     }
   }
 
@@ -398,7 +440,7 @@
     await chrome.storage.local.set({ [key]: { key, result } });
     const all = await chrome.storage.local.get(null);
     const entries = Object.entries(all).filter(([k]) => k.startsWith("origin-lens:v")).sort((a,b) => Date.parse(b[1]?.result?.checkedAt || 0) - Date.parse(a[1]?.result?.checkedAt || 0));
-    const remove = entries.filter(([k,r],i) => !k.startsWith(C.CACHE_PREFIX) || i >= 100 || !Number.isFinite(Date.parse(r?.result?.checkedAt)) || Date.now() - Date.parse(r.result.checkedAt) >= C.CACHE_RETENTION).map(([k]) => k);
+    const remove = entries.filter(([k,r],i) => !k.startsWith(C.CACHE_PREFIX) || i >= C.CACHE_LIMIT || !Number.isFinite(Date.parse(r?.result?.checkedAt)) || Date.now() - Date.parse(r.result.checkedAt) >= C.CACHE_RETENTION).map(([k]) => k);
     if (remove.length) await chrome.storage.local.remove(remove);
   }
 

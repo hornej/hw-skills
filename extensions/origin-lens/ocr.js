@@ -1,12 +1,17 @@
 /* Pure OCR interpretation and image preprocessing; also exercised with real OCR in the smoke check. */
 ((root) => {
   "use strict";
-  const VERSION = 1;
+  const VERSION = 2;
   const ENGINE = "Tesseract.js 7.0.0";
   const MIN_CONFIDENCE = 80;
-  // Only mappings supported by ST's explanation. Other marks remain literal text.
-  const COUNTRIES = Object.freeze({ CHN: "China", MYS: "Malaysia" });
+  // Literal country marks only; never infer countries from plant or lot codes.
+  const COUNTRIES = Object.freeze({ CHN: "China", MYS: "Malaysia", TWN: "Taiwan", PHL: "Philippines" });
+  const VARIANTS = Object.freeze(["gray", "contrast", "red"]);
   const INTERPRETATION_URL = "https://community.st.com/stm32-mcus-products-25/does-anyone-have-a-cheat-sheet-to-tell-me-what-the-date-code-is-and-what-it-stands-for-34162";
+  // ST PCN 4452 explicitly defines TWN/PHL on device markings. It covers EPROMs,
+  // so applying those country codes to STM32 assembly is an interpretation.
+  const COUNTRY_CODE_URL = "https://www.anglia.com/registration/pcn_ptn/docs/pcn/4452.pdf#page=7";
+  const interpretationUrl = marking => ["TWN", "PHL"].includes(marking) ? COUNTRY_CODE_URL : INTERPRETATION_URL;
   const token = text => typeof text === "string" ? text.toUpperCase().replace(/^[^A-Z0-9]+|[^A-Z0-9]+$/g, "") : "";
   function summarize(readings, part) {
     const observations = [];
@@ -28,12 +33,14 @@
       if (wrongPart) { mismatched = true; continue; }
       if (candidates.size > 1) { conflicting = true; continue; }
       for (const [marking, votes] of candidates) {
-        const scores = [0,90,180,270].filter(r => votes.has(`${r}:gray`) && votes.has(`${r}:contrast`))
-          .map(r => Math.min(votes.get(`${r}:gray`), votes.get(`${r}:contrast`)));
+        const scores = [0,90,180,270].flatMap(r => {
+          const agreeing = VARIANTS.map(v => votes.get(`${r}:${v}`)).filter(Number.isFinite).sort((a,b) => b-a);
+          return agreeing.length >= 2 ? [agreeing[1]] : [];
+        });
         if (!scores.length) continue;
         observations.push({ marking, country: COUNTRIES[marking], stage: "assembly",
           method: "local OCR", imageUrl: reading.imageUrl, sha256: reading.sha256,
-          confidence: Math.max(...scores) });
+          confidence: Math.max(...scores), interpretationUrl: interpretationUrl(marking) });
       }
     }
     if (new Set(observations.map(o => o.marking)).size > 1) conflicting = true;
@@ -46,12 +53,12 @@
       report.readings.length > 3 || !["detected","conflict","part-mismatch","unreadable","unavailable"].includes(report.status)) return false;
     for (const reading of report.readings) {
       if (!reading || !images.includes(reading.imageUrl) || !/^[a-f0-9]{64}$/.test(reading.sha256 || "") ||
-        !Array.isArray(reading.passes) || reading.passes.length > 8) return false;
+        !Array.isArray(reading.passes) || reading.passes.length > 4*VARIANTS.length) return false;
       const keys = new Set();
       for (const pass of reading.passes) {
         if (!pass) return false;
         const key = `${pass.rotation}:${pass.variant}`;
-        if (keys.has(key) || ![0,90,180,270].includes(pass.rotation) || !["gray","contrast"].includes(pass.variant) ||
+        if (keys.has(key) || ![0,90,180,270].includes(pass.rotation) || !VARIANTS.includes(pass.variant) ||
           typeof pass.text !== "string" || pass.text.length > 1500 || !Array.isArray(pass.words) || pass.words.length > 120 ||
           !pass.words.every(w => w && typeof w.text === "string" && w.text.length <= 80 &&
             Number.isFinite(w.confidence) && w.confidence >= 0 && w.confidence <= 100)) return false;
@@ -90,19 +97,22 @@
     const dx=Math.round((x1-x0)*.025),dy=Math.round((y1-y0)*.025);
     return {x:x0+dx,y:y0+dy,width:x1-x0+1-2*dx,height:y1-y0+1-2*dy};
   }
-  function grayscale(data, contrast) {
+  function grayscale(data, contrast, red = false) {
     const histogram = new Uint32Array(256);
-    for(let i=0;i<data.length;i+=4) histogram[Math.round(.299*data[i]+.587*data[i+1]+.114*data[i+2])]++;
+    // A blue catalog watermark is dark in the red channel, while neutral laser
+    // lettering remains bright. This is a separate fallback, not a forced token.
+    const intensity = i => red ? data[i] : Math.round(.299*data[i]+.587*data[i+1]+.114*data[i+2]);
+    for(let i=0;i<data.length;i+=4) histogram[intensity(i)]++;
     const percentile = fraction => { let sum=0; for(let i=0;i<256;i++) { sum+=histogram[i]; if(sum>=data.length/4*fraction)return i; } return 255; };
     const low=percentile(.02),high=Math.max(low+1,percentile(.98));
     for(let i=0;i<data.length;i+=4) {
-      let value=Math.round(.299*data[i]+.587*data[i+1]+.114*data[i+2]);
+      let value=intensity(i);
       if(contrast) value=255-Math.max(0,Math.min(255,(value-low)*255/(high-low)));
       data[i]=data[i+1]=data[i+2]=value; data[i+3]=255;
     }
     return data;
   }
-  const api = { VERSION, ENGINE, MIN_CONFIDENCE, INTERPRETATION_URL, summarize, valid, packPass, cropBox, grayscale };
+  const api = { VERSION, ENGINE, MIN_CONFIDENCE, VARIANTS, INTERPRETATION_URL, COUNTRY_CODE_URL, summarize, valid, packPass, cropBox, grayscale };
   if (typeof module !== "undefined" && module.exports) module.exports=api;
   else root.OriginLensOCR=Object.freeze(api);
 })(globalThis);

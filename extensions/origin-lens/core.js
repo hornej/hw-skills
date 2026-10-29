@@ -5,6 +5,7 @@
   const VERSION = 2;
   const CACHE_TTL = 60 * 60 * 1000;
   const CACHE_RETENTION = 7 * 24 * 60 * 60 * 1000;
+  const CACHE_LIMIT = 500;
   const CACHE_PREFIX = "origin-lens:v2:";
   const normalize = (value) => typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
   const same = (a, b) => normalize(a).toLowerCase() === normalize(b).toLowerCase();
@@ -31,7 +32,7 @@
     { id: "other", label: "Other / unrecognized", hint: "Sensors, optoelectronics & uncategorized parts", defaultEnabled: true }
   ].map(Object.freeze));
   const typeKey = type => "component-type:" + type;
-  const PREFERENCE_KEYS = Object.freeze(["enabled", ...COMPONENT_TYPES.map(t => typeKey(t.id))]);
+  const PREFERENCE_KEYS = Object.freeze(["enabled", "listViewEnabled", ...COMPONENT_TYPES.map(t => typeKey(t.id))]);
   function componentTypeEnabled(type, settings = {}) {
     const definition = COMPONENT_TYPES.find(t => t.id === type) || COMPONENT_TYPES.find(t => t.id === "other");
     const value = settings[typeKey(definition.id)];
@@ -479,6 +480,14 @@
     } catch { throw new LookupError("url", "The source did not provide a supported product URL."); }
   }
 
+  function isDigiKeyResultsUrl(value) {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && url.hostname === "www.digikey.com" && !url.port && !url.username && !url.password &&
+        /^\/en\/products\/(?:filter\/[^?#]+|result\/?$)/.test(url.pathname);
+    } catch { return false; }
+  }
+
   function sourceHost(provider, part) {
     if (provider === "ti") return "www.ti.com";
     if (provider === "lcsc") return "www.lcsc.com";
@@ -694,6 +703,21 @@
     return result;
   }
 
+  function stAssemblyDocuments(part) {
+    // Reviewed manufacturer evidence, independent of the live catalog/cache.
+    // Exact reviewed ordering codes only: a shared family or packing suffix is
+    // not sufficient. These are routes in a dated PCN, never shipment origin.
+    if (!sameManufacturer(part?.manufacturer, "STMicroelectronics") ||
+        !["STM32G491RET6", "STM32G491RET6TR"].some(mpn => same(mpn, part?.mpn))) return [];
+    return [{
+      id: "MDG/24/14363", publishedOn: "2024-04-12", reviewedOn: "2026-10-20",
+      sourceUrl: "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/6161/MDG-24-14363.pdf",
+      documentSha256: "3765a7830d577652c783aaa8ad6c221fce3f6c6d33d8f4373a10c327d2f0966b",
+      scope: "assembly-routes-in-pcn", lotVerified: false,
+      sites: [{ name: "ASE Kaohsiung", country: "Taiwan" }, { name: "JSCC", country: "China" }]
+    }];
+  }
+
   function stFamily(part) {
     // This is only a candidate page path. The page's PF ID and exact order-code
     // mapping must both be verified; a family prefix is never origin evidence.
@@ -736,10 +760,10 @@
     return new Set(signatures).size > 1;
   }
 
-  const api = { VERSION, CACHE_TTL, CACHE_RETENTION, CACHE_PREFIX, PROVIDERS, COMPONENT_TYPES, PREFERENCE_KEYS, typeKey, componentTypeEnabled, classifyCategories, readComponentType, LookupError, normalize, same, field, parseListId, cacheKey, isFresh, readIdentity, fromDigiKey, fromMouser, getJson, discoverList, lookupDigiKey,
+  const api = { VERSION, CACHE_TTL, CACHE_RETENTION, CACHE_LIMIT, CACHE_PREFIX, PROVIDERS, COMPONENT_TYPES, PREFERENCE_KEYS, typeKey, componentTypeEnabled, classifyCategories, readComponentType, LookupError, normalize, same, field, parseListId, cacheKey, isFresh, readIdentity, fromDigiKey, fromMouser, getJson, discoverList, lookupDigiKey, isDigiKeyResultsUrl,
     TI_SHIP_TO, tiUrl, tiRequest, fromTI,
     hasOriginEvidence, hasSourceEvidence, manufacturerKey, sameManufacturer, assertMatch, productUrl, sourceHost, sourceCacheKey, sourceFresh, savedSource, crossDigiKey, mouserCandidate, parseHtml, lookupMouser, lookupMouserAuto, fromMouserApi, manufacturerProvider, microchipUrl, fromMicrochip, infineonUrl, fromInfineon, manufacturerPageUrl, fromManufacturerPage, lookupManufacturerPage, stFamily, stParent, stProduct, fromST, lookupST, disagreement,
-    lcscSupported, lcscSearchUrl, lcscImageUrl, lcscReview, validLCSCPhotos, lcscCandidate, fromLCSC, lookupLCSC };
+    stAssemblyDocuments, lcscSupported, lcscSearchUrl, lcscImageUrl, lcscReview, validLCSCPhotos, lcscCandidate, fromLCSC, lookupLCSC };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OriginLens = Object.freeze(api);
 })(globalThis);

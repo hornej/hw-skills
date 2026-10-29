@@ -1,0 +1,440 @@
+{
+  "categories": [
+    {
+      "href": "/en/products/category/connectors-interconnects/20",
+      "label": "Connectors, Interconnects"
+    },
+    {
+      "href": "/en/products/category/usb-dvi-hdmi-connectors/2032",
+      "label": "USB, DVI, HDMI Connectors"
+    },
+    {
+      "href": "/en/products/filter/usb-dvi-hdmi-connectors/usb-dvi-hdmi-connector-assemblies/312",
+      "label": "USB, DVI, HDMI Connector Assemblies"
+    }
+  ],
+  "description": "DigiKey rendered result-row identity attributes captured 2026-10-21; no origin declarations.",
+  "rows": [
+    {
+      "data": {
+        "data-id": "21838842",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4730-GF-A-KIT",
+        "data-product-number": "2073-USB4730-GF-A-KITCT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4730-GF-A-KIT/21838842",
+      "manufacturer": "GCT",
+      "mpn": "USB4730-GF-A-KIT",
+      "productId": "21838842"
+    },
+    {
+      "data": {
+        "data-id": "7805255",
+        "data-mfg-name": "Amphenol ICC (Commercial Products)",
+        "data-mfg-number": "MUSBRM1C1M0",
+        "data-product-number": "MUSBRM1C1M0-ND"
+      },
+      "href": "/en/products/detail/amphenol-cs-commercial-products/MUSBRM1C1M0/7805255",
+      "manufacturer": "Amphenol ICC (Commercial Products)",
+      "mpn": "MUSBRM1C1M0",
+      "productId": "7805255"
+    },
+    {
+      "data": {
+        "data-id": "21838841",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4730-GF-A",
+        "data-product-number": "2073-USB4730-GF-ACT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4730-GF-A/21838841",
+      "manufacturer": "GCT",
+      "mpn": "USB4730-GF-A",
+      "productId": "21838841"
+    },
+    {
+      "data": {
+        "data-id": "5877551",
+        "data-mfg-name": "Amphenol ICC (Commercial Products)",
+        "data-mfg-number": "MUSBRM1C130",
+        "data-product-number": "MUSBRM1C130-ND"
+      },
+      "href": "/en/products/detail/amphenol-cs-commercial-products/MUSBRM1C130/5877551",
+      "manufacturer": "Amphenol ICC (Commercial Products)",
+      "mpn": "MUSBRM1C130",
+      "productId": "5877551"
+    },
+    {
+      "data": {
+        "data-id": "9825354",
+        "data-mfg-name": "Amphenol ICC (Commercial Products)",
+        "data-mfg-number": "124018792112A",
+        "data-product-number": "124018792112ACT-ND"
+      },
+      "href": "/en/products/detail/amphenol-cs-commercial-products/124018792112A/9825354",
+      "manufacturer": "Amphenol ICC (Commercial Products)",
+      "mpn": "124018792112A",
+      "productId": "9825354"
+    },
+    {
+      "data": {
+        "data-id": "25600319",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4745-03-A",
+        "data-product-number": "2073-USB4745-03-ACT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4745-03-A/25600319",
+      "manufacturer": "GCT",
+      "mpn": "USB4745-03-A",
+      "productId": "25600319"
+    },
+    {
+      "data": {
+        "data-id": "16889471",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4715-GF-A-KIT",
+        "data-product-number": "2073-USB4715-GF-A-KITCT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4715-GF-A-KIT/16889471",
+      "manufacturer": "GCT",
+      "mpn": "USB4715-GF-A-KIT",
+      "productId": "16889471"
+    },
+    {
+      "data": {
+        "data-id": "21838843",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4720-03-A",
+        "data-product-number": "2073-USB4720-03-ACT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4720-03-A/21838843",
+      "manufacturer": "GCT",
+      "mpn": "USB4720-03-A",
+      "productId": "21838843"
+    },
+    {
+      "data": {
+        "data-id": "13683231",
+        "data-mfg-name": "Amphenol ICC (Commercial Products)",
+        "data-mfg-number": "124019772112A",
+        "data-product-number": "664-124019772112ACT-ND"
+      },
+      "href": "/en/products/detail/amphenol-cs-commercial-products/124019772112A/13683231",
+      "manufacturer": "Amphenol ICC (Commercial Products)",
+      "mpn": "124019772112A",
+      "productId": "13683231"
+    },
+    {
+      "data": {
+        "data-id": "18443708",
+        "data-mfg-name": "Amphenol ICC (FCI)",
+        "data-mfg-number": "10164986-00011LF",
+        "data-product-number": "609-10164986-00011LFCT-ND"
+      },
+      "href": "/en/products/detail/amphenol-cs-fci/10164986-00011LF/18443708",
+      "manufacturer": "Amphenol ICC (FCI)",
+      "mpn": "10164986-00011LF",
+      "productId": "18443708"
+    },
+    {
+      "data": {
+        "data-id": "9371352",
+        "data-mfg-name": "Amphenol LTW",
+        "data-mfg-number": "UC-00PFFH-QF7001",
+        "data-product-number": "1754-UC-00PFFH-QF7001CT-ND"
+      },
+      "href": "/en/products/detail/amphenol-ltw/UC-00PFFH-QF7001/9371352",
+      "manufacturer": "Amphenol LTW",
+      "mpn": "UC-00PFFH-QF7001",
+      "productId": "9371352"
+    },
+    {
+      "data": {
+        "data-id": "26795952",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4736-GF-A-KIT",
+        "data-product-number": "2073-USB4736-GF-A-KITCT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4736-GF-A-KIT/26795952",
+      "manufacturer": "GCT",
+      "mpn": "USB4736-GF-A-KIT",
+      "productId": "26795952"
+    },
+    {
+      "data": {
+        "data-id": "26795947",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4736-GF-A",
+        "data-product-number": "2073-USB4736-GF-ACT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4736-GF-A/26795947",
+      "manufacturer": "GCT",
+      "mpn": "USB4736-GF-A",
+      "productId": "26795947"
+    },
+    {
+      "data": {
+        "data-id": "16500604",
+        "data-mfg-name": "Cvilux USA",
+        "data-mfg-number": "CU3924SAZBNR007-NH",
+        "data-product-number": "2987-CU3924SAZBNR007-NHCT-ND"
+      },
+      "href": "/en/products/detail/cvilux-usa/CU3924SAZBNR007-NH/16500604",
+      "manufacturer": "Cvilux USA",
+      "mpn": "CU3924SAZBNR007-NH",
+      "productId": "16500604"
+    },
+    {
+      "data": {
+        "data-id": "17028573",
+        "data-mfg-name": "Amphenol ICC (Commercial Products)",
+        "data-mfg-number": "12402136E512A",
+        "data-product-number": "664-12402136E512ACT-ND"
+      },
+      "href": "/en/products/detail/amphenol-cs-commercial-products/12402136E512A/17028573",
+      "manufacturer": "Amphenol ICC (Commercial Products)",
+      "mpn": "12402136E512A",
+      "productId": "17028573"
+    },
+    {
+      "data": {
+        "data-id": "16669072",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4715-GF-A",
+        "data-product-number": "2073-USB4715-GF-ACT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4715-GF-A/16669072",
+      "manufacturer": "GCT",
+      "mpn": "USB4715-GF-A",
+      "productId": "16669072"
+    },
+    {
+      "data": {
+        "data-id": "9825359",
+        "data-mfg-name": "Amphenol ICC (Commercial Products)",
+        "data-mfg-number": "124019032112A",
+        "data-product-number": "124019032112ACT-ND"
+      },
+      "href": "/en/products/detail/amphenol-cs-commercial-products/124019032112A/9825359",
+      "manufacturer": "Amphenol ICC (Commercial Products)",
+      "mpn": "124019032112A",
+      "productId": "9825359"
+    },
+    {
+      "data": {
+        "data-id": "25358003",
+        "data-mfg-name": "Samtec Inc.",
+        "data-mfg-number": "BRU-C-S-VT-P",
+        "data-product-number": "612-BRU-C-S-VT-P-ND"
+      },
+      "href": "/en/products/detail/samtec-inc/BRU-C-S-VT-P/25358003",
+      "manufacturer": "Samtec Inc.",
+      "mpn": "BRU-C-S-VT-P",
+      "productId": "25358003"
+    },
+    {
+      "data": {
+        "data-id": "10322532",
+        "data-mfg-name": "Kycon, Inc.",
+        "data-mfg-number": "KUSB67X-SMTTH-CS4-BTR",
+        "data-product-number": "2092-KUSB67X-SMTTH-CS4-BCT-ND"
+      },
+      "href": "/en/products/detail/kycon-inc/KUSB67X-SMTTH-CS4-BTR/10322532",
+      "manufacturer": "Kycon, Inc.",
+      "mpn": "KUSB67X-SMTTH-CS4-BTR",
+      "productId": "10322532"
+    },
+    {
+      "data": {
+        "data-id": "25701117",
+        "data-mfg-name": "Adam Tech",
+        "data-mfg-number": "USB-C20-S-RA-CS22B-SMT-WP-BK-T/R",
+        "data-product-number": "2057-USB-C20-S-RA-CS22B-SMT-WP-BK-T/RCT-ND"
+      },
+      "href": "/en/products/detail/adam-tech/USB-C20-S-RA-CS22B-SMT-WP-BK-T-R/25701117",
+      "manufacturer": "Adam Tech",
+      "mpn": "USB-C20-S-RA-CS22B-SMT-WP-BK-T/R",
+      "productId": "25701117"
+    },
+    {
+      "data": {
+        "data-id": "25356664",
+        "data-mfg-name": "Samtec Inc.",
+        "data-mfg-number": "BRU-C-S-RA-P",
+        "data-product-number": "612-BRU-C-S-RA-P-ND"
+      },
+      "href": "/en/products/detail/samtec-inc/BRU-C-S-RA-P/25356664",
+      "manufacturer": "Samtec Inc.",
+      "mpn": "BRU-C-S-RA-P",
+      "productId": "25356664"
+    },
+    {
+      "data": {
+        "data-id": "13996730",
+        "data-mfg-name": "Stewart Connector",
+        "data-mfg-number": "SS-52400-004",
+        "data-product-number": "380-SS-52400-004CT-ND"
+      },
+      "href": "/en/products/detail/stewart-connector/SS-52400-004/13996730",
+      "manufacturer": "Stewart Connector",
+      "mpn": "SS-52400-004",
+      "productId": "13996730"
+    },
+    {
+      "data": {
+        "data-id": "10322533",
+        "data-mfg-name": "Kycon, Inc.",
+        "data-mfg-number": "KUSB67X-MM-CS1-B15TR",
+        "data-product-number": "2092-KUSB67X-MM-CS1-B15CT-ND"
+      },
+      "href": "/en/products/detail/kycon-inc/KUSB67X-MM-CS1-B15TR/10322533",
+      "manufacturer": "Kycon, Inc.",
+      "mpn": "KUSB67X-MM-CS1-B15TR",
+      "productId": "10322533"
+    },
+    {
+      "data": {
+        "data-id": "22196966",
+        "data-mfg-name": "Assmann WSW Components",
+        "data-mfg-number": "A-USB1-DFN-EG-GTP1",
+        "data-product-number": "123-A-USB1-DFN-EG-GTP1-ND"
+      },
+      "href": "/en/products/detail/assmann-wsw-components/A-USB1-DFN-EG-GTP1/22196966",
+      "manufacturer": "Assmann WSW Components",
+      "mpn": "A-USB1-DFN-EG-GTP1",
+      "productId": "22196966"
+    },
+    {
+      "data": {
+        "data-id": "16500605",
+        "data-mfg-name": "Cvilux USA",
+        "data-mfg-number": "CU3924SFSFDR003-LF",
+        "data-product-number": "2987-CU3924SFSFDR003-LFCT-ND"
+      },
+      "href": "/en/products/detail/cvilux-usa/CU3924SFSFDR003-LF/16500605",
+      "manufacturer": "Cvilux USA",
+      "mpn": "CU3924SFSFDR003-LF",
+      "productId": "16500605"
+    },
+    {
+      "data": {
+        "data-id": "17884499",
+        "data-mfg-name": "Kycon, Inc.",
+        "data-mfg-number": "KUSB67X-SMT-CS-B30TR",
+        "data-product-number": "2092-KUSB67X-SMT-CS-B30TRCT-ND"
+      },
+      "href": "/en/products/detail/kycon-inc/KUSB67X-SMT-CS-B30TR/17884499",
+      "manufacturer": "Kycon, Inc.",
+      "mpn": "KUSB67X-SMT-CS-B30TR",
+      "productId": "17884499"
+    },
+    {
+      "data": {
+        "data-id": "26779912",
+        "data-mfg-name": "ATTEND Technology",
+        "data-mfg-number": "217B-BE09",
+        "data-product-number": "4827-217B-BE09CT-ND"
+      },
+      "href": "/en/products/detail/attend-technology/217B-BE09/26779912",
+      "manufacturer": "ATTEND Technology",
+      "mpn": "217B-BE09",
+      "productId": "26779912"
+    },
+    {
+      "data": {
+        "data-id": "27790971",
+        "data-mfg-name": "Tensility International Corp",
+        "data-mfg-number": "54-00528",
+        "data-product-number": "839-54-00528CT-ND"
+      },
+      "href": "/en/products/detail/tensility/54-00528/27790971",
+      "manufacturer": "Tensility International Corp",
+      "mpn": "54-00528",
+      "productId": "27790971"
+    },
+    {
+      "data": {
+        "data-id": "10322531",
+        "data-mfg-name": "Kycon, Inc.",
+        "data-mfg-number": "KUSB67X-SMTTH-CS4-B30TR",
+        "data-product-number": "2092-KUSB67X-SMTTH-CS4-B30CT-ND"
+      },
+      "href": "/en/products/detail/kycon-inc/KUSB67X-SMTTH-CS4-B30TR/10322531",
+      "manufacturer": "Kycon, Inc.",
+      "mpn": "KUSB67X-SMTTH-CS4-B30TR",
+      "productId": "10322531"
+    },
+    {
+      "data": {
+        "data-id": "29706914",
+        "data-mfg-name": "GCT",
+        "data-mfg-number": "USB4731-GF-A-KIT",
+        "data-product-number": "2073-USB4731-GF-A-KITCT-ND"
+      },
+      "href": "/en/products/detail/gct/USB4731-GF-A-KIT/29706914",
+      "manufacturer": "GCT",
+      "mpn": "USB4731-GF-A-KIT",
+      "productId": "29706914"
+    },
+    {
+      "data": {
+        "data-id": "29296701",
+        "data-mfg-name": "Amphenol Socapex",
+        "data-mfg-number": "UCOMUSBCRPZN",
+        "data-product-number": "623-UCOMUSBCRPZN-ND"
+      },
+      "href": "/en/products/detail/amphenol-pcd/UCOMUSBCRPZN/29296701",
+      "manufacturer": "Amphenol Socapex",
+      "mpn": "UCOMUSBCRPZN",
+      "productId": "29296701"
+    },
+    {
+      "data": {
+        "data-id": "29527470",
+        "data-mfg-name": "Stewart Connector",
+        "data-mfg-number": "SS-52400-014",
+        "data-product-number": "380-SS-52400-014CT-ND"
+      },
+      "href": "/en/products/detail/stewart-connector/SS-52400-014/29527470",
+      "manufacturer": "Stewart Connector",
+      "mpn": "SS-52400-014",
+      "productId": "29527470"
+    },
+    {
+      "data": {
+        "data-id": "28882386",
+        "data-mfg-name": "Kycon, Inc.",
+        "data-mfg-number": "KUSBV67X-SMT-CS-24-BTR",
+        "data-product-number": "2092-KUSBV67X-SMT-CS-24-BTR-ND"
+      },
+      "href": "/en/products/detail/kycon-inc/KUSBV67X-SMT-CS-24-BTR/28882386",
+      "manufacturer": "Kycon, Inc.",
+      "mpn": "KUSBV67X-SMT-CS-24-BTR",
+      "productId": "28882386"
+    },
+    {
+      "data": {
+        "data-id": "29296709",
+        "data-mfg-name": "Amphenol Socapex",
+        "data-mfg-number": "UCOMUSBCRPZNF059",
+        "data-product-number": "623-UCOMUSBCRPZNF059-ND"
+      },
+      "href": "/en/products/detail/amphenol-pcd/UCOMUSBCRPZNF059/29296709",
+      "manufacturer": "Amphenol Socapex",
+      "mpn": "UCOMUSBCRPZNF059",
+      "productId": "29296709"
+    },
+    {
+      "data": {
+        "data-id": "29705766",
+        "data-mfg-name": "GlobTek, Inc.",
+        "data-mfg-number": "JACK-USBC4-BTCF-24SMT-001",
+        "data-product-number": "1939-JACK-USBC4-BTCF-24SMT-001-ND"
+      },
+      "href": "/en/products/detail/globtek-inc/JACK-USBC4-BTCF-24SMT-001/29705766",
+      "manufacturer": "GlobTek, Inc.",
+      "mpn": "JACK-USBC4-BTCF-24SMT-001",
+      "productId": "29705766"
+    }
+  ],
+  "url": "https://www.digikey.com/en/products/filter/usb-dvi-hdmi-connectors/usb-dvi-hdmi-connector-assemblies/312"
+}

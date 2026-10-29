@@ -27,7 +27,7 @@ function popupHarness(saved) {
     setAttribute(key,value){this.attributes[key]=value;}
     addEventListener(name,fn){this.events[name]=fn;}
   }
-  for(const id of ['status','enabled','component-types','enabled-state','enabled-hint','type-options','clear'])new Element(id);
+  for(const id of ['status','enabled','list-view','list-view-state','component-types','enabled-state','enabled-hint','type-options','clear'])new Element(id);
   const document={getElementById:id=>nodes.find(n=>n.id===id),createElement:()=>new Element()};
   vm.runInNewContext(script('popup.js'),{OriginLens:C,document,chrome:{storage:saved}});
   return {get:document.getElementById,change:async(id,checked)=>{const input=document.getElementById(id);input.checked=checked;await input.events.change();}};
@@ -48,10 +48,26 @@ test('popup rolls back a failed save and reflects category changes from another 
   const saved=storage(),popup=popupHarness(saved);await settle();
   const originalSet=saved.local.set;saved.local.set=async()=>{throw new Error('Storage failed');};
   await popup.change('type-passives',true);
+  await popup.change('list-view',true);
+  assert.equal(popup.get('list-view').checked,false);assert.equal(popup.get('list-view').disabled,false);
   assert.equal(popup.get('type-passives').checked,false);assert.equal(popup.get('type-passives').disabled,false);
   assert.match(popup.get('status').textContent,/could not be saved/);
   saved.local.set=originalSet;await saved.local.set({[C.typeKey('passives')]:true});
   assert.equal(popup.get('type-passives').checked,true);
+});
+
+test('list-view preference persists independently of master and component choices',async()=>{
+  const saved=storage(),popup=popupHarness(saved);await settle();
+  assert.equal(popup.get('list-view').checked,false);
+  await popup.change('list-view',true);
+  assert.equal(saved.values.listViewEnabled,true);assert.equal(popup.get('enabled').checked,true);
+  assert.equal(popup.get('type-ics').checked,true);
+  const reopened=popupHarness(saved);await settle();
+  assert.equal(reopened.get('list-view').checked,true);
+  await reopened.change('enabled',false);await reopened.change('enabled',true);
+  assert.equal(popup.get('list-view').checked,true);
+  await reopened.change('list-view',false);
+  assert.equal(popup.get('list-view').checked,false);
 });
 
 test('worker rejects requests while off and resumes after enabling, including a fresh worker',async()=>{
@@ -122,6 +138,56 @@ function originRecord(identity,country,age=0){
 const savedEntry=result=>{const key=C.sourceCacheKey(result.identity.provider,result.identity);return {[key]:{key,result}};};
 const pageText=page=>page.nodes().map(n=>n.textContent||'').join(' ');
 
+// Only include content a user can see while the row's details remain closed.
+const visibleRowNodes=node=>[node,...(node.tagName==='details'&&!node.open
+  ? node.children.filter(child=>child.tagName==='summary') : node.children).flatMap(visibleRowNodes)];
+const sourceRow=(page,name)=>page.nodes().find(n=>n.children.some(child=>child.className==='report-head'
+  &&child.children.some(heading=>heading.tagName==='h3'&&heading.textContent.startsWith(name))));
+const visibleFacts=row=>row.children.filter(n=>n.tagName==='dl').flatMap(dl=>dl.children.map(item=>item.children.map(n=>n.textContent)));
+
+test('Mouser origin and assembly stay visible with details closed on either site, fresh and cached',async()=>{
+  const fixture=require('./fixtures/mouser-tcpp03-m20.json');
+  for(const site of ['digikey','mouser']){
+    const selected={provider:site,host:`www.${site}.com`,manufacturer:'STMicroelectronics',mpn:'TCPP03-M20',
+      sku:site==='mouser'?'511-TCPP03-M20':'497-TCPP03-M20TR-ND',
+      sourceUrl:site==='mouser'?fixture.SearchResults.Parts[0].ProductDetailUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/TCPP03-M20/1'};
+    const report=C.fromMouserApi(fixture,selected),unchanged=JSON.stringify(report);
+    for(const cached of [false,true]){
+      const saved=storage(cached?savedEntry(report):{});
+      const page=pageHarness(saved,selected,'ics',undefined,{},()=>({ok:true,data:report}));
+      await settle();await settle();
+      const row=sourceRow(page,'Mouser'),visible=visibleRowNodes(row);
+      assert.deepEqual(visible.filter(n=>n.className==='country').map(n=>n.textContent),['Italy','China']);
+      assert.deepEqual(visibleFacts(row),[['Declared origin','Italy'],['Assembly','China']]);
+      assert.equal(row.children.some(n=>n.className==='status'),false);
+      assert.ok(row.children.some(n=>n.tagName==='details'&&!n.open));
+      assert.doesNotMatch(visible.map(n=>n.textContent||'').join(' '),/Not available|Not reported/);
+      assert.equal(page.apiMessages(),cached?0:1);
+      assert.equal(JSON.stringify(report),unchanged,'rendering must preserve source evidence');
+    }
+  }
+});
+
+test('visible classification rows include every manufacturing stage and support absent declared origin',async()=>{
+  for(const country of ['Italy','']){
+    const report=originRecord(nexMouser,country);
+    report.fields.assembly={raw:['China'],values:['China']};
+    report.fields.diffusion={raw:['Taiwan / United States'],values:['Taiwan','United States']};
+    report.fields.testing={raw:['China / Malaysia'],values:['China','Malaysia']};
+    const page=pageHarness(storage(savedEntry(report)),nexDk,'discretes');
+    await settle();await settle();
+    const row=sourceRow(page,'Mouser'),visible=visibleRowNodes(row);
+    assert.deepEqual(visible.filter(n=>n.className==='country').map(n=>n.textContent),[
+      ...(country?['Italy']:[]),'China','Taiwan / United States','China / Malaysia'
+    ]);
+    assert.deepEqual(visibleFacts(row),[
+      ...(country?[['Declared origin','Italy']]:[]),['Assembly','China'],
+      ['Wafer fabrication / diffusion','Taiwan / United States'],['Testing','China / Malaysia']
+    ]);
+    assert.equal(row.children.some(n=>n.className==='status'),false);
+  }
+});
+
 test('manufacturer rows load on either distributor and keep Samtec estimates labeled through cache reuse', async()=>{
   const { DOMParser }=require('linkedom');
   const parse=html=>new DOMParser().parseFromString(html,'text/html');
@@ -142,7 +208,7 @@ test('manufacturer rows load on either distributor and keep Samtec estimates lab
       const text=pageText(page);
       assert.match(text,provider==='samtec'?/Malaysia · probable/:/China/);
       if(provider==='samtec'){
-        assert.match(text,/Manufacturer estimate · exact part matched/);
+        assert.match(text,/Probable origin/);
         assert.match(text,/0 sources reporting origin · manufacturer estimate available/);
         assert.doesNotMatch(text,/Declared origin · exact part matched/);
         assert.match(text,/No manufacturing stages are established/);
@@ -304,6 +370,30 @@ test('all three supported source reports are reusable from either distributor',a
   }
 });
 
+test('ST exposes both PCN assembly countries on both sites, including legacy catalog caches and failed lookups',async()=>{
+  const dk={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND'};
+  const mouser={...nexMouser,manufacturer:dk.manufacturer,mpn:dk.mpn,sku:'511-STM32G491RET6'};
+  const catalog=C.fromST([{prmis_id:'CP531377',attribute_name:'5080',attribute_value:'TAIWAN'}],
+    {item_name:dk.mpn,prmis_id:'CP531377',parent_id:'PF269474'},dk);
+  const walk=n=>[n,...n.children.flatMap(walk)];
+  for(const selected of [dk,mouser])for(const cached of [true,false]){
+    const page=pageHarness(storage(cached?savedEntry(catalog):{}),selected,'ics');await settle();
+    const row=page.nodes().find(n=>n.className==='report'&&walk(n).some(c=>c.tagName==='h3'&&c.textContent==='STMicroelectronics'));
+    const nodes=walk(row),text=nodes.map(n=>n.textContent||'').join(' ');
+    assert.ok(nodes.some(n=>n.className==='country'&&n.textContent==='Taiwan / China'));
+    assert.match(text,/Declared COO · ST catalog/);assert.match(text,/Assembly locations · ST PCN/);
+    assert.match(text,/ASE Kaohsiung \(Taiwan\)/);assert.match(text,/JSCC \(China\)/);
+    assert.match(text,/Published 2024-04-12 · reviewed 2026-10-20/);
+    assert.match(text,/shipment lot is not verified/);
+    assert.ok(nodes.some(n=>n.tagName==='a'&&n.href===C.stAssemblyDocuments(dk)[0].sourceUrl));
+    if(cached){assert.match(text,/Assembly of shipment lot/);assert.match(text,/Not verified/);}
+    else assert.match(text,/ST catalog Not reported/);
+    assert.deepEqual(catalog.fields.declaredCoo.values,['TAIWAN']);assert.deepEqual(catalog.fields.assembly.values,[]);
+  }
+  const sibling=pageHarness(storage(),{...dk,mpn:'STM32G491REI6'},'ics');await settle();
+  assert.doesNotMatch(pageText(sibling),/MDG\/24\/14363|Assembly locations · ST PCN/);
+});
+
 test('LCSC photo evidence appears on both sites, stays outside the COO count and respects Off',async()=>{
   const dkPart={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32G491RET6',sku:'497-STM32G491RET6-ND',sourceUrl:'https://www.digikey.com/en/products/detail/stmicroelectronics/STM32G491RET6/13592591'};
   const mouserPart={...nexMouser,manufacturer:dkPart.manufacturer,mpn:dkPart.mpn,sku:'511-STM32G491RET6',sourceUrl:'https://www.mouser.com/en/ProductDetail/STMicroelectronics/STM32G491RET6'};
@@ -316,7 +406,7 @@ test('LCSC photo evidence appears on both sites, stays outside the COO count and
   const dkPage=pageHarness(saved,dkPart,'ics'),mouserPage=pageHarness(saved,mouserPart,'ics',undefined,{fromMouser:()=>originRecord(mouserPart,'Taiwan')});
   await settle();
   for(const page of [dkPage,mouserPage]){
-    assert.match(pageText(page),/China · sample/);assert.match(pageText(page),/Reviewed marking CHN · assembly country of the photographed sample/);
+    assert.match(pageText(page),/China · sample/);assert.match(pageText(page),/Reviewed marking CHN · interpreted assembly country of the photographed sample/);
     assert.match(pageText(page),/2 sources reporting origin · reference photos available/);
     assert.ok(page.nodes().some(n=>n.tagName==='img'&&n.src===image&&n.referrerPolicy==='no-referrer'));
     assert.ok(page.nodes().some(n=>n.tagName==='a'&&n.href===front));
@@ -364,24 +454,30 @@ test('old underside galleries stay hidden during refresh and cannot return when 
 });
 
 test('automatic markings render on both sites with raw text and stay separate from catalog COO',async()=>{
-  const O=require('../ocr.js'),dk={...nexDk,manufacturer:'STMicroelectronics',mpn:'STM32F103C8T6'};
+ for(const marking of ['MYS','TWN']){
+  const O=require('../ocr.js'),taiwan=marking==='TWN',country=taiwan?'Taiwan':'Malaysia';
+  const dk={...nexDk,manufacturer:'STMicroelectronics',mpn:taiwan?'STM32G491REI6':'STM32F103C8T6'};
   const mouser={...nexMouser,manufacturer:dk.manufacturer,mpn:dk.mpn};
-  const url='https://www.lcsc.com/product-detail/C8734.html',image='https://assets.lcsc.com/images/lcsc/900x900/20230221_STMicroelectronics-STM32F103C8T6_C8734_blank.jpg';
-  const product={'@type':'Product',mpn:dk.mpn,sku:'C8734',brand:{name:'ST'},offers:{url},image:[image]};
+  const sku=taiwan?'C3228560':'C8734',date=taiwan?'20230711':'20230221';
+  const url=`https://www.lcsc.com/product-detail/${sku}.html`,image=`https://assets.lcsc.com/images/lcsc/900x900/${date}_STMicroelectronics-${dk.mpn}_${sku}_blank.jpg`;
+  const product={'@type':'Product',mpn:dk.mpn,sku,brand:{name:'ST'},offers:{url},image:[image]};
   const result=C.fromLCSC({querySelectorAll:()=>[{textContent:JSON.stringify(product)}]},url,dk);
-  const readings=[{imageUrl:image,sha256:'a'.repeat(64),passes:['gray','contrast'].map(variant=>({rotation:0,variant,text:'STM32F 103C8T6 MYS',words:[{text:'MYS',confidence:90}]}))}];
+  const readings=[{imageUrl:image,sha256:'a'.repeat(64),passes:(taiwan?['contrast','red']:['gray','contrast']).map(variant=>({rotation:0,variant,text:dk.mpn+' '+marking,words:[{text:marking,confidence:90}]}))}];
   result.photoEvidence.ocr={version:O.VERSION,engine:O.ENGINE,processedAt:new Date().toISOString(),readings,...O.summarize(readings,dk)};
   const saved=storage({...savedEntry(result)});
   for(const selected of [dk,mouser]){
     const page=pageHarness(saved,selected,'ics');await settle();
-    assert.match(pageText(page),/Malaysia · auto-read/);
-    assert.match(pageText(page),/Automatically read marking MYS/);
+    assert.ok(pageText(page).includes(country+' · auto-read'));
+    assert.ok(pageText(page).includes('Automatically read marking '+marking));
     assert.match(pageText(page),/processed on this device/);
-    assert.match(pageText(page),/STM32F 103C8T6 MYS/);
+    assert.ok(pageText(page).includes(dk.mpn+' '+marking));
     assert.match(pageText(page),/0 sources reporting origin · reference photos available/);
     assert.doesNotMatch(pageText(page),/Visual review/);
+    assert.ok(page.nodes().some(n=>n.tagName==='a'&&n.href===(taiwan?O.COUNTRY_CODE_URL:O.INTERPRETATION_URL)));
+    if(taiwan)assert.match(pageText(page),/not a part-specific manufacturing declaration/);
   }
   await saved.local.set({enabled:false});
+ }
 });
 
 test('failed refresh retains dated shared reports, uses known Mouser URL, and type/global off still suppress updates',async()=>{

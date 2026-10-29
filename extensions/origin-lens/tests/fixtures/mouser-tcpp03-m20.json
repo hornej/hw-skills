@@ -1,0 +1,18 @@
+{
+  "_fixture": "Synthetic API envelope using the TCPP03-M20 identity and origin fields in the user's 2026-10-21 screenshots; not a captured API response.",
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 1,
+    "Parts": [{
+      "Manufacturer": "STMicroelectronics",
+      "ManufacturerPartNumber": "TCPP03-M20",
+      "MouserPartNumber": "511-TCPP03-M20",
+      "ProductDetailUrl": "https://www.mouser.com/en/ProductDetail/STMicroelectronics/TCPP03-M20",
+      "TradeCompliance": [
+        { "ComplianceName": "Country of Origin", "ComplianceValue": "Italy" },
+        { "ComplianceName": "Assembly Country of Origin", "ComplianceValue": "China" },
+        { "ComplianceName": "Country of Diffusion", "ComplianceValue": "Not available" }
+      ]
+    }]
+  }
+}

@@ -1,9 +1,10 @@
 # LCSC and JLCPCB
 
 Verified official documentation on 2026-10-20. Both offer partner APIs requiring
-account approval. LCSC live testing is pending credentials. A JLCPCB detail
-request reached the API but returned HTTP 403 while Parts access was under
-review; no successful component response has been validated yet.
+account approval. LCSC live testing is pending credentials. JLCPCB authenticated
+component-detail requests were validated after Parts approval on 2026-10-21 UTC
+(2026-10-20 in America/Denver). Stock, pricing tiers and technical parameters
+were returned; no manufacturing-country or lot-route fields were found.
 
 ## LCSC
 
@@ -133,11 +134,35 @@ uses the standard library and does not run or redistribute the Java SDK.
   unknown and excludes these prices from purchase-cost comparisons. `--currency`
   is a comparison preference, not evidence of JLCPCB's response currency.
 
-SDK offline checks are not successful live acceptance. The first authenticated
-attempt returned HTTP/business status 403, consistent with the application's
-**Parts — Reviewing** status. Wait for approval before retrying. If access still
-fails after approval, check application credentials, Parts entitlement and the
-configured [outbound IP whitelist](https://api.jlcpcb.com/docs/ip-whitelist).
+### Live acceptance — 2026-10-21 UTC
+
+After Parts approval, the existing Python client completed two authenticated
+detail requests with business `code: 200`, `success: true`, and one exact
+manufacturer/full-MPN/C-number match each:
+
+- `STM32G491RET6` / `C3231005`, checked at `2026-10-21T04:55:12Z`.
+- `STM32F103C8T6` / `C8734`, checked at `2026-10-21T04:56:02Z`.
+
+Both returned package, public PCBA-library stock, price tiers, technical
+parameters, library classification, datasheet links, ECCN and RoHS. One returned
+zero stock and the other positive stock. The existing normalizer handled both
+without changes. Live responses also supplied `dataManualUrl`,
+`dataManualOfficialLink` and `dataManualFileAccessId`; they remain in the raw
+response rather than being interpreted as origin evidence. No response currency,
+MOQ or order multiple was present, so price tiers remain unqualified.
+
+All returned field names and parameter labels were reviewed. Neither part had
+COO, wafer-fabrication, chip-assembly, test-country or lot-route information.
+The public component response classes in SDK 1.0.6 likewise expose no explicit
+manufacturing-country fields. This confirms these detail lookups, not every
+JLCPCB API, account entitlement, or possible future response. Private inventory,
+orders, balances and catalog-wide enumeration were not requested. Credentials
+were supplied in memory; full API responses remain outside the repository.
+
+The earlier request returned HTTP/business status 403 while Parts was under
+review. If another account fails, check application credentials, Parts
+entitlement and the configured
+[outbound IP whitelist](https://api.jlcpcb.com/docs/ip-whitelist).
 Do not automatically retry or disable security settings.
 
 The SDK's other public-library operations paginate a catalog; they do not provide
@@ -147,7 +172,7 @@ an ordinary focused library search, then verify identity with the detail lookup.
 Batch limits, account quotas and redistribution terms require confirmation before
 expanding this into a bulk service.
 
-Until live acceptance, use the ordinary parts-library UI for focused checks. Basic/Extended
+Use the ordinary parts-library UI for focused C-number discovery. Basic/Extended
 classification and SMT placement capabilities concern JLCPCB's assembly service.
 Private/customer-owned inventory is not public stock offered for sale. A shared
 C-number does not mean LCSC and JLCPCB stock can be combined or purchased through
@@ -166,8 +191,12 @@ JLCPCB's inspected component-detail schema has no explicit COO, wafer-fabricatio
 chip-assembly, test-country or lot-traceability field. `assemblyComponentFlag`
 concerns PCBA eligibility, not a chip's assembly country. `eccnCode`, `rohsFlag`
 and generic parameters do not establish a manufacturing route. The helper leaves
-all origin assertions empty; successful live fields and their definitions still
-need review before adding any origin integration.
+all origin assertions empty. The two successful live detail responses above
+also contained no manufacturing-country fields, including their generic
+parameter arrays. JLCPCB access is now usable by the sourcing helper, but does
+not add an origin source or credential requirement to Origin Lens. An explicit,
+defined country/lot field and a verified exact-part response are still needed
+before adding an origin integration.
 
 Origin Lens already reads exact ST STM32 LCSC listing photos and recognizes
 supported markings locally. This establishes evidence about a photographed

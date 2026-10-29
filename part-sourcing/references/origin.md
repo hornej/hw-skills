@@ -94,9 +94,10 @@ and export codes. Its shipping-country fields are destinations, and its
 process changes. The helper preserves raw responses and leaves origin assertions
 empty. JLCPCB's official business SDK 1.0.6 detail schema was inspected: it has no
 explicit COO, wafer-fabrication, chip-assembly, test-country or lot-route fields.
-The helper leaves origin assertions empty; successful live response validation
-is pending Parts approval. Export codes, RoHS and `assemblyComponentFlag` do not
-establish origin.
+Two exact STM32 detail requests succeeded after Parts approval on 2026-10-21 UTC
+(2026-10-20 America/Denver). Neither their fields nor their generic parameters
+contained manufacturing countries. The helper leaves origin assertions empty.
+Export codes, RoHS and `assemblyComponentFlag` do not establish origin.
 
 Origin Lens's existing LCSC photo/OCR integration can provide sample assembly
 evidence for supported ST markings. Keep this separate from catalog declarations,

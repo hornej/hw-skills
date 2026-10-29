@@ -132,9 +132,11 @@ The `jlcpcb` helper implements one exact C-number detail lookup from the officia
 Java business SDK 1.0.6. It requires `JLC_API_APP_ID`, `JLC_API_ACCESS_KEY`,
 `JLC_API_SECRET_KEY` and approval for **Parts**. Signing, matching, missing
 currency/order rules, failure handling and credential isolation have offline
-coverage. Live acceptance remains pending: the 2026-10-20 attempt returned HTTP
-403 while Parts access was under review. Do not repeat requests until access is
-approved. A configured key alone does not establish entitlement.
+coverage. After Parts approval, two exact STM32 detail requests succeeded on
+2026-10-21 UTC (2026-10-20 America/Denver), returning stock, unqualified price
+tiers and technical parameters. No currency, order rules or manufacturing-country
+fields were returned. See the linked acceptance record. A configured key alone
+does not establish entitlement for another account or API operation.
 
 ## Failures, records, and Findchips
 

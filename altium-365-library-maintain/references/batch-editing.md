@@ -6,11 +6,17 @@ do not extrapolate component-grid paste behavior to model metadata.
 
 Use this route for native metadata changes when synchronization behavior is
 unproven, especially when changing Name. Match records using live Workspace
-Item IDs; do not use a Name that is itself about to change as the update key.
+Item IDs and exact current revisions; do not use a Name that is itself about to
+change as the update key. Refresh those identities before applying the write.
 Confirm the active Workspace, including when multiple Altium windows are open.
 
 Selecting multiple existing components in Components or Explorer and choosing
-Edit opens the batch Component Editor. Show Item ID, Name, Comment, Description,
+Edit opens component editors according to their templates; components sharing
+a template can open together, while different templates can open separately.
+Verify the actual definition roster and each editor's template before pasting.
+For automated acquisition and cache identity checks, use
+[Workspace automation](workspace-automation.md).
+Show Item ID, Name, Comment, Description,
 MFR/MPN and the requested fields. For a user-operated session, have the user
 copy those cells to a spreadsheet if offline transformation is needed. Join by
 Item ID and preserve the live row order in the returned paste columns; a prior
@@ -40,8 +46,9 @@ paste; preserve/export the data and use a verified transfer route.
 Show Release Status: existing components should normally target Create Revision,
 with the existing Item ID retained. Do not use Clear Link To Target Item, which
 turns the operation into creating a new item. Save using File > Save to Server,
-inspect validation and release results, then refresh/read back a representative
-sample before extending an unproven paste workflow. Preserve models, footprints,
+inspect validation and release results, then refresh/read back every affected
+item/revision and operation. A representative pilot qualifies the paste route;
+it does not replace accounting for all writes. Preserve models, footprints,
 Part Choices, lifecycle behavior and out-of-scope fields.
 
 For Source cleanup, clearing a cell value differs from removing the parameter.

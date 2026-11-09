@@ -11,6 +11,14 @@ the component library remains managed in Altium 365.
 
 ## Select the workflow
 
+- For repeated native automation or library deduplication, read
+  [Workspace automation](references/workspace-automation.md). Use structured
+  readback by default, qualify cache identity and model evidence, and keep
+  lifecycle changes separate from template cleanup and deletion.
+- For current Windows panel handles or scoped read-only UIA queries through
+  Adom Bridge, read [native readback](references/native-readback.md). Its helper
+  discovers the running Altium instance and avoids hardcoded HWNDs; it does not
+  edit components or establish Workspace identity.
 - Establish the Workspace and requested fields from the session. Prefer an
   available, documented API or connector with the needed capability. Otherwise
   use Custom Data Synchronization for repeatable metadata changes. Use the

@@ -100,7 +100,7 @@ the native Altium workflow is used for authorized changes.
 | DigiKey catalog helper | Python 3.10+; a DigiKey Product Information API application for live queries. Set `DIGIKEY_CLIENT_ID` and `DIGIKEY_CLIENT_SECRET` through your own secret manager or process environment. |
 | Batch sourcing and origin helpers | Python 3.10+; Nexar Supply credentials, a Mouser Search API key, LCSC production API key/secret, JLCPCB App ID/access key/secret with Parts approval, or DigiKey account-linked OAuth access for the selected provider. ST's undocumented website service may require browser capture. |
 | STM32 package/pin screening | ST's public pin-data repository at a recorded commit; local CubeMX or current datasheets for missing coverage or a verified newer source. No distributor API key is needed. |
-| Binary library migration and optional native design inventory | CPython 3.12 with `altium-monkey==2026.9.21`, the tested engine version. |
+| Binary library migration and optional native design inventory | CPython 3.12 with `altium-monkey==2026.9.22`, the tested engine version. |
 | Native import, Workspace release and component/model editing | Altium Designer on Windows and appropriate access to the selected Altium 365 Workspace. Custom Data Synchronization also needs its installed feature and a compatible 64-bit OLE DB provider. |
 
 For binary helpers, create a virtual environment and install
@@ -197,7 +197,7 @@ under the [MIT License](LICENSE).
 
 [Altium Monkey](https://github.com/wavenumber-eng/altium_monkey) is separately
 installed and licensed under
-[AGPL-3.0-or-later](https://pypi.org/project/altium-monkey/2026.9.21/).
+[AGPL-3.0-or-later](https://pypi.org/project/altium-monkey/2026.9.22/).
 The MIT license here does not relicense that dependency or its dependencies.
 Altium and DigiKey services remain subject to their own access requirements and
 terms. This is an independent project, not an official Altium or DigiKey product.

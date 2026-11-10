@@ -11,6 +11,10 @@ the component library remains managed in Altium 365.
 
 ## Select the workflow
 
+- For a local database mirror of captured Workspace metadata and offline change
+  previews, read [local mirror](references/local-mirror.md). Its importer preserves
+  source identities and hashes; it does not establish current server state or
+  execute Workspace writes.
 - For repeated native automation or library deduplication, read
   [Workspace automation](references/workspace-automation.md). Use structured
   readback by default, qualify cache identity and model evidence, and keep

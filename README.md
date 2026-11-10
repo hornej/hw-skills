@@ -81,6 +81,7 @@ name when repeating it.
 | `native_inventory.py` | Uses Altium Monkey to inventory saved schematic/PCB files. Full circuit reasoning and physical-instance reconciliation remain review work. |
 | `migrate.py` / `normalize_config.py` | Generate local library staging and adapt an exported importer configuration. |
 | `sync_artifacts.py` | Prepares synchronization CSV/schema files or summarizes a private log. It does not execute a Workspace update. |
+| [`library_mirror.py`](altium-365-library-maintain/references/local-mirror.md) | Imports a captured metadata snapshot into a new local SQLite database, exports exact revision evidence, and previews changes. No network access or Workspace writes. |
 | [`altium_panel_probe.py`](altium-365-library-maintain/references/native-readback.md) | Discovers current Windows Altium panel hosts and performs scoped read-only UIA queries through Adom Bridge. No input, settings changes or Workspace writes. |
 | [`altium_explorer_states.py`](altium-365-library-maintain/references/native-readback.md#exact-explorer-state-readback) | Checks exact revision/state rows already loaded in Explorer against an expected roster. No screenshots, refresh, input or Workspace writes. |
 | `digikey.py` | Queries the DigiKey API or reads its local cache. It does not select or purchase parts automatically. |

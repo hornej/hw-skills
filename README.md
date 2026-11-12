@@ -1,209 +1,117 @@
 # hw-skills
 
-Reusable Codex skills for PCB and hardware design: Altium library preparation,
-Altium 365 maintenance, design review, and component sourcing.
+Reusable hardware engineering skills for component selection, sourcing,
+country-of-origin evidence and design review across CAD tools.
 
-Each skill includes instructions and focused reference material. The bundled
-Python helpers make repeatable file analysis and catalog queries available
-without requiring UI automation for every step.
-
-The [Origin Lens Chrome prototype](extensions/origin-lens/README.md) compares
-DigiKey, Mouser, ST STM32, Texas Instruments, Microchip, Infineon, and Harwin origin reports on distributor product pages,
-with separate Samtec probable-origin estimates and LCSC package-photo evidence with local marking recognition.
-Its DigiKey lookup reads an existing MyLists context without adding products;
-each source retains its own exact-part match, declaration, and timestamp.
+Altium-specific automation now lives in
+[altium-tools](https://github.com/hornej/altium-tools), with its file history
+preserved. See the [repository split](docs/repository-split.md) for migration
+details and the installation boundary.
 
 ## Skills
 
 | Skill | Use it for |
 | --- | --- |
-| [altium-library-migrate](altium-library-migrate/SKILL.md) | Discover, normalize, audit and consolidate local SchLib/PcbLib libraries; prepare an Altium Library Importer configuration. |
-| [altium-365-library-maintain](altium-365-library-maintain/SKILL.md) | Maintain existing Workspace components, models and templates; add verified metadata and named product links; prepare synchronization inputs and diagnose saves. |
-| [altium-design-review](altium-design-review/SKILL.md) | Review BOMs, replacements, schematic roles and assembly variants; reconcile exports and review PCB rules, xSignals and DRC evidence. |
+| [hardware-design-review](hardware-design-review/SKILL.md) | Review component suitability, BOM/placement evidence, grounding, board interfaces and release readiness using available CAD evidence. |
 | [digikey-part-selection](digikey-part-selection/SKILL.md) | Find and compare exact parts using DigiKey catalog data, current purchasing information and manufacturer datasheets. |
-| [part-sourcing](part-sourcing/SKILL.md) | Check Nexar/Octopart, Mouser and LCSC availability, compare quantity pricing with DigiKey results, collect separate origin evidence, and query live-validated JLCPCB component details by C-number. |
-| [st-origin-lookup](st-origin-lookup/SKILL.md) | Retrieve ST declared country of origin for exact ordering codes, preserving source evidence and unknown manufacturing stages. |
+| [part-sourcing](part-sourcing/SKILL.md) | Compare Nexar/Octopart, Mouser, LCSC and DigiKey availability/prices, collect origin evidence, and query live-validated JLCPCB component details. |
+| [st-origin-lookup](st-origin-lookup/SKILL.md) | Retrieve ST declared country of origin for exact ordering codes while preserving unknown manufacturing stages. |
 
-The library skills distinguish local staging from updates to existing Workspace
-items. Design review reports evidence and unresolved checks; component selection
-does not place an order. Project naming conventions, templates, supplier choices
-and component lists belong with the project using the skills.
+The [Origin Lens Chrome extension](extensions/origin-lens/README.md) compares
+distributor and manufacturer origin reports, exact-part matches and timestamps.
+It includes separate manufacturing-stage evidence, probable-origin estimates and
+LCSC package-photo marking recognition. Its own README covers installation,
+credentials and current prototype limitations.
 
-For release work, start with the [PCB Release Checklist](altium-design-review/references/pcb-release-checklist.md)
-and [OutputJobs and Manufacturing Files](altium-design-review/references/outputjobs-manufacturing-files.md).
-They include evidence-based completion criteria and supplier guidance for CircuitHub,
-JLCPCB and PCBWay.
-When a board specification selects CircuitHub, use the
-[service-specific design requirements](altium-design-review/references/circuithub-design-requirements.md)
-during design and review as well as release, distinguishing ProtoBoard fabrication,
-Value Proto build eligibility and general/custom fabrication.
+Project naming, limits, supplier choices and completed reviews belong with the
+project. Component selection does not place orders, and source parsing or an
+export report does not establish engineering signoff.
 
 ## Install in Codex
 
-Ask Codex:
-
 ```text
-Use $skill-installer to install altium-library-migrate,
-altium-365-library-maintain, altium-design-review, digikey-part-selection,
-part-sourcing, and st-origin-lookup
+Use $skill-installer to install hardware-design-review,
+digikey-part-selection, part-sourcing, and st-origin-lookup
 from https://github.com/hornej/hw-skills.
 ```
 
-Alternatively, clone this repository and copy the desired skill folders into
-`~/.codex/skills` (Windows: `%USERPROFILE%\.codex\skills`), or into your configured
-`CODEX_HOME/skills`. Preserve existing same-name skills and reconcile local edits
-before replacing them. Installing all six keeps the companion reference links
-available. Installed skills are available on the next Codex turn.
+Alternatively copy the desired skill folders into `~/.codex/skills` (Windows:
+`%USERPROFILE%\.codex\skills`) or your configured `CODEX_HOME/skills`. Preserve
+local edits before replacing existing same-name skills. Keep companion folders
+side by side for relative references. Installed skills are available on the next
+Codex turn; copied installations do not update automatically.
 
-Installation supplies skill instructions and scripts. Configure the dependencies
-below only for workflows you use.
+For Altium, install `altium-library-migrate`, `altium-365-library-maintain` and
+`altium-design-review` from
+[hornej/altium-tools](https://github.com/hornej/altium-tools).
+Their names and helper command lines are unchanged. They are optional for this
+repository's generic workflows.
 
-### Try it without accounts or Altium
+## Capabilities and dependencies
 
-The [BOM review walkthrough](altium-design-review/examples/bom-review/README.md)
-contains small, synthetic inputs with intentional mistakes. From a checkout of
-this repository, Python 3.10+ is enough:
-
-```sh
-python altium-design-review/scripts/audit_exports.py --project altium-design-review/examples/bom-review/Demo.PrjPCB --variant "Demo assembly" --bom altium-design-review/examples/bom-review/bom.csv --pnp altium-design-review/examples/bom-review/pnp.csv --out demo-review.json
-```
-
-Open `demo-review.json` or ask Codex to explain it. The walkthrough shows the
-expected findings and where they appear in the report. The command preserves
-its inputs and refuses to overwrite an existing report; choose a new `--out`
-name when repeating it.
-
-## What runs automatically
-
-| Bundled helper | Result |
+| Workflow | Requirements and result |
 | --- | --- |
-| `audit_exports.py` | Reads CSV exports and saved variant metadata; writes a JSON review report. |
-| `native_inventory.py` | Uses Altium Monkey to inventory saved schematic/PCB files. Full circuit reasoning and physical-instance reconciliation remain review work. |
-| `migrate.py` / `normalize_config.py` | Generate local library staging and adapt an exported importer configuration. |
-| `sync_artifacts.py` | Prepares synchronization CSV/schema files or summarizes a private log. It does not execute a Workspace update. |
-| [`altium_panel_probe.py`](altium-365-library-maintain/references/native-readback.md) | Discovers current Windows Altium panel hosts and performs scoped read-only UIA queries through Adom Bridge. No input, settings changes or Workspace writes. |
-| [`altium_explorer_states.py`](altium-365-library-maintain/references/native-readback.md#exact-explorer-state-readback) | Checks exact revision/state rows already loaded in Explorer against an expected roster. No screenshots, refresh, input or Workspace writes. |
-| `digikey.py` | Queries the DigiKey API or reads its local cache. It does not select or purchase parts automatically. |
-| `part_sourcing.py` | Reads batch availability and origin APIs, imports DigiKey ProductDetails evidence, and compares native-currency quantity prices. No quote creation, orders, or RFQs. |
-| `st_origin_lookup.py` | Reads ST website origin data or normalizes captured responses; exports JSON/CSV with exact-code and source checks. |
+| Hardware design review | Instructions and reference material; uses supplied evidence or available CAD tools. No particular CAD installation required. |
+| DigiKey catalog | Python 3.10+ and Product Information API credentials for live queries; local cache and manufacturer-page fallbacks remain available. |
+| Batch sourcing and origin | Python 3.10+ and credentials/access for each selected provider. No quote creation, order placement or RFQs. |
+| ST website origin | Python 3.10+; undocumented website access may require browser capture. |
+| STM32 package/pin screening | ST public pin-data repository at a recorded commit; CubeMX/datasheets for missing coverage. |
+| Origin Lens | Chrome extension and configured access for the selected sources; see its own setup guide. |
 
-The skills guide Codex through the remaining research, review and native Altium
-steps. They do not bundle an Altium MCP server or a general Workspace write API.
-Installing them does not supply those capabilities; an available connector or
-the native Altium workflow is used for authorized changes.
+The helpers preserve exact manufacturer/part identities, source timestamps and
+native currencies. JLCPCB component-detail calls have been validated; LCSC live
+testing is pending credentials. Read the [provider scope](part-sourcing/references/lcsc-jlcpcb.md)
+before interpreting coverage. Historical validation does not establish current
+stock or access for another account.
 
-See the [hardware tooling evaluation](docs/tool-landscape-2026-11-12.md) for a
-dated comparison of 25 complementary projects, their overlap with these skills,
-and proposed integration pilots. The accompanying candidate catalog records
-upstream revisions; it is research evidence, not an installation manifest or a
-list of qualified backends.
+See [DigiKey credentials](digikey-part-selection/references/credentials.md) and
+[API behavior](digikey-part-selection/references/api.md), plus
+[sourcing provider access](part-sourcing/references/providers.md) for batching,
+quotas, plan-gated fields and retention. Nexar data must not be retained beyond
+its documented 24-hour limit. The optional
+[Windows sourcing launcher](part-sourcing/references/credentials.md) accepts
+environment credentials or a user-configured Bitwarden mapping. No private
+vault or account-specific configuration is required for the ordinary clients.
 
-## Dependencies
+This repository does not depend on Altium Monkey, Altium Designer or an Altium
+MCP server. Native Altium helpers and the synthetic BOM/variant CLI walkthrough
+are maintained in [altium-tools](https://github.com/hornej/altium-tools).
 
-| Workflow | Requirements |
-| --- | --- |
-| BOM/PnP CSV review and synchronization-file preparation | Python 3.10+; standard library only. |
-| DigiKey catalog helper | Python 3.10+; a DigiKey Product Information API application for live queries. Set `DIGIKEY_CLIENT_ID` and `DIGIKEY_CLIENT_SECRET` through your own secret manager or process environment. |
-| Batch sourcing and origin helpers | Python 3.10+; Nexar Supply credentials, a Mouser Search API key, LCSC production API key/secret, JLCPCB App ID/access key/secret with Parts approval, or DigiKey account-linked OAuth access for the selected provider. JLCPCB component-detail calls have been validated; LCSC live testing is pending credentials. See the [provider validation scope](part-sourcing/references/lcsc-jlcpcb.md). ST's undocumented website service may require browser capture. |
-| STM32 package/pin screening | ST's public pin-data repository at a recorded commit; local CubeMX or current datasheets for missing coverage or a verified newer source. No distributor API key is needed. |
-| Binary library migration and optional native design inventory | CPython 3.12 with `altium-monkey==2026.9.22`, the tested engine version. |
-| Native import, Workspace release and component/model editing | Altium Designer on Windows and appropriate access to the selected Altium 365 Workspace. Custom Data Synchronization also needs its installed feature and a compatible 64-bit OLE DB provider. |
+## Review and future integrations
 
-For binary helpers, create a virtual environment and install
-[`altium-library-migrate/scripts/requirements.txt`](altium-library-migrate/scripts/requirements.txt).
-See the [migration workflow](altium-library-migrate/references/workflow.md) for
-platform commands and validation limits. Some adapters use internal engine APIs;
-test another engine version before using it on design files.
+Start with the [generic release checklist](hardware-design-review/references/release-checklist.md)
+for a review across CAD tools. For an Altium project, use the native release and
+OutputJob guidance in the Altium repository as well.
 
-See [DigiKey credentials](digikey-part-selection/references/credentials.md) for
-portable credential injection and [API usage](digikey-part-selection/references/api.md)
-for cache and request behavior. Product pages and manufacturer datasheets remain
-available when API access is absent. No account credentials are included.
-
-See [sourcing provider access](part-sourcing/references/providers.md) for credential
-variables, batching, quotas, plan-gated fields, and retention. New sourcing clients
-are verified against public schemas and offline fixtures; live authenticated
-acceptance checks still require provisioned access. Nexar API data must not be
-retained beyond its documented 24-hour limit. Findchips currently has a manual
-fallback; no public self-service inventory-search API integration is claimed.
-The optional [Windows sourcing launcher](part-sourcing/references/credentials.md)
-accepts environment credentials or a user-configured Bitwarden mapping; a private
-vault, helper skill, and account-specific configuration are not required for the
-ordinary environment-based clients.
-
-### Common setup issues
-
-- **An existing skill blocks installation:** compare it with the new version,
-  preserve local edits, and reconcile the same-name folder before reinstalling.
-  Installed copies do not automatically update when this repository changes.
-- **Python or `altium_monkey` cannot be found:** use the same interpreter for
-  installation and execution. For example, `.venv/Scripts/python.exe -m pip`
-  installs into that Windows environment; a different `python` command may not.
-  The CSV demo does not need Altium Monkey.
-- **A companion reference is missing:** install all six skills side by side,
-  using their original folder names.
-- **DigiKey returns 401/403 or 429:** check the application's access or returned
-  retry/reset information respectively. See the [API guide](digikey-part-selection/references/api.md).
-- **Altium rejects a save or synchronization:** use the affected skill's
-  [save diagnostics](altium-365-library-maintain/references/save-troubleshooting.md)
-  or [synchronization guidance](altium-365-library-maintain/references/synchronization.md).
-  An offline helper passing does not establish Workspace permissions.
-
-## Examples
-
-```text
-Use $altium-design-review to check this project's BOM and assembly variant,
-including consolidation candidates and differences from the pick-and-place export.
-
-Use $altium-library-migrate to analyze these local libraries and prepare an
-import package while preserving electrical symbol variants.
-
-Use $altium-365-library-maintain to prepare DigiKey links and verified
-MFR, MPN, Supplier, SPN, and passive Value fields for these existing components.
-
-Use $digikey-part-selection to compare replacement MOSFETs for this circuit,
-including the actual gate drive, pinout, thermal conditions, and build quantity.
-
-Use $part-sourcing to compare these candidate MPNs at 1,000 pieces, including
-authorized distributor stock, valid quantity prices, and missing origin evidence.
-
-Use $st-origin-lookup to check the declared country of origin of these exact ST
-ordering codes and separate it from fabrication, assembly, and testing locations.
-```
+The [hardware tooling evaluation](docs/tool-landscape-2026-11-12.md) compares 25
+projects and records proposed pilots. Its candidate catalog is research evidence,
+not an installation manifest or qualified-backend registry. Portable datasheet,
+manufacturing-file and simulation integrations belong here; Altium-specific
+adapters and native acceptance tests belong in `altium-tools`.
 
 ## Tests and contributions
 
-From the repository root, in the environment described above:
+From the repository root, Python 3.10+ is enough:
 
 ```sh
-python -m unittest discover -s altium-library-migrate/tests -v
-python -m unittest discover -s altium-365-library-maintain/tests -v
-python -m unittest discover -s altium-design-review/tests -v
-python -m unittest discover -s digikey-part-selection/tests -v
-python -m unittest discover -s part-sourcing/tests -v
+python -B -m unittest discover -s digikey-part-selection/tests -v
+python -B -m unittest discover -s part-sourcing/tests -v
 python -B st-origin-lookup/scripts/test_st_origin_lookup.py
 ```
 
-The tests use synthetic temporary libraries, CSVs and mocked network responses.
-They do not require a private project, live Workspace or DigiKey credentials.
-They do not establish native Altium acceptance, live API access, current stock
-or engineering signoff. GitHub Actions runs all suites on Windows with Python 3.12,
-plus the five standard-library suites on Linux with Python 3.10. The packaged
-CSV walkthrough is exercised through its command-line interface on both platforms.
+These suites use synthetic inputs and mocked responses. They do not require
+credentials or establish live stock, API access or electrical qualification.
+CI runs them on Windows/Python 3.12 and Linux/Python 3.10. Origin Lens has its
+own tests described in its README.
 
-Contributions should improve reusable workflows or include a minimal synthetic
-reproduction for a demonstrated problem. Keep customer designs, Workspace
-exports, project histories, credentials and API caches out of commits and issue
-attachments. Run the affected suite when changing a helper.
+Keep customer designs, Workspace exports, credentials and API caches out of
+commits and issue attachments. Run the affected suite when changing a helper.
+Generic review guidance should not assume one CAD vendor or a particular
+project's electrical limits.
 
 ## License
 
-Original skill instructions and helper code in this repository are available
-under the [MIT License](LICENSE).
-
-[Altium Monkey](https://github.com/wavenumber-eng/altium_monkey) is separately
-installed and licensed under
-[AGPL-3.0-or-later](https://pypi.org/project/altium-monkey/2026.9.22/).
-The MIT license here does not relicense that dependency or its dependencies.
-Altium and DigiKey services remain subject to their own access requirements and
-terms. This is an independent project, not an official Altium or DigiKey product.
+Original skills and helpers are available under the [MIT License](LICENSE).
+Third-party dependencies and bundled extension assets retain their own terms;
+see the extension's notices. Services remain subject to their access requirements.
+This is an independent project, not an official distributor or CAD-vendor product.

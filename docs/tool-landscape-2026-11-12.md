@@ -14,6 +14,11 @@ original discussion. The [candidate catalog](tool-candidates-2026-11-12.json)
 records upstream commit IDs, dates, declared licenses, decisions and evidence
 levels. These are research snapshots, **not approved dependency pins**.
 
+> Repository split: Altium-specific skills now live in
+> [altium-tools](https://github.com/hornej/altium-tools). Links to the original
+> Altium helpers below are pinned to the evaluated snapshot. Current portable
+> review guidance lives in `hardware-design-review`.
+
 ## Scope and evidence
 
 The search covered live Altium automation, saved-file readers, managed libraries,
@@ -35,10 +40,10 @@ upstream issue reports remain author-reported evidence.
 
 | Existing capability | Evidence in this checkout | What an addition must improve |
 | --- | --- | --- |
-| BOM/PnP/variant review | [`audit_exports.py`](../altium-design-review/scripts/audit_exports.py), synthetic CLI example, tests, release checklist | Native connectivity, geometry and verification of the actual generated files |
-| Saved Altium inspection | [`native_inventory.py`](../altium-design-review/scripts/native_inventory.py), Altium Monkey dependency | The adapter explicitly leaves pin/net connectivity and physical-instance reconciliation unresolved; extend or supplement it before claiming complete circuit extraction |
-| Local library migration | [`altium-library-migrate`](../altium-library-migrate/SKILL.md), pinned Monkey engine, staging and normalization helpers | Primitive-level authoring/diff and native acceptance of newly generated models |
-| Managed-library maintenance | [`altium-365-library-maintain`](../altium-365-library-maintain/SKILL.md), synchronization artifacts, revision/IPN guidance | Direct structured Workspace reads and narrowly controlled revision updates |
+| BOM/PnP/variant review | [`audit_exports.py`](https://github.com/hornej/hw-skills/blob/edef9633a1c207daa839eba5da5924b1572c4464/altium-design-review/scripts/audit_exports.py), synthetic CLI example, tests, release checklist | Native connectivity, geometry and verification of the actual generated files |
+| Saved Altium inspection | [`native_inventory.py`](https://github.com/hornej/hw-skills/blob/edef9633a1c207daa839eba5da5924b1572c4464/altium-design-review/scripts/native_inventory.py), Altium Monkey dependency | The adapter explicitly leaves pin/net connectivity and physical-instance reconciliation unresolved; extend or supplement it before claiming complete circuit extraction |
+| Local library migration | [`altium-library-migrate`](https://github.com/hornej/hw-skills/blob/edef9633a1c207daa839eba5da5924b1572c4464/altium-library-migrate/SKILL.md), pinned Monkey engine, staging and normalization helpers | Primitive-level authoring/diff and native acceptance of newly generated models |
+| Managed-library maintenance | [`altium-365-library-maintain`](https://github.com/hornej/hw-skills/blob/edef9633a1c207daa839eba5da5924b1572c4464/altium-365-library-maintain/SKILL.md), synchronization artifacts, revision/IPN guidance | Direct structured Workspace reads and narrowly controlled revision updates |
 | Sourcing and origin | DigiKey, Nexar, Mouser, LCSC/JLCPCB clients, ST lookup and [Origin Lens](../extensions/origin-lens/README.md) | Better presentation or additional verified providers; preserve exact identity, currency, freshness and manufacturing-stage distinctions |
 | Native workflow guidance | PCB rules, xSignals, grounding, OutputJobs and supplier-specific release references | Reliable machine-readable evidence that those checks actually ran |
 

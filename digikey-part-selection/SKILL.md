@@ -66,3 +66,7 @@ When the user asks to add the selected part to a library, hand off exact identit
 datasheet/product links, verified parameters, and evidence to
 altium-library-migrate (local preparation) or altium-365-library-maintain
 (existing Workspace items). Keep stable item identity separate from display Name.
+
+The Altium companion skills are maintained in
+[altium-tools](https://github.com/hornej/altium-tools); they are optional and
+are not required for component selection or catalog queries.

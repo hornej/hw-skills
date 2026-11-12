@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hardware Design Review"
+  short_description: "Review hardware evidence across CAD tools"
+  default_prompt: "Use $hardware-design-review to review this design's component, interface and release evidence and report verified findings and unresolved checks."

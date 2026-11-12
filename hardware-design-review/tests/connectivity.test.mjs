@@ -14,6 +14,30 @@ async function fixture(t, extra = '') {
   return { dir, design: await makeProject(dir, extra) };
 }
 
+test('declared physical annotation is hashed and blocks a clean CLI result', async t => {
+  const { dir, design } = await fixture(t, '[Document2]\nDocumentPath=Physical.Annotation\n');
+  const annotation = path.join(dir, 'Physical.Annotation');
+  await writeFile(annotation, '[DesignatorManager]\nLogicalDesignator0=R1\nPhysicalDesignator0=R23\n');
+  const report = await inspectConnectivity(design);
+  assert.equal(report.coverage.physical_instance_mapping, 'unsupported_saved_annotation');
+  assert.equal(report.findings[0].code, 'altium_physical_annotation_unsupported');
+  assert.equal(report.findings[0].physical_mapping_count, 1);
+  assert.equal(report.sources.find(s => s.path === annotation).sha256, sha256(await readFile(annotation)));
+  assert.ok(report.connections.some(c => c.refdes === 'R1')); // Preserve evidence; do not invent a remapping.
+  const cli = fileURLToPath(new URL('../scripts/inspect_connectivity.mjs', import.meta.url));
+  const result = spawnSync(process.execPath, [cli, '--design', design, '--out', path.join(dir, 'report.json')], { encoding: 'utf8' });
+  assert.equal(result.status, 1, result.stderr);
+  assert.equal(JSON.parse(result.stdout).findings, 1);
+});
+
+test('adjacent annotation is detected even when absent from project membership', async t => {
+  const { dir, design } = await fixture(t);
+  await writeFile(path.join(dir, 'Demo.Annotation'), '[DesignatorManager]\nPhysicalDesignator0=R23\n');
+  const report = await inspectConnectivity(design);
+  assert.equal(report.findings.length, 1);
+  assert.equal(report.coverage.physical_instance_mapping, 'unsupported_saved_annotation');
+});
+
 test('real parser extracts saved Altium pin membership and hashes every source', async t => {
   const { dir, design } = await fixture(t);
   const before = await readFile(path.join(dir, 'Main.SchDoc'));

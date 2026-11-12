@@ -41,6 +41,7 @@ export async function inspectConnectivity(design, variant, comparisonPath) {
   const version = JSON.parse(await readFile(packagePath, 'utf8')).version;
   if (version !== PIN) throw new Error(`Expected universal-netlist ${PIN}, found ${version}`);
   const reads = new Map(), probes = new Map(), readErrors = new Map();
+  const findings = [];
   const files = {
     async readFile(filename) {
       const absolute = path.resolve(filename);
@@ -70,22 +71,36 @@ export async function inspectConnectivity(design, variant, comparisonPath) {
     const projectText = projectBytes.toString('utf8');
     if (projectText.includes('\ufffd') || projectText.includes('\0')) throw new Error('Unsupported Altium project text encoding');
     let declared = 0;
+    const annotations = new Set();
     for (const line of projectText.split(/\r?\n/)) {
       const raw = line.match(/^\s*DocumentPath=(.+)$/i)?.[1];
       if (!raw) continue;
       const relative = raw.trim().replace(/^"+|"+$/g, '').split('|')[0].trim().replaceAll('\\', '/');
-      if (!relative.toLowerCase().endsWith('.schdoc')) continue;
-      declared++;
+      const annotation = relative.toLowerCase().endsWith('.annotation');
+      if (!annotation && !relative.toLowerCase().endsWith('.schdoc')) continue;
       if (path.win32.isAbsolute(relative) || path.posix.isAbsolute(relative)) {
-        throw new Error(`Altium project uses an absolute SchDoc path unsupported by the engine: ${relative}`);
+        throw new Error(`Altium project uses an absolute ${annotation ? 'Annotation' : 'SchDoc'} path unsupported by the engine: ${relative}`);
       }
       const filename = path.resolve(path.dirname(design), relative);
+      if (annotation) { annotations.add(filename); continue; }
+      declared++;
       const bytes = await files.readFile(filename);
       if (!bytes.subarray(0, 8).equals(Buffer.from('d0cf11e0a1b11ae1', 'hex'))) {
         throw new Error(`Declared SchDoc is not a supported OLE document: ${filename}`);
       }
     }
     if (!declared) throw new Error('Project declares no SchDoc files; directory fallback cannot establish project scope');
+    const adjacentAnnotation = path.resolve(path.dirname(design), path.parse(design).name + '.Annotation');
+    if (await files.exists(adjacentAnnotation)) annotations.add(adjacentAnnotation);
+    for (const filename of annotations) {
+      const bytes = await files.readFile(filename);
+      const body = bytes.toString('utf8');
+      if (body.includes('\ufffd') || body.includes('\0')) throw new Error('Unsupported Altium annotation text encoding');
+      const mappingCount = [...body.matchAll(/^PhysicalDesignator\d+=\S+/gmi)].length;
+      if (mappingCount) findings.push({ code: 'altium_physical_annotation_unsupported', file: filename,
+        physical_mapping_count: mappingCount,
+        message: 'Universal Netlist 1.14.4 does not apply saved physical annotation. References and pin identities can differ from native Altium; use a native compiled export.' });
+    }
   }
   const service = createNetlistService({ files, cache: false, kicadCli: false });
   const parsed = await loadNetlist(path.resolve(design), variant, service.context);
@@ -119,10 +134,11 @@ export async function inspectConnectivity(design, variant, comparisonPath) {
     engine: { name: '@intelligentelectron/universal-netlist', version },
     design: path.resolve(design), design_variant: parsed.design_variant, format: parsed.format,
     sources: [...reads.values()].sort((a, b) => a.path.localeCompare(b.path, 'en')),
-    components: parsed.components, nets: parsed.nets, connections,
+    components: parsed.components, nets: parsed.nets, connections, findings,
     ...(parsed.netLabelSources ? { net_label_sources: parsed.netLabelSources } : {}), comparison,
     coverage: { saved_pin_net_membership: 'parsed', source_stability: 'unchanged',
-      physical_instance_mapping: 'parser_derived_not_native_verified',
+      physical_instance_mapping: findings.some(f => f.code === 'altium_physical_annotation_unsupported')
+        ? 'unsupported_saved_annotation' : 'parser_derived_not_native_verified',
       unconnected_pin_semantics: 'engine_normalizes_unconnected_to_NC',
       native_compile: 'not_run', native_membership_equivalence: 'not_verified',
       pcb_geometry: 'not_read', electrical_qualification: 'not_performed' } };
@@ -144,8 +160,9 @@ async function main() {
     if (report.sources.some(s => path.resolve(s.path) === path.resolve(values.out))) throw new Error('Output aliases a source');
     await writeFile(values.out, JSON.stringify(report, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
     console.log(JSON.stringify({ report: path.resolve(values.out), components: Object.keys(report.components).length,
-      nets: Object.keys(report.nets).length, pins: report.connections.length, comparison: report.comparison.status }));
-    if (report.comparison.status === 'different') process.exitCode = 1;
+      nets: Object.keys(report.nets).length, pins: report.connections.length, findings: report.findings.length,
+      comparison: report.comparison.status }));
+    if (report.comparison.status === 'different' || report.findings.length) process.exitCode = 1;
   } catch (error) { console.error(`Connectivity inspection failed: ${error.message}`); process.exitCode = 2; }
 }
 if (process.argv[1] && await realpath(process.argv[1]) === await realpath(fileURLToPath(import.meta.url))) await main();

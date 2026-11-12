@@ -44,7 +44,8 @@ class ManufacturingTests(unittest.TestCase):
         self.input = self.root / "cam"
         self.input.mkdir()
         for name, text in [("board.gtl", GERBER), ("board.gbl", GERBER),
-                           ("board.gko", GERBER), ("board.drl", DRILL)]:
+                           ("board.gko", GERBER.replace('%MOMM*%', '%MOMM*%\n%TF.FileFunction,Profile,NP*%')),
+                           ("board.drl", DRILL)]:
             (self.input / name).write_text(text)
 
     def inspect(self, **kwargs):
@@ -67,6 +68,17 @@ class ManufacturingTests(unittest.TestCase):
         (self.input / "board.gbl").unlink()
         report, _ = self.inspect(required=["bottom copper"])
         self.assertIn({"code": "required_role_missing", "role": "bottom copper"}, report["findings"])
+
+    def test_keepout_filename_does_not_establish_outline(self):
+        (self.input / "board.gko").write_text(GERBER)
+        report, _ = self.inspect(required=["outline"])
+        self.assertIn({"code": "required_role_missing", "role": "outline"}, report["findings"])
+        keepout = next(f for f in report["files"] if f["path"] == "board.gko")
+        self.assertIsNone(keepout["role"])
+        mapping = self.root / "map.json"
+        mapping.write_text(json.dumps({"layers": {"board.gko": "outline"}}))
+        report, _ = self.inspect(layer_map=mapping, required=["outline"])
+        self.assertEqual(report["findings"], [])
 
     def test_shifted_drill_is_not_hidden_by_matching_counts(self):
         (self.input / "board.drl").write_text(DRILL.replace("X5.000", "X105.000"))

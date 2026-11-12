@@ -7,8 +7,8 @@ candidate catalog remains a historical snapshot; it is not an installer.
 
 | Integration | Home and delivered capability | Qualified scope |
 | --- | --- | --- |
-| Universal Netlist 1.14.4 | `hardware-design-review/scripts/inspect_connectivity.mjs`: saved pin/net maps, DNP/variant fields, source hashes, full-membership comparison | Real parser on synthetic flat/repeated-sheet Altium projects, multi-part components and DNP variants; no native compiled equivalence claim |
-| Gerbonara 1.6.3 | `hardware-design-review/scripts/inspect_manufacturing.py`: Gerber/Excellon/IPC-356 manifest, layer evidence, units, drill sizes/plating, coarse drill bounds check, per-layer SVG | Synthetic CAM inputs, including missing layers, shifted drills, malformed files and IPC pin identity; no vendor DFM or copper-netlist equivalence claim |
+| Universal Netlist 1.14.4 | `hardware-design-review/scripts/inspect_connectivity.mjs`: saved pin/net maps, DNP/variant fields, source hashes, full-membership comparison | Synthetic regression cases and a native 65-pin control match; annotated hierarchical example fails native equivalence |
+| Gerbonara 1.6.3 | `hardware-design-review/scripts/inspect_manufacturing.py`: Gerber/Excellon/IPC-356 manifest, layer evidence, units, drill sizes/plating, coarse drill bounds check, per-layer SVG | Synthetic regressions plus 20 native Gerber files and one drill file; native hole count/diameter cross-check; no vendor DFM or copper-netlist equivalence claim |
 
 Both are CAD-independent engines, so the adapters belong in `hw-skills`.
 [altium-tools](https://github.com/hornej/altium-tools/blob/main/altium-design-review/references/connectivity-integration.md)
@@ -45,19 +45,29 @@ and [manufacturing reference](../hardware-design-review/references/manufacturing
   refuses unsupported absolute paths and refuses an undeclared project scope.
   Regression tests include a valid sheet beside a missing/corrupt second sheet.
 
-The integration suite contains 22 tests (12 connectivity, 10 manufacturing),
+The integration suite contains 25 tests (14 connectivity, 11 manufacturing),
 run against the pinned libraries rather than mocked parser success responses.
+
+## Native Altium follow-up
+
+AD26.11.1 testing now includes a complete 65-pin match on a single-sheet control,
+a failed comparison on the hierarchical Bluetooth Sentinel example, and parsing
+of actual native Gerber/drill output. The detailed
+[qualification record](https://github.com/hornej/altium-tools/blob/main/docs/native-qualification-2026-11-12.md)
+owns the results and limits. Native testing exposed ignored physical annotation
+and the unsafe `.GKO`-as-outline assumption; the adapters now flag the former and
+require explicit outline evidence for the latter.
 
 ## Next capability gates
 
-1. Qualify the existing live Altium MCP on a disposable representative project,
-   then compare fresh native compiled membership with saved-parser evidence.
-   This needs deliberate native target selection and is not established by a
-   status response or the synthetic tests here.
-2. Pilot the Altium interactive BOM exporter against AD26 and explicit variants;
-   verify both board sides, rotations, pin 1 and reference-set agreement.
+1. Resolve physical annotation and the remaining hierarchical membership/count
+   differences before promoting saved connectivity beyond the qualified control.
+2. Qualify explicit fabrication profiles and the remaining CAM layer roles, then
+   add native variant, ERC/DRC and more complex connectivity acceptance cases.
 3. Add reusable datasheet evidence, then evaluate Workspace read access when its
    intended tenant and authentication are available.
+
+Interactive assembly/iBOM work is deferred; native Altium testing takes priority.
 
 The first two adapters are usable now for scoped evidence gathering. Complex
 buses/harnesses, hidden-power cases, native physical identity, CAM registration,

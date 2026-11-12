@@ -92,13 +92,19 @@ steps. They do not bundle an Altium MCP server or a general Workspace write API.
 Installing them does not supply those capabilities; an available connector or
 the native Altium workflow is used for authorized changes.
 
+See the [hardware tooling evaluation](docs/tool-landscape-2026-11-12.md) for a
+dated comparison of 25 complementary projects, their overlap with these skills,
+and proposed integration pilots. The accompanying candidate catalog records
+upstream revisions; it is research evidence, not an installation manifest or a
+list of qualified backends.
+
 ## Dependencies
 
 | Workflow | Requirements |
 | --- | --- |
 | BOM/PnP CSV review and synchronization-file preparation | Python 3.10+; standard library only. |
 | DigiKey catalog helper | Python 3.10+; a DigiKey Product Information API application for live queries. Set `DIGIKEY_CLIENT_ID` and `DIGIKEY_CLIENT_SECRET` through your own secret manager or process environment. |
-| Batch sourcing and origin helpers | Python 3.10+; Nexar Supply credentials, a Mouser Search API key, LCSC production API key/secret, JLCPCB App ID/access key/secret with Parts approval, or DigiKey account-linked OAuth access for the selected provider. ST's undocumented website service may require browser capture. |
+| Batch sourcing and origin helpers | Python 3.10+; Nexar Supply credentials, a Mouser Search API key, LCSC production API key/secret, JLCPCB App ID/access key/secret with Parts approval, or DigiKey account-linked OAuth access for the selected provider. JLCPCB component-detail calls have been validated; LCSC live testing is pending credentials. See the [provider validation scope](part-sourcing/references/lcsc-jlcpcb.md). ST's undocumented website service may require browser capture. |
 | STM32 package/pin screening | ST's public pin-data repository at a recorded commit; local CubeMX or current datasheets for missing coverage or a verified newer source. No distributor API key is needed. |
 | Binary library migration and optional native design inventory | CPython 3.12 with `altium-monkey==2026.9.22`, the tested engine version. |
 | Native import, Workspace release and component/model editing | Altium Designer on Windows and appropriate access to the selected Altium 365 Workspace. Custom Data Synchronization also needs its installed feature and a compatible 64-bit OLE DB provider. |

@@ -18,6 +18,10 @@ levels. These are research snapshots, **not approved dependency pins**.
 > [altium-tools](https://github.com/hornej/altium-tools). Links to the original
 > Altium helpers below are pinned to the evaluated snapshot. Current portable
 > review guidance lives in `hardware-design-review`.
+>
+> Implementation update: the [first integration delivery](integrations-2026-11-12.md)
+> adds optional Universal Netlist and Gerbonara adapters with synthetic acceptance
+> tests. The evaluation and candidate catalog below retain their original evidence scope.
 
 ## Scope and evidence
 

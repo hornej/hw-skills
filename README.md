@@ -51,7 +51,9 @@ repository's generic workflows.
 
 | Workflow | Requirements and result |
 | --- | --- |
-| Hardware design review | Instructions and reference material; uses supplied evidence or available CAD tools. No particular CAD installation required. |
+| Hardware design review | Engineering guidance plus optional saved-connectivity and CAM adapters; no particular CAD installation required. |
+| Saved schematic connectivity | Node.js 22.15+; optional Universal Netlist 1.14.4 library. Pin/net membership, variant/DNP data, source hashes and membership comparison. See [setup and scope](hardware-design-review/references/connectivity.md). |
+| Gerber/drill/IPC-356 inspection | Python 3.12+; optional Gerbonara 1.6.3. Layer/units manifest, drill bounds screening and SVG previews. See [setup and scope](hardware-design-review/references/manufacturing-inspection.md). |
 | DigiKey catalog | Python 3.10+ and Product Information API credentials for live queries; local cache and manufacturer-page fallbacks remain available. |
 | Batch sourcing and origin | Python 3.10+ and credentials/access for each selected provider. No quote creation, order placement or RFQs. |
 | ST website origin | Python 3.10+; undocumented website access may require browser capture. |
@@ -89,9 +91,13 @@ not an installation manifest or qualified-backend registry. Portable datasheet,
 manufacturing-file and simulation integrations belong here; Altium-specific
 adapters and native acceptance tests belong in `altium-tools`.
 
+The [first integration delivery](docs/integrations-2026-11-12.md) records the
+implemented Universal Netlist and Gerbonara adapters, exact tested versions,
+acceptance evidence and remaining native qualification work.
+
 ## Tests and contributions
 
-From the repository root, Python 3.10+ is enough:
+For the existing sourcing suites, Python 3.10+ is enough:
 
 ```sh
 python -B -m unittest discover -s digikey-part-selection/tests -v
@@ -104,6 +110,14 @@ credentials or establish live stock, API access or electrical qualification.
 CI runs them on Windows/Python 3.12 and Linux/Python 3.10. Origin Lens has its
 own tests described in its README.
 
+The optional review integrations have a separate Windows/Linux CI job with
+Python 3.12 and Node.js 24. After installing their optional dependencies:
+
+```sh
+python -B -m unittest discover -s hardware-design-review/tests -v
+npm --prefix hardware-design-review test
+```
+
 Keep customer designs, Workspace exports, credentials and API caches out of
 commits and issue attachments. Run the affected suite when changing a helper.
 Generic review guidance should not assume one CAD vendor or a particular
@@ -114,4 +128,6 @@ project's electrical limits.
 Original skills and helpers are available under the [MIT License](LICENSE).
 Third-party dependencies and bundled extension assets retain their own terms;
 see the extension's notices. Services remain subject to their access requirements.
+The optional review engines retain their Apache-2.0 licenses; see
+[dependency attribution](hardware-design-review/THIRD_PARTY.md).
 This is an independent project, not an official distributor or CAD-vendor product.

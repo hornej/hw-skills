@@ -22,6 +22,7 @@ demo-review*.json
 .altium-migration-output
 .DS_Store
 Thumbs.db
+node_modules/
 
 # Machine-specific setup and private validation notes
 **/references/local-runtime.md

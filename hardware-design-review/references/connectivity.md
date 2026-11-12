@@ -49,6 +49,13 @@ The adapter rejects an empty parse, read failure or changed source and refuses
 existing output files. The engine normalizes unconnected pins to `NC`; a report
 does not independently establish the semantics of a literal net named `NC`.
 
+Altium `.Annotation` files containing physical designator mappings are a known
+unsupported dependency in engine 1.14.4. The adapter checks declared annotation
+files and the adjacent project-named file, hashes them, and emits
+`altium_physical_annotation_unsupported`. It retains the parser's evidence but
+marks physical mapping unsupported and exits 1. Use native compiled membership;
+do not repair this by renaming references until the numbers look right.
+
 ## Compare independent membership
 
 Optionally pass `--compare compiled-membership.json` with this structure:
@@ -74,7 +81,8 @@ export. Verify its complete source revision, physical instance mapping, variant,
 compile completion and unconnected-pin conventions independently. Differences
 remain evidence for investigation, not permission to rewrite a design.
 
-Exit codes: **0** report written; **1** supplied membership differs; **2** input,
+Exit codes: **0** report written with no findings; **1** supplied membership differs
+or an unsupported annotation mapping is present; **2** input,
 parser, version or output error. Native compile/ERC/DRC, physical mapping,
 PCB geometry and electrical qualification remain explicitly unverified.
 
@@ -86,3 +94,10 @@ pin membership, missing/corrupt sheet refusal, source preservation, comparison
 scope and exclusive output creation. They do not qualify all buses, harnesses,
 hidden-power conventions, alternate libraries or native compiled equivalence.
 Retain these gaps when applying the parser to a real design.
+
+Native AD26.11.1 testing on 2026-11-12 matched all 65 pin/net memberships in a
+15-component single-sheet control. The annotated, hierarchical Bluetooth Sentinel
+example failed equivalence (native 72 components/224 pins versus saved parser
+70/220). See the [native qualification record](https://github.com/hornej/altium-tools/blob/main/docs/native-qualification-2026-11-12.md).
+This is a limited positive control and a confirmed unsupported case, not general
+Altium equivalence.

@@ -36,6 +36,9 @@ For ambiguous exports, supply `--layer-map layers.json`:
 
 Paths are relative to the package, with `/` separators. Confirm mechanical-layer
 meaning from the CAD output configuration; `.GM1` alone does not mean outline.
+An Altium `.GKO` is a keepout export and also needs explicit evidence/mapping
+before it can serve as an outline. Matching board bounds alone does not prove
+that it is the intended fabrication profile.
 Gerber FileFunction attributes take priority over common extension hints; an
 explicit mapping is retained as user evidence and conflicts are reported.
 Inspect the `role_basis` field rather than treating filenames as authoritative.
@@ -68,4 +71,9 @@ Use the [release checklist](release-checklist.md) for those separate checks.
 Synthetic acceptance covers missing layers, shifted drills, ambiguous names,
 duplicate roles, unknown plating, malformed/unknown files, IPC pin records,
 SVG generation and input/output preservation. Real supplier packages and native
-Altium OutputJobs still need project-specific review.
+Altium OutputJobs still need project-specific review. Native AD26.11.1 testing
+parsed all 20 Gerber files and one drill file from a disposable Bluetooth Sentinel
+OutputJob. Its 173 drill objects and nominal 0.3 mm diameter agreed with native
+board measurements. Deprecated G70 warnings, ancillary files, ambiguous layers
+and an unidentified fabrication outline remained findings; see the
+[native qualification record](https://github.com/hornej/altium-tools/blob/main/docs/native-qualification-2026-11-12.md).

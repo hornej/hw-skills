@@ -16,7 +16,7 @@ import warnings
 ENGINE_VERSION = "1.6.3"
 EXTENSIONS = {".gtl": "top copper", ".gbl": "bottom copper", ".gts": "top mask",
               ".gbs": "bottom mask", ".gto": "top silk", ".gbo": "bottom silk",
-              ".gtp": "top paste", ".gbp": "bottom paste", ".gko": "outline"}
+              ".gtp": "top paste", ".gbp": "bottom paste"}
 
 
 def digest(data):

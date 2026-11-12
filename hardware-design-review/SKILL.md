@@ -1,6 +1,6 @@
 ---
 name: hardware-design-review
-description: Review hardware component suitability, BOM and placement evidence, grounding and board interfaces, and fabrication or assembly release readiness across CAD tools. Use for portable engineering review; use the relevant CAD skill for native file parsing, edits, compilation and output generation.
+description: Review hardware components, BOM and placement evidence, schematic pin/net connectivity, Gerber/drill manufacturing files, grounding and release readiness across CAD tools. Includes optional saved-source parsers; use the relevant CAD skill for native editing, compilation and output generation.
 ---
 
 # Hardware design review
@@ -25,11 +25,22 @@ supplier choices and completed reviews with the project.
 - For fabrication or assembly handoff, use the
   [release checklist](references/release-checklist.md). Record Done, N/A or Open
   with evidence; an unknown or unexecuted check cannot become a pass.
+- For saved schematic pin/net membership, use the optional
+  [Universal Netlist adapter](references/connectivity.md). It retains full parser
+  identities, DNP components, variants and source hashes; native equivalence
+  remains a separate check.
+- For an exported CAM package, use the optional
+  [Gerbonara inspection](references/manufacturing-inspection.md). Supply expected
+  layers when known; inspect ambiguous roles, parser warnings and drill offsets.
 
 Use the project's available CAD tools to obtain native connectivity, compilation,
 DRC and geometry evidence. State what was actually run and which source snapshot
 it covers. Native generation and mutation belong to that CAD workflow. This skill
 can review supplied evidence without requiring a particular CAD installation.
+
+The parser integrations are optional. If this installation has a
+`references/local-runtime.md`, use its tested interpreter/dependency locations;
+otherwise follow the relevant reference's isolated setup instructions.
 
 For live procurement checks, use the installed `part-sourcing` or
 `digikey-part-selection` companion when available. Manufacturer datasheets govern

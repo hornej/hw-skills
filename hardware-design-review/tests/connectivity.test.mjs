@@ -14,28 +14,31 @@ async function fixture(t, extra = '') {
   return { dir, design: await makeProject(dir, extra) };
 }
 
-test('declared physical annotation is hashed and blocks a clean CLI result', async t => {
+const annotationRow = (n, { logical='R1', physical='R23', document='Main.SchDoc', channel='main.schdoc', uid='COMP0002', part='1' } = {}) =>
+  `LogicalDesignator${n}=${logical}\nLogicalPartID${n}=${part}\nDocumentName${n}=${document}\nChannelName${n}=${channel}\nUniqueID${n}=\\${uid.replaceAll('/', '\\')}\nPhysicalDesignator${n}=${physical}\n`;
+
+test('declared physical annotation is applied by UID and hashed', async t => {
   const { dir, design } = await fixture(t, '[Document2]\nDocumentPath=Physical.Annotation\n');
   const annotation = path.join(dir, 'Physical.Annotation');
-  await writeFile(annotation, '[DesignatorManager]\nLogicalDesignator0=R1\nPhysicalDesignator0=R23\n');
+  await writeFile(annotation, '[DesignatorManager]\n' + annotationRow(0));
   const report = await inspectConnectivity(design);
-  assert.equal(report.coverage.physical_instance_mapping, 'unsupported_saved_annotation');
-  assert.equal(report.findings[0].code, 'altium_physical_annotation_unsupported');
-  assert.equal(report.findings[0].physical_mapping_count, 1);
+  assert.equal(report.coverage.physical_instance_mapping, 'saved_annotation_and_channel_identity');
+  assert.deepEqual(report.findings, []);
   assert.equal(report.sources.find(s => s.path === annotation).sha256, sha256(await readFile(annotation)));
-  assert.ok(report.connections.some(c => c.refdes === 'R1')); // Preserve evidence; do not invent a remapping.
+  assert.ok(report.connections.some(c => c.refdes === 'R23'));
+  assert.ok(!report.components.R1);
   const cli = fileURLToPath(new URL('../scripts/inspect_connectivity.mjs', import.meta.url));
   const result = spawnSync(process.execPath, [cli, '--design', design, '--out', path.join(dir, 'report.json')], { encoding: 'utf8' });
-  assert.equal(result.status, 1, result.stderr);
-  assert.equal(JSON.parse(result.stdout).findings, 1);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).findings, 0);
 });
 
 test('adjacent annotation is detected even when absent from project membership', async t => {
   const { dir, design } = await fixture(t);
-  await writeFile(path.join(dir, 'Demo.Annotation'), '[DesignatorManager]\nPhysicalDesignator0=R23\n');
+  await writeFile(path.join(dir, 'Demo.Annotation'), '[DesignatorManager]\n' + annotationRow(0));
   const report = await inspectConnectivity(design);
-  assert.equal(report.findings.length, 1);
-  assert.equal(report.coverage.physical_instance_mapping, 'unsupported_saved_annotation');
+  assert.ok(report.components.R23);
+  assert.equal(report.physical_identities.find(p => p.refdes === 'R23').basis, 'saved_annotation_uid');
 });
 
 test('real parser extracts saved Altium pin membership and hashes every source', async t => {

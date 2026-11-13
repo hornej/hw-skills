@@ -7,7 +7,7 @@ candidate catalog remains a historical snapshot; it is not an installer.
 
 | Integration | Home and delivered capability | Qualified scope |
 | --- | --- | --- |
-| Universal Netlist 1.14.4 | `hardware-design-review/scripts/inspect_connectivity.mjs`: saved pin/net maps, DNP/variant fields, source hashes, full-membership comparison | Synthetic regression cases and a native 65-pin control match; annotated hierarchical example fails native equivalence |
+| Universal Netlist 1.14.4 + Altium adapter v1 | `hardware-design-review/scripts/inspect_connectivity.mjs`: saved pin/net maps, physical annotation, hierarchy, source hashes, full-membership comparison | Fresh native 224-pin hierarchical and 65-pin single-sheet matches; annotated assembly variants remain blocked |
 | Gerbonara 1.6.3 | `hardware-design-review/scripts/inspect_manufacturing.py`: Gerber/Excellon/IPC-356 manifest, layer evidence, units, drill sizes/plating, coarse drill bounds check, per-layer SVG | Synthetic regressions plus 20 native Gerber files and one drill file; native hole count/diameter cross-check; no vendor DFM or copper-netlist equivalence claim |
 
 Both are CAD-independent engines, so the adapters belong in `hw-skills`.
@@ -45,23 +45,26 @@ and [manufacturing reference](../hardware-design-review/references/manufacturing
   refuses unsupported absolute paths and refuses an undeclared project scope.
   Regression tests include a valid sheet beside a missing/corrupt second sheet.
 
-The integration suite contains 25 tests (14 connectivity, 11 manufacturing),
+The integration suite contains 35 tests (24 connectivity, 11 manufacturing),
 run against the pinned libraries rather than mocked parser success responses.
 
 ## Native Altium follow-up
 
-AD26.11.1 testing now includes a complete 65-pin match on a single-sheet control,
-a failed comparison on the hierarchical Bluetooth Sentinel example, and parsing
-of actual native Gerber/drill output. The detailed
+Initial AD26.11.1 testing included a complete 65-pin match on a single-sheet
+control, a failed hierarchical comparison and actual native Gerber/drill parsing.
+The detailed
 [qualification record](https://github.com/hornej/altium-tools/blob/main/docs/native-qualification-2026-11-12.md)
-owns the results and limits. Native testing exposed ignored physical annotation
-and the unsafe `.GKO`-as-outline assumption; the adapters now flag the former and
-require explicit outline evidence for the latter.
+retains that historical result. The subsequent
+[fix and fresh rerun](https://github.com/hornej/altium-tools/blob/main/docs/native-connectivity-fix-2026-11-12.md)
+matches all 224 hierarchical memberships after applying physical annotation
+before extraction, correcting hierarchical power scope and retaining isolated
+pin names. Both native cases preserve source bytes and workspace state. The CAM
+adapter continues to require explicit outline evidence for `.GKO`.
 
 ## Next capability gates
 
-1. Resolve physical annotation and the remaining hierarchical membership/count
-   differences before promoting saved connectivity beyond the qualified control.
+1. Extend native qualification to annotated assembly variants and additional
+   hierarchy/hidden-power cases beyond the two exact-match projects.
 2. Qualify explicit fabrication profiles and the remaining CAM layer roles, then
    add native variant, ERC/DRC and more complex connectivity acceptance cases.
 3. Add reusable datasheet evidence, then evaluate Workspace read access when its

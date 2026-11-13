@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { createNetlistService, loadNetlist } from '@intelligentelectron/universal-netlist/service';
+import { loadAltiumProject } from './altium/load.mjs';
 
 const PIN = '1.14.4';
 export const sha256 = data => createHash('sha256').update(data).digest('hex');
@@ -96,14 +97,12 @@ export async function inspectConnectivity(design, variant, comparisonPath) {
       const bytes = await files.readFile(filename);
       const body = bytes.toString('utf8');
       if (body.includes('\ufffd') || body.includes('\0')) throw new Error('Unsupported Altium annotation text encoding');
-      const mappingCount = [...body.matchAll(/^PhysicalDesignator\d+=\S+/gmi)].length;
-      if (mappingCount) findings.push({ code: 'altium_physical_annotation_unsupported', file: filename,
-        physical_mapping_count: mappingCount,
-        message: 'Universal Netlist 1.14.4 does not apply saved physical annotation. References and pin identities can differ from native Altium; use a native compiled export.' });
     }
   }
   const service = createNetlistService({ files, cache: false, kicadCli: false });
-  const parsed = await loadNetlist(path.resolve(design), variant, service.context);
+  const altiumProject = path.extname(design).toLowerCase() === '.prjpcb';
+  const parsed = altiumProject ? await loadAltiumProject(path.resolve(design), variant, files)
+    : await loadNetlist(path.resolve(design), variant, service.context);
   if ('error' in parsed) throw new Error(parsed.error);
   if (readErrors.size) throw new Error(`Unreadable source dependencies: ${JSON.stringify([...readErrors])}`);
   if (!Object.keys(parsed.components).length) throw new Error('Parser returned no components; connectivity coverage is empty');
@@ -131,15 +130,16 @@ export async function inspectConnectivity(design, variant, comparisonPath) {
     if (exists !== existed) throw new Error(`Source dependency changed: ${filename}`);
   }
   return { schema_version: 1, generated_at: new Date().toISOString(),
-    engine: { name: '@intelligentelectron/universal-netlist', version },
+    engine: { name: '@intelligentelectron/universal-netlist', version,
+      ...(altiumProject ? { adapter: 'altium-physical-hierarchy', adapter_version: 1 } : {}) },
     design: path.resolve(design), design_variant: parsed.design_variant, format: parsed.format,
     sources: [...reads.values()].sort((a, b) => a.path.localeCompare(b.path, 'en')),
     components: parsed.components, nets: parsed.nets, connections, findings,
+    ...(parsed.physical_identities ? { physical_identities: parsed.physical_identities } : {}),
     ...(parsed.netLabelSources ? { net_label_sources: parsed.netLabelSources } : {}), comparison,
     coverage: { saved_pin_net_membership: 'parsed', source_stability: 'unchanged',
-      physical_instance_mapping: findings.some(f => f.code === 'altium_physical_annotation_unsupported')
-        ? 'unsupported_saved_annotation' : 'parser_derived_not_native_verified',
-      unconnected_pin_semantics: 'engine_normalizes_unconnected_to_NC',
+      physical_instance_mapping: altiumProject ? 'saved_annotation_and_channel_identity' : 'parser_derived_not_native_verified',
+      unconnected_pin_semantics: altiumProject ? 'isolated_pins_retain_generated_net_names' : 'engine_normalizes_unconnected_to_NC',
       native_compile: 'not_run', native_membership_equivalence: 'not_verified',
       pcb_geometry: 'not_read', electrical_qualification: 'not_performed' } };
 }

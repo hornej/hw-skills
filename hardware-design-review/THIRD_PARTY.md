@@ -1,7 +1,21 @@
 # Optional engine attribution
 
-The adapter code and synthetic fixtures in this skill are original MIT-licensed
-work under the repository license. Upstream engine source is not vendored.
+The adapter code and synthetic fixtures are MIT-licensed except for the explicitly
+marked Apache-2.0 modules described below.
+
+`scripts/altium/project.mjs` and `scripts/altium/channels.mjs` are modified copies
+of the matching Universal Netlist **1.14.4** distributed modules. `load.mjs`
+adapts its service variant-selection logic. They retain Apache-2.0 licensing;
+the upstream [LICENSE](vendor/universal-netlist/LICENSE) and
+[NOTICE](vendor/universal-netlist/NOTICE) are included. Changes apply physical
+annotation before extraction, preserve isolated-pin names, localize hierarchical
+power/port connections, and reject ambiguous identities/hierarchies. The original
+annotation module and regression fixtures remain MIT-licensed.
+
+These few integration modules call the separately installed, pinned engine's
+parser internals. They do not edit `node_modules`, replace the package globally,
+or require install scripts. Requalify both the internal interfaces and native
+comparisons before upgrading the engine or changing this integration.
 
 | Dependency | Tested version | Upstream license and source |
 | --- | --- | --- |
